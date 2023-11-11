@@ -1,0 +1,7 @@
+*.db
+*.db-shm
+*.db-wal
+cli/cli
+.direnv
+armaria
+dist
