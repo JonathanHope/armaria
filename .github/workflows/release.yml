@@ -1,0 +1,26 @@
+name: Release Armaria
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+      - name: Release
+        run: task release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
