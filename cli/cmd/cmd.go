@@ -159,18 +159,25 @@ func (r *AddTagsCmd) Run(ctx *Context) error {
 
 // ListAllCmd is a CLI command to list bookmarks and folders.
 type ListAllCmd struct {
-	Folder *string       `help:"Folder to list bookmarks/folders in."`
-	After  *string       `help:"ID of bookmark/folder to return results after."`
-	Query  *string       `help:"Query to search bookmarks/folders by."`
-	Tag    []string      `help:"Tag to filter bookmarks/folders by."`
-	Order  lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
-	Dir    lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
-	First  *int64        `help:"The max number of bookmarks/folders to return."`
+	Folder   *string       `help:"Folder to list bookmarks/folders in."`
+	NoFolder bool          `help:"List top level bookmarks/folders."`
+	After    *string       `help:"ID of bookmark/folder to return results after."`
+	Query    *string       `help:"Query to search bookmarks/folders by."`
+	Tag      []string      `help:"Tag to filter bookmarks/folders by."`
+	Order    lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Dir      lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
+	First    *int64        `help:"The max number of bookmarks/folders to return."`
 }
 
 // Run list bookmarks and folders.
 func (r *ListAllCmd) Run(ctx *Context) error {
 	start := time.Now()
+
+	if r.NoFolder && r.Folder != nil {
+		formatError(ctx.Writer, ctx.Formatter, ErrFolderNoFolderMutuallyExclusive)
+		ctx.ReturnCode(1)
+		return nil
+	}
 
 	options := lib.DefaultListBooksOptions()
 	options.WithFolders(true)
@@ -180,6 +187,9 @@ func (r *ListAllCmd) Run(ctx *Context) error {
 	}
 	if r.Folder != nil {
 		options.WithParentID(*r.Folder)
+	}
+	if r.NoFolder {
+		options.WithoutParentID()
 	}
 	if r.After != nil {
 		options.WithAfter(*r.After)
@@ -217,18 +227,25 @@ func (r *ListAllCmd) Run(ctx *Context) error {
 
 // ListBooksCmd is a CLI command to list bookmarks.
 type ListBooksCmd struct {
-	Folder *string       `help:"Folder to list bookmarks in."`
-	After  *string       `help:"ID of bookmark to return results after."`
-	Query  *string       `help:"Query to search bookmarks by."`
-	Tag    []string      `help:"Tag to filter bookmarks by."`
-	Order  lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
-	Dir    lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
-	First  *int64        `help:"The max number of bookmarks to return."`
+	Folder   *string       `help:"Folder to list bookmarks in."`
+	NoFolder bool          `help:"List top level bookmarks."`
+	After    *string       `help:"ID of bookmark to return results after."`
+	Query    *string       `help:"Query to search bookmarks by."`
+	Tag      []string      `help:"Tag to filter bookmarks by."`
+	Order    lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Dir      lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
+	First    *int64        `help:"The max number of bookmarks to return."`
 }
 
 // Run list bookmarks.
 func (r *ListBooksCmd) Run(ctx *Context) error {
 	start := time.Now()
+
+	if r.NoFolder && r.Folder != nil {
+		formatError(ctx.Writer, ctx.Formatter, ErrFolderNoFolderMutuallyExclusive)
+		ctx.ReturnCode(1)
+		return nil
+	}
 
 	options := lib.DefaultListBooksOptions()
 	options.WithFolders(false)
@@ -238,6 +255,9 @@ func (r *ListBooksCmd) Run(ctx *Context) error {
 	}
 	if r.Folder != nil {
 		options.WithParentID(*r.Folder)
+	}
+	if r.NoFolder {
+		options.WithoutParentID()
 	}
 	if r.After != nil {
 		options.WithAfter(*r.After)
@@ -275,18 +295,25 @@ func (r *ListBooksCmd) Run(ctx *Context) error {
 
 // ListFoldersCmd is a CLI command to list folders.
 type ListFoldersCmd struct {
-	Folder *string       `help:"Folder to list folders in."`
-	After  *string       `help:"ID of folder to return results after."`
-	Query  *string       `help:"Query to search folders by."`
-	Tag    []string      `help:"Tag to filter folders by."`
-	Order  lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
-	Dir    lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
-	First  *int64        `help:"The max number of folders to return."`
+	Folder   *string       `help:"Folder to list folders in."`
+	NoFolder bool          `help:"List top level folders."`
+	After    *string       `help:"ID of folder to return results after."`
+	Query    *string       `help:"Query to search folders by."`
+	Tag      []string      `help:"Tag to filter folders by."`
+	Order    lib.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Dir      lib.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
+	First    *int64        `help:"The max number of folders to return."`
 }
 
 // Run list folders.
 func (r *ListFoldersCmd) Run(ctx *Context) error {
 	start := time.Now()
+
+	if r.NoFolder && r.Folder != nil {
+		formatError(ctx.Writer, ctx.Formatter, ErrFolderNoFolderMutuallyExclusive)
+		ctx.ReturnCode(1)
+		return nil
+	}
 
 	options := lib.DefaultListBooksOptions()
 	options.WithFolders(true)
@@ -296,6 +323,9 @@ func (r *ListFoldersCmd) Run(ctx *Context) error {
 	}
 	if r.Folder != nil {
 		options.WithParentID(*r.Folder)
+	}
+	if r.NoFolder {
+		options.WithoutParentID()
 	}
 	if r.After != nil {
 		options.WithAfter(*r.After)

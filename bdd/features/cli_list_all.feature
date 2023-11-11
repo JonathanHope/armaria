@@ -90,6 +90,20 @@ Feature: List All with CLI
     | [id] | [parent_1_id] | false     | https://jho.pe | https://jho.pe | NULL        |      |
 
   @cli @list_all
+  Scenario: Can list top level bookmarks/folders
+    Given the DB already has the following entries:
+      | id            | parent_id     | is_folder | name           | url            | description | tags |
+      | {parent_1_id} | NULL          | true      | blogs          | NULL           | NULL        |      |
+      | {id}          | [parent_1_id] | false     | https://jho.pe | https://jho.pe | NULL        |      |
+  When I run it with the following args:
+    """
+    list all --no-folder
+    """
+  Then the folllowing books are returned:
+    | id            | parent_id | is_folder | name  | url  | description | tags |
+    | [parent_1_id] | NULL      | true      | blogs | NULL | NULL        |      |
+
+  @cli @list_all
   Scenario: Can search bookmarks/folders
     Given the DB already has the following entries:
       | id            | parent_id     | is_folder | name           | url            | description | tags |
@@ -137,4 +151,15 @@ Feature: List All with CLI
     Then the following error is returned:
       """
     Query too short
+      """
+
+  @cli @list_all
+  Scenario: Cannot filter by folder and top level at same time
+    When I run it with the following args:
+      """
+      list all --folder [parent_id] --no-folder
+      """
+    Then the following error is returned:
+      """
+      Arguments folder and no-folder are mutually exclusive
       """

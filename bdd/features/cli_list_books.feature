@@ -96,6 +96,21 @@ Feature: List Books with CLI
       | [id_1] | [parent_id] | false     | https://jho.pe | https://jho.pe | NULL        |      |
 
   @cli @list_books
+  Scenario: Can list top-level bookmarks
+    Given the DB already has the following entries:
+      | id          | parent_id   | is_folder | name                | url                 | description | tags |
+      | {parent_id} | NULL        | true      | blogs               | NULL                | NULL        |      |
+      | {id_1}      | [parent_id] | false     | https://jho.pe      | https://jho.pe      | NULL        |      |
+      | {id_2}      | NULL        | false     | https://armaria.net | https://armaria.net | NULL        |      |
+    When I run it with the following args:
+      """
+      list books --no-folder
+      """
+    Then the folllowing books are returned:
+       | id          | parent_id   | is_folder | name                | url                 | description | tags |
+       | [id_2]      | NULL        | false     | https://armaria.net | https://armaria.net | NULL        |      |
+
+  @cli @list_books
   Scenario: Can search bookmarks
     Given the DB already has the following entries:
       | id          | parent_id   | is_folder | name                | url                 | description | tags |
@@ -145,4 +160,15 @@ Feature: List Books with CLI
     Then the following error is returned:
       """
       Query too short
+      """
+
+  @cli @list_books
+  Scenario: Cannot filter by folder and top level at same time
+    When I run it with the following args:
+      """
+      list books --folder [parent_id] --no-folder
+      """
+    Then the following error is returned:
+      """
+      Arguments folder and no-folder are mutually exclusive
       """
