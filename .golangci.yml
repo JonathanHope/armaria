@@ -1,0 +1,33 @@
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - errcheck
+    - gosimple
+    - ineffassign
+    - staticcheck
+    - asciicheck
+    - containedctx
+    - contextcheck
+    - errchkjson
+    - errorlint
+    - forcetypeassert
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecknoglobals
+    - gofmt
+    - gosec
+    - makezero
+    - musttag
+    - nilerr
+    - nilnil
+    - predeclared
+    - reassign
+    - sqlclosecheck
+    - unconvert
+    - unparam
+    - wastedassign
+run:
+  skip-files:
+    - lib/go_sqlite3_migrate.go
+    - test/armaria_test.go
