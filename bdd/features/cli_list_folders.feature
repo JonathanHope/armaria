@@ -96,6 +96,21 @@ Feature: List Folder with CLI
       | [parent_2_id] | [parent_1_id] | true      | tech | NULL | NULL        |      |
 
   @cli @list_folders
+  Scenario: Can list top level folders
+    Given the DB already has the following entries:
+      | id            | parent_id     | is_folder | name           | url            | description | tags |
+      | {parent_1_id} | NULL          | true      | blogs          | NULL           | NULL        |      |
+      | {parent_2_id} | [parent_1_id] | true      | tech           | NULL           | NULL        |      |
+      | {id}          | NULL          | false     | https://jho.pe | https://jho.pe | NULL        |      |
+    When I run it with the following args:
+      """
+      list folders --no-folder
+      """
+    Then the folllowing books are returned:
+      | id            | parent_id | is_folder | name  | url  | description | tags |
+      | [parent_1_id] | NULL      | true      | blogs | NULL | NULL        |      |
+
+  @cli @list_folders
   Scenario: Can search folders
     Given the DB already has the following entries:
       | id            | parent_id     | is_folder | name           | url            | description | tags |
@@ -130,4 +145,15 @@ Feature: List Folder with CLI
     Then the following error is returned:
       """
       Query too short
+      """
+
+  @cli @list_folders
+  Scenario: Cannot filter by folder and top level at same time
+    When I run it with the following args:
+      """
+      list folders --folder [parent_id] --no-folder
+      """
+    Then the following error is returned:
+      """
+      Arguments folder and no-folder are mutually exclusive
       """

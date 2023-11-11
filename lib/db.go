@@ -130,6 +130,8 @@ func getBooksDB(tx transaction, args getBooksDBArgs) ([]Book, error) {
 
 	if args.parentID.Dirty && args.parentID.Valid {
 		where.And(`"child"."parent_id" = ?`, args.parentID.String)
+	} else if args.parentID.Dirty && !args.parentID.Valid {
+		where.And(`"child"."parent_id" IS NULL`)
 	}
 
 	if args.query.Dirty && args.query.Valid {

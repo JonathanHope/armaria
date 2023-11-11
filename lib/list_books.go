@@ -74,6 +74,11 @@ func (o *listBooksOptions) WithFirst(first int64) {
 	o.first = NullInt64From(first)
 }
 
+// WithoutParentID removes the parent ID of a bookmark.
+func (o *listBooksOptions) WithoutParentID() {
+	o.parentID = NullStringFromPtr(nil)
+}
+
 // ListBooks lists bookmarks and folders in the bookmarks database.
 func ListBooks(options listBooksOptions) ([]Book, error) {
 	return queryWithDB(options.db, connectDB, func(tx transaction) ([]Book, error) {
