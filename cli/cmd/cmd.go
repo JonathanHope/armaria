@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -66,6 +67,7 @@ type ConfigCmd struct {
 // DBConfigCmd is a CLI command to manage the bookmarks database location config.
 type DBConfigCmd struct {
 	Get GetDBConfigCmd `cmd:"" help:"Get the location of the bookmarks database from the configuration."`
+	Set SetDBConfigCmd `cmd:"" help:"Set the location of the bookmarks database in the configuration."`
 }
 
 // Run add a bookmark.
@@ -627,9 +629,9 @@ type GetDBConfigCmd struct {
 func (r *GetDBConfigCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	dbPath, err := lib.GetDBPathConfig()
+	config, err := lib.GetConfig()
 
-	if err != nil {
+	if err != nil && !errors.Is(err, lib.ErrConfigMissing) {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
 		return nil
@@ -637,8 +639,34 @@ func (r *GetDBConfigCmd) Run(ctx *Context) error {
 
 	elapsed := time.Since(start)
 
-	formatConfigResult(ctx.Writer, ctx.Formatter, dbPath)
+	formatConfigResult(ctx.Writer, ctx.Formatter, config.DB)
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Retreived in %s", elapsed))
+
+	return nil
+}
+
+// SetDBConfigCmd is a CLI command to set the location of the bookmarks database in the config.
+type SetDBConfigCmd struct {
+	DB string `arg:"" name:"db" help:"Location of the bookmarks database."`
+}
+
+// Run set the location of the bookmarks database in the config.
+func (r *SetDBConfigCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	err := lib.UpdateConfig(func(config *lib.Config) {
+		config.DB = r.DB
+	})
+
+	if err != nil && !errors.Is(err, lib.ErrConfigMissing) {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Set in %s", elapsed))
 
 	return nil
 }

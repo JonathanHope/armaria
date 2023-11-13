@@ -9,11 +9,17 @@ import (
 
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 )
 
 const configFilename = "armaria.toml"
 const databaseFilename = "bookmarks.db"
+
+// Config is the unmarshalled Config.
+type Config struct {
+	DB string `koanf:"db"`
+}
 
 // mkDirAllFn creates a directory if it doesn't already exist.
 type mkDirAllFn func(path string, perm os.FileMode) error
@@ -24,38 +30,86 @@ type userHomeFn func() (string, error)
 // joinFn joins path segments together.
 type joinFn func(elem ...string) string
 
-// GetDBPathConfig gets the path to the bookmarks database from the config file.
-func GetDBPathConfig() (string, error) {
-	config, err := getConfig(runtime.GOOS, os.UserHomeDir, filepath.Join)
-	if err != nil && !errors.Is(err, ErrConfigMissing) {
-		return "", err
-	}
+// updateConfigFn is a callback to update the current config
+type updateConfigFn func(config *Config)
 
-	if errors.Is(err, ErrConfigMissing) {
-		return "", nil
-	} else {
-		return config.String("db"), nil
-	}
-}
-
-// getConfig parses the config file.
+// GetConfig gets the current config.
 // If the sentinerl error ErrConfigMissing then it doesn't exist.
-func getConfig(goos string, userHome userHomeFn, join joinFn) (*koanf.Koanf, error) {
-	configPath, err := getConfigPath(goos, userHome, join)
+func GetConfig() (Config, error) {
+	config := Config{}
+
+	configPath, err := getConfigPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
 	if err != nil {
-		return nil, err
+		return config, err
 	}
 
-	var config = koanf.New(".")
-	if err := config.Load(file.Provider(configPath), toml.Parser()); err != nil {
+	var k = koanf.New(".")
+	if err := k.Load(file.Provider(configPath), toml.Parser()); err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			return nil, ErrConfigMissing
+			return config, ErrConfigMissing
 		} else {
-			return nil, err
+			return config, err
 		}
 	}
 
+	err = k.Unmarshal("", &config)
+	if err != nil {
+		return config, err
+	}
+
 	return config, nil
+}
+
+// UpdateConfig updates the current config.
+// It will be created if it hasn't already been created.
+func UpdateConfig(update updateConfigFn) error {
+	config, err := GetConfig()
+	if err != nil && !errors.Is(err, ErrConfigMissing) {
+		return err
+	}
+
+	if errors.Is(err, ErrConfigMissing) {
+		folder, err := getFolderPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
+		if err != nil {
+			return err
+		}
+
+		err = os.MkdirAll(folder, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	update(&config)
+
+	var k = koanf.New(".")
+	err = k.Load(structs.Provider(config, "koanf"), nil)
+	if err != nil {
+		return err
+	}
+
+	buffer, err := k.Marshal(toml.Parser())
+	if err != nil {
+		return err
+	}
+
+	configPath, err := getConfigPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
+	if err != nil {
+		return err
+	}
+
+	handle, err := os.Create(configPath)
+	if err != nil {
+		return err
+	}
+	defer handle.Close()
+
+	_, err = handle.Write(buffer)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // getDatabasePath gets the path to the bookmarks database.

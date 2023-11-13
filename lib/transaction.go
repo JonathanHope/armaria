@@ -3,6 +3,7 @@ package lib
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -130,12 +131,12 @@ type connectDBFn func(inputPath NullString) (*sql.DB, error)
 
 // connectDB returns a connection to the bookmarks database.
 func connectDB(inputPath NullString) (*sql.DB, error) {
-	configPath, err := GetDBPathConfig()
-	if err != nil {
+	config, err := GetConfig()
+	if err != nil && !errors.Is(err, ErrConfigMissing) {
 		return nil, err
 	}
 
-	dbLocation, err := getDatabasePath(inputPath, configPath, runtime.GOOS, os.MkdirAll, os.UserHomeDir, filepath.Join)
+	dbLocation, err := getDatabasePath(inputPath, config.DB, runtime.GOOS, os.MkdirAll, os.UserHomeDir, filepath.Join)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
 	}

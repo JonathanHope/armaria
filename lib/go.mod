@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/blockloop/scan/v2 v2.5.0
 	github.com/google/uuid v1.4.0
+	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v0.1.0
 	github.com/knadh/koanf/v2 v2.0.1
 	github.com/mattn/go-sqlite3 v1.14.18
@@ -12,10 +13,11 @@ require (
 	github.com/pressly/goose/v3 v3.15.1
 	github.com/samber/lo v1.38.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
-  github.com/knadh/koanf/parsers/toml v0.1.0
+  github.com/knadh/koanf/providers/structs v0.1.0
 )
 
 require (
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
