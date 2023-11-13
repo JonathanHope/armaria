@@ -32,8 +32,8 @@ type queryTxFn[T any] func(transaction) (T, error)
 // queryWithTransaction creates a scope for functions that operate on a transaction which returns results.
 // Handles connecting to the DB, creating the transaction, committing/rolling back, and closing the connection.
 // Will also handle creating the DB if it doesn't exist and applying missing migrations to it.
-func queryWithTransaction[T any](dbFile NullString, connectFn connectDBFn, queryFn queryTxFn[T]) (val T, err error) {
-	db, err := connectFn(dbFile)
+func queryWithTransaction[T any](inputPath NullString, connectFn connectDBFn, queryFn queryTxFn[T]) (val T, err error) {
+	db, err := connectFn(inputPath)
 	if err != nil {
 		return
 	}
@@ -74,8 +74,8 @@ type execTxFn func(transaction) error
 // execWithTransaction creates a scope for functions that operate on a transaction which doesn't return results.
 // Handles connecting to the DB, creating the transaction, committing/rolling back, and closing the connection.
 // Will also handle creating the DB if it doesn't exist and applying missing migrations to it.
-func execWithTransaction(dbFile NullString, connectFn connectDBFn, execFn execTxFn) (err error) {
-	db, err := connectFn(dbFile)
+func execWithTransaction(inputPath NullString, connectFn connectDBFn, execFn execTxFn) (err error) {
+	db, err := connectFn(inputPath)
 	if err != nil {
 		return
 	}
@@ -113,10 +113,10 @@ func execWithTransaction(dbFile NullString, connectFn connectDBFn, execFn execTx
 // queryWithDB creates a scope for for functions that operate on a database connection which return results.
 // Handles connecting to the DB and closing the connection.
 // Will also handle creating the DB if it doesn't exist and applying missing migrations to it.
-func queryWithDB[T any](dbFile NullString, connectFn connectDBFn, queryFn queryTxFn[T]) (T, error) {
+func queryWithDB[T any](inputPath NullString, connectFn connectDBFn, queryFn queryTxFn[T]) (T, error) {
 	var val T
 
-	db, err := connectFn(dbFile)
+	db, err := connectFn(inputPath)
 	if err != nil {
 		return val, err
 	}
@@ -125,12 +125,17 @@ func queryWithDB[T any](dbFile NullString, connectFn connectDBFn, queryFn queryT
 	return queryFn(db)
 }
 
-// connectDBFn is a function that connects to SQLite database.
-type connectDBFn func(dbFile NullString) (*sql.DB, error)
+// connectDBFn is a function that connects to SQLite database
+type connectDBFn func(inputPath NullString) (*sql.DB, error)
 
 // connectDB returns a connection to the bookmarks database.
-func connectDB(dbFile NullString) (*sql.DB, error) {
-	dbLocation, err := getDBLocation(dbFile, runtime.GOOS, os.MkdirAll, os.UserHomeDir, filepath.Join)
+func connectDB(inputPath NullString) (*sql.DB, error) {
+	configPath, err := GetDBPathConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	dbLocation, err := getDatabasePath(inputPath, configPath, runtime.GOOS, os.MkdirAll, os.UserHomeDir, filepath.Join)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
 	}
@@ -149,45 +154,6 @@ func connectDB(dbFile NullString) (*sql.DB, error) {
 	}
 
 	return db, nil
-}
-
-// mkDirAllFn creates a directory if it doesn't alread exist.
-type mkDirAllFn func(path string, perm os.FileMode) error
-
-// userHomeFn returns the home directory of the current user.
-type userHomeFn func() (string, error)
-
-// joinFn joins path segments together.
-type joinFn func(elem ...string) string
-
-// getDBLocation returns the default location for the bookmarks database.
-func getDBLocation(dbFile NullString, goos string, mkDirAll mkDirAllFn, userHome userHomeFn, join joinFn) (string, error) {
-	if !dbFile.Valid || !dbFile.Dirty {
-		home, err := userHome()
-		if err != nil {
-			return "", err
-		}
-
-		var folder string
-		if goos == "linux" {
-			folder = join(home, ".armaria")
-		} else if goos == "windows" {
-			folder = join(home, "AppData", "Local", "Armaria")
-		} else if goos == "darwin" {
-			folder = join(home, "Library", "Application Support", "Armaria")
-		} else {
-			panic("Unsupported operating system")
-		}
-
-		err = mkDirAll(folder, os.ModePerm)
-		if err != nil {
-			return "", err
-		}
-
-		return filepath.Join(folder, "bookmarks.db"), nil
-	} else {
-		return dbFile.String, nil
-	}
 }
 
 // configureDB uses PRAGMA to configure SQLite:

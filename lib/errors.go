@@ -45,4 +45,6 @@ var (
 	ErrInvalidDirection = errors.New("invalid direction")
 	// ErrQueryTooShort is returned when a provided query is too short.
 	ErrQueryTooShort = errors.New("query too short")
+	// ErrConfigMissing is returned when the config file is missing.
+	ErrConfigMissing = errors.New("config is missing")
 )
