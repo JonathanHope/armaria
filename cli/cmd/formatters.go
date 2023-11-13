@@ -225,6 +225,35 @@ func formatTagResults(writer io.Writer, formatter Formatter, tags []string) {
 	}
 }
 
+// formatConfigResult formats a config value.
+func formatConfigResult(writer io.Writer, formatter Formatter, value string) {
+	switch formatter {
+
+	case FormatterJSON:
+		fmt.Fprintf(writer, "\"%s\"\n", value)
+
+	case FormatterPretty:
+		width, _, err := term.GetSize(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err)
+		}
+
+		style := lipgloss.
+			NewStyle().
+			Bold(true).
+			PaddingLeft(1).
+			PaddingRight(1).
+			BorderStyle(lipgloss.RoundedBorder()).
+			MaxWidth(width - 2)
+
+		if value == "" {
+			fmt.Fprintln(writer, style.Render("⚙ N/A"))
+		} else {
+			fmt.Fprintln(writer, style.Render(fmt.Sprintf("⚙ %s", value)))
+		}
+	}
+}
+
 // formatIsFolder formats an is folder value.
 func formatIsFolder(isFolder bool) string {
 	if isFolder {

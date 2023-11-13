@@ -16,6 +16,8 @@ type RootCmd struct {
 	Remove RemoveCmd `cmd:"" help:"Remove a folder, bookmark, or tag."`
 	Update UpdateCmd `cmd:"" help:"Update a folder or bookmark."`
 	List   ListCmd   `cmd:"" help:"List folders, bookmarks, or tags."`
+
+	Config ConfigCmd `cmd:"" help:"Manage the configuration."`
 }
 
 // AddCmd is a CLI command to add a bookmark or folder.
@@ -54,6 +56,16 @@ type AddBookCmd struct {
 	Tag         []string `help:"Tag to apply to the bookmark."`
 
 	URL string `arg:"" name:"url" help:"URL of the bookmark."`
+}
+
+// ConfigCmd is a CLI command to manage config.
+type ConfigCmd struct {
+	DB DBConfigCmd `cmd:"" help:"Manage the bookmarks database location configuration."`
+}
+
+// DBConfigCmd is a CLI command to manage the bookmarks database location config.
+type DBConfigCmd struct {
+	Get GetDBConfigCmd `cmd:"" help:"Get the location of the bookmarks database from the configuration."`
 }
 
 // Run add a bookmark.
@@ -603,6 +615,30 @@ func (r *RemoveTagsCmd) Run(ctx *Context) error {
 
 	formatBookResults(ctx.Writer, ctx.Formatter, []lib.Book{book})
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Untagged in %s", elapsed))
+
+	return nil
+}
+
+// GetDBConfigCmd is a CLI command to get the location of the bookmarks database from the config.
+type GetDBConfigCmd struct {
+}
+
+// Run get the location of the bookmarks database from the config.
+func (r *GetDBConfigCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	dbPath, err := lib.GetDBPathConfig()
+
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatConfigResult(ctx.Writer, ctx.Formatter, dbPath)
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Retreived in %s", elapsed))
 
 	return nil
 }
