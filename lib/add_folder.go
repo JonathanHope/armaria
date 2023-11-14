@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"fmt"
+)
+
 // addFolderOptions are the optional arguments for AddFolder.
 type addFolderOptions struct {
 	db       NullString
@@ -27,16 +31,16 @@ func AddFolder(name string, options addFolderOptions) (Book, error) {
 		var book Book
 
 		if err := validateName(NullStringFrom(name)); err != nil {
-			return book, err
+			return book, fmt.Errorf("name validation failed while adding folder: %w", err)
 		}
 
 		if err := validateParentID(tx, options.parentID); err != nil {
-			return book, err
+			return book, fmt.Errorf("parent ID validation failed while adding folder: %w", err)
 		}
 
 		id, err := addFolderDB(tx, name, options.parentID)
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error while adding folder: %w", err)
 		}
 
 		books, err := getBooksDB(tx, getBooksDBArgs{
@@ -44,9 +48,9 @@ func AddFolder(name string, options addFolderOptions) (Book, error) {
 			includeFolders: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting folders while adding folder: %w", err)
 		}
 
-		return books[0], err
+		return books[0], nil
 	})
 }

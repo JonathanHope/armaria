@@ -36,13 +36,14 @@ type queryTxFn[T any] func(transaction) (T, error)
 func queryWithTransaction[T any](inputPath NullString, connectFn connectDBFn, queryFn queryTxFn[T]) (val T, err error) {
 	db, err := connectFn(inputPath)
 	if err != nil {
+		err = fmt.Errorf("error connecting to database while querying with a transaction: %w", err)
 		return
 	}
 	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
-		err = fmt.Errorf("%w: %w", ErrUnexpected, err)
+		err = fmt.Errorf("error beginning transaction while querying with a transaction: %w", err)
 		return
 	}
 
@@ -60,13 +61,17 @@ func queryWithTransaction[T any](inputPath NullString, connectFn connectDBFn, qu
 			// all good, commit
 			err = tx.Commit()
 			if err != nil {
-				err = fmt.Errorf("%w: %w", ErrUnexpected, err)
+				err = fmt.Errorf("error committing transaction while querying with a transaction: %w", err)
 			}
 		}
 	}()
 
 	val, err = queryFn(tx)
-	return val, err
+	if err != nil {
+		return val, fmt.Errorf("error while querying with a transaction: %w", err)
+	}
+
+	return val, nil
 }
 
 // QueryTxFn is a function that operates on a transaction which doesn't return results.
@@ -78,13 +83,14 @@ type execTxFn func(transaction) error
 func execWithTransaction(inputPath NullString, connectFn connectDBFn, execFn execTxFn) (err error) {
 	db, err := connectFn(inputPath)
 	if err != nil {
+		err = fmt.Errorf("error connecting to database while executing with a transaction: %w", err)
 		return
 	}
 	defer db.Close()
 
 	tx, err := db.Begin()
 	if err != nil {
-		err = fmt.Errorf("%w: %w", ErrUnexpected, err)
+		err = fmt.Errorf("error beginning transaction while executing with a transaction: %w", err)
 		return
 	}
 
@@ -102,13 +108,17 @@ func execWithTransaction(inputPath NullString, connectFn connectDBFn, execFn exe
 			// all good, commit
 			err = tx.Commit()
 			if err != nil {
-				err = fmt.Errorf("%w: %w", ErrUnexpected, err)
+				err = fmt.Errorf("error committing transaction while executing with a transaction: %w", err)
 			}
 		}
 	}()
 
 	err = execFn(tx)
-	return err
+	if err != nil {
+		return fmt.Errorf("error while executing with a transaction: %w", err)
+	}
+
+	return nil
 }
 
 // queryWithDB creates a scope for for functions that operate on a database connection which return results.
@@ -119,11 +129,16 @@ func queryWithDB[T any](inputPath NullString, connectFn connectDBFn, queryFn que
 
 	db, err := connectFn(inputPath)
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("error connecting to database while querying with database: %w", err)
 	}
 	defer db.Close()
 
-	return queryFn(db)
+	val, err = queryFn(db)
+	if err != nil {
+		return val, fmt.Errorf("error while querying with database: %w", err)
+	}
+
+	return val, nil
 }
 
 // connectDBFn is a function that connects to SQLite database
@@ -133,25 +148,25 @@ type connectDBFn func(inputPath NullString) (*sql.DB, error)
 func connectDB(inputPath NullString) (*sql.DB, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, ErrConfigMissing) {
-		return nil, err
+		return nil, fmt.Errorf("error getting config wile connecting to database: %w", err)
 	}
 
 	dbLocation, err := getDatabasePath(inputPath, config.DB, runtime.GOOS, os.MkdirAll, os.UserHomeDir, filepath.Join)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error getting database location wile connecting to database: %w", err)
 	}
 
 	db, err := sql.Open("sqlite3", dbLocation)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error while connecting to database: %w", err)
 	}
 
 	if err := configureDB(db); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error configuring database wile connecting to database: %w", err)
 	}
 
 	if err := migrateDB(db); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error applying migrations to database wile connecting to database: %w", err)
 	}
 
 	return db, nil
@@ -162,11 +177,11 @@ func connectDB(inputPath NullString) (*sql.DB, error) {
 // - Enforce foreign keys.
 func configureDB(db *sql.DB) error {
 	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
-		return err
+		return fmt.Errorf("error turning WAL mode on while configuring database: %w", err)
 	}
 
 	if _, err := db.Exec("PRAGMA foreign_keys=on"); err != nil {
-		return err
+		return fmt.Errorf("error turning foreign key checking on while configuring database: %w", err)
 	}
 
 	return nil
@@ -178,11 +193,11 @@ func migrateDB(db *sql.DB) error {
 	goose.SetLogger(goose.NopLogger())
 
 	if err := goose.SetDialect("sqlite3"); err != nil {
-		return err
+		return fmt.Errorf("error setting dialect while applying migrations: %w", err)
 	}
 
 	if err := goose.Up(db, "migrations"); err != nil {
-		return err
+		return fmt.Errorf("error while applying migrations: %w", err)
 	}
 
 	return nil
@@ -194,19 +209,19 @@ func query[T any](tx transaction, q *bqb.Query) ([]T, error) {
 
 	sql, args, err := q.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error building query while querying: %w", err)
 	}
 
 	rows, err := tx.Query(sql, args...)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error while querying: %w", err)
 	}
 
 	defer rows.Close()
 
 	err = scan.RowsStrict(&results, rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return nil, fmt.Errorf("error building results while querying: %w", err)
 	}
 
 	return results, nil
@@ -216,11 +231,11 @@ func query[T any](tx transaction, q *bqb.Query) ([]T, error) {
 func exec(tx transaction, q *bqb.Query) error {
 	sql, args, err := q.ToSql()
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return fmt.Errorf("error building query while executing: %w", err)
 	}
 
 	if _, err = tx.Exec(sql, args...); err != nil {
-		return fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return fmt.Errorf("error while executing: %w", err)
 	}
 
 	return nil
@@ -230,12 +245,12 @@ func exec(tx transaction, q *bqb.Query) error {
 func count(tx transaction, q *bqb.Query) (int, error) {
 	sql, args, err := q.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return 0, fmt.Errorf("error building query while counting: %w", err)
 	}
 
 	var count = 0
 	if err = tx.QueryRow(sql, args...).Scan(&count); err != nil {
-		return 0, fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return 0, fmt.Errorf("error while counting: %w", err)
 	}
 
 	return count, nil

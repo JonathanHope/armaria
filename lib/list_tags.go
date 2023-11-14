@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"fmt"
+)
+
 // listTagsOptions are the optional arguments for ListTags.
 type listTagsOptions struct {
 	db        NullString
@@ -47,22 +51,27 @@ func ListTags(options listTagsOptions) ([]string, error) {
 		tags := make([]string, 0)
 
 		if err := validateFirst(options.first); err != nil {
-			return tags, err
+			return tags, fmt.Errorf("first validation failed while listing tags: %w", err)
 		}
 
 		if err := validateDirection(options.direction); err != nil {
-			return tags, err
+			return tags, fmt.Errorf("direction validation failed while listing tags: %w", err)
 		}
 
 		if err := validateQuery(options.query); err != nil {
-			return tags, err
+			return tags, fmt.Errorf("query validation failed while listing tags: %w", err)
 		}
 
-		return getTagsDB(tx, getTagsDBArgs{
+		tags, err := getTagsDB(tx, getTagsDBArgs{
 			query:     options.query,
 			after:     options.after,
 			direction: options.direction,
 			first:     options.first,
 		})
+		if err != nil {
+			return tags, fmt.Errorf("error while listing tags: %w", err)
+		}
+
+		return tags, nil
 	})
 }

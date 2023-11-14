@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+
 	"github.com/samber/lo"
 )
 
@@ -29,7 +31,7 @@ func AddTags(id string, tags []string, options addTagsOptions) (Book, error) {
 			includeBooks: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting tags while adding tags: %w", err)
 		}
 
 		if len(books) != 1 || books[0].IsFolder {
@@ -37,7 +39,7 @@ func AddTags(id string, tags []string, options addTagsOptions) (Book, error) {
 		}
 
 		if err := validateTags(tags, books[0].Tags); err != nil {
-			return book, err
+			return book, fmt.Errorf("tags validation failed while adding tags: %w", err)
 		}
 
 		existingTags, err := getTagsDB(tx, getTagsDBArgs{
@@ -49,11 +51,11 @@ func AddTags(id string, tags []string, options addTagsOptions) (Book, error) {
 
 		tagsToAdd, _ := lo.Difference(tags, existingTags)
 		if err = addTagsDB(tx, tagsToAdd); err != nil {
-			return book, err
+			return book, fmt.Errorf("error while adding tags: %w", err)
 		}
 
 		if err = linkTagsDB(tx, id, tags); err != nil {
-			return book, err
+			return book, fmt.Errorf("error linking tags while adding tags: %w", err)
 		}
 
 		books, err = getBooksDB(tx, getBooksDBArgs{
@@ -61,7 +63,7 @@ func AddTags(id string, tags []string, options addTagsOptions) (Book, error) {
 			includeBooks: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting bookmarks while adding tags: %w", err)
 		}
 
 		return books[0], nil

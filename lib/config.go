@@ -2,6 +2,7 @@ package lib
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -40,7 +41,7 @@ func GetConfig() (Config, error) {
 
 	configPath, err := getConfigPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
 	if err != nil {
-		return config, err
+		return config, fmt.Errorf("error getting config path while getting config: %w", err)
 	}
 
 	var k = koanf.New(".")
@@ -48,13 +49,13 @@ func GetConfig() (Config, error) {
 		if strings.Contains(err.Error(), "no such file or directory") {
 			return config, ErrConfigMissing
 		} else {
-			return config, err
+			return config, fmt.Errorf("error loading config while getting config: %w", err)
 		}
 	}
 
 	err = k.Unmarshal("", &config)
 	if err != nil {
-		return config, err
+		return config, fmt.Errorf("error unmarshalling config while getting config: %w", err)
 	}
 
 	return config, nil
@@ -65,18 +66,18 @@ func GetConfig() (Config, error) {
 func UpdateConfig(update updateConfigFn) error {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, ErrConfigMissing) {
-		return err
+		return fmt.Errorf("error getting config while updating config: %w", err)
 	}
 
 	if errors.Is(err, ErrConfigMissing) {
 		folder, err := getFolderPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting config folder path while updating config: %w", err)
 		}
 
 		err = os.MkdirAll(folder, os.ModePerm)
 		if err != nil {
-			return err
+			return fmt.Errorf("error making config folder while updating config: %w", err)
 		}
 	}
 
@@ -85,28 +86,28 @@ func UpdateConfig(update updateConfigFn) error {
 	var k = koanf.New(".")
 	err = k.Load(structs.Provider(config, "koanf"), nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("error loading config while updating config: %w", err)
 	}
 
 	buffer, err := k.Marshal(toml.Parser())
 	if err != nil {
-		return err
+		return fmt.Errorf("error marshalling config while updating config: %w", err)
 	}
 
 	configPath, err := getConfigPath(runtime.GOOS, os.UserHomeDir, filepath.Join)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting config path while updating config: %w", err)
 	}
 
 	handle, err := os.Create(configPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating config file while updating config: %w", err)
 	}
 	defer handle.Close()
 
 	_, err = handle.Write(buffer)
 	if err != nil {
-		return err
+		return fmt.Errorf("error writing config file contents while updating config: %w", err)
 	}
 
 	return nil
@@ -125,11 +126,11 @@ func getDatabasePath(inputPath NullString, configPath string, goos string, mkDir
 	} else {
 		folder, err := getFolderPath(goos, userHome, join)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error getting folder path while getting database path: %w", err)
 		}
 
 		if err = mkDirAll(folder, os.ModePerm); err != nil {
-			return "", err
+			return "", fmt.Errorf("error creating folder while getting database path: %w", err)
 		}
 
 		return join(folder, databaseFilename), nil
@@ -141,7 +142,7 @@ func getDatabasePath(inputPath NullString, configPath string, goos string, mkDir
 func getConfigPath(goos string, userHome userHomeFn, join joinFn) (string, error) {
 	folder, err := getFolderPath(goos, userHome, join)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting folder path while getting config path: %w", err)
 	}
 
 	return join(folder, configFilename), nil
@@ -155,7 +156,7 @@ func getConfigPath(goos string, userHome userHomeFn, join joinFn) (string, error
 func getFolderPath(goos string, userHome userHomeFn, join joinFn) (string, error) {
 	home, err := userHome()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting home path while getting folder path: %w", err)
 	}
 
 	var folder string
