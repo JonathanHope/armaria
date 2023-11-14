@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+
 	"github.com/samber/lo"
 )
 
@@ -29,7 +31,7 @@ func RemoveTags(id string, tags []string, options removeTagsOptions) (Book, erro
 			includeBooks: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting bookmarks while removing tags: %w", err)
 		}
 
 		if len(books) != 1 || books[0].IsFolder {
@@ -43,11 +45,11 @@ func RemoveTags(id string, tags []string, options removeTagsOptions) (Book, erro
 		}
 
 		if err = unlinkTagsDB(tx, books[0].ID, tags); err != nil {
-			return book, err
+			return book, fmt.Errorf("error unlinking tags while removing tags: %w", err)
 		}
 
 		if err = cleanOrphanedTagsDB(tx, tags); err != nil {
-			return book, err
+			return book, fmt.Errorf("error cleaning orphaned tags while removing tags: %w", err)
 		}
 
 		books, err = getBooksDB(tx, getBooksDBArgs{
@@ -55,7 +57,7 @@ func RemoveTags(id string, tags []string, options removeTagsOptions) (Book, erro
 			includeBooks: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting bookmarks while removing tags: %w", err)
 		}
 
 		return books[0], nil

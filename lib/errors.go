@@ -5,8 +5,6 @@ import (
 )
 
 var (
-	// ErrUnexpected is returned when an unexpected error occurs.
-	ErrUnexpected = errors.New("unexpected error")
 	// ErrNoUpdate is returned when an update is requested with no updates.
 	ErrNoUpdate = errors.New("no update")
 	// ErrBookNotFound is returned when a target bookmark was not found.
@@ -46,5 +44,5 @@ var (
 	// ErrQueryTooShort is returned when a provided query is too short.
 	ErrQueryTooShort = errors.New("query too short")
 	// ErrConfigMissing is returned when the config file is missing.
-	ErrConfigMissing = errors.New("config is missing")
+	ErrConfigMissing = errors.New("config missing")
 )

@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"fmt"
+)
+
 // listBooksOptions are the optional arguments for ListBooks.
 type listBooksOptions struct {
 	db               NullString
@@ -89,22 +93,22 @@ func ListBooks(options listBooksOptions) ([]Book, error) {
 		}
 
 		if err := validateFirst(options.first); err != nil {
-			return books, err
+			return books, fmt.Errorf("first validation failed while listing bookmarks: %w", err)
 		}
 
 		if err := validateDirection(options.direction); err != nil {
-			return books, err
+			return books, fmt.Errorf("direction validation failed while listing bookmarks: %w", err)
 		}
 
 		if err := validateOrder(options.order); err != nil {
-			return books, err
+			return books, fmt.Errorf("order validation failed while listing bookmarks: %w", err)
 		}
 
 		if err := validateQuery(options.query); err != nil {
-			return books, err
+			return books, fmt.Errorf("query validation failed while listing bookmarks: %w", err)
 		}
 
-		return getBooksDB(tx, getBooksDBArgs{
+		books, err := getBooksDB(tx, getBooksDBArgs{
 			includeBooks:   options.includeBookmarks,
 			includeFolders: options.includeFolders,
 			parentID:       options.parentID,
@@ -115,5 +119,10 @@ func ListBooks(options listBooksOptions) ([]Book, error) {
 			direction:      options.direction,
 			first:          options.first,
 		})
+		if err != nil {
+			return books, fmt.Errorf("error while listing bookmarks: %w", err)
+		}
+
+		return books, nil
 	})
 }

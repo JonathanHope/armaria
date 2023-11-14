@@ -75,9 +75,9 @@ func validateTags(tags []string, existingTags []string) error {
 		return ErrDuplicateTag
 	}
 
-	r, e := regexp.Compile(`^[a-zA-Z0-9\-_]*$`)
-	if e != nil {
-		return e
+	r, err := regexp.Compile(`^[a-zA-Z0-9\-_]*$`)
+	if err != nil {
+		return fmt.Errorf("error compiling regex while validating tags: %w", err)
 	}
 
 	for _, tag := range tags {
@@ -156,7 +156,7 @@ func validateQuery(query NullString) error {
 func validateBookID(tx transaction, ID string) error {
 	exists, err := bookFolderExistsDB(tx, ID, false)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return fmt.Errorf("error checking if bookmark exists while validating bookmark ID")
 	}
 
 	if !exists {
@@ -175,7 +175,7 @@ func validateParentID(tx transaction, parentID NullString) error {
 
 	exists, err := bookFolderExistsDB(tx, parentID.String, true)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUnexpected, err)
+		return fmt.Errorf("error checking if folder exists while validating parent ID")
 	}
 
 	if !exists {

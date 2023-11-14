@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"fmt"
+)
+
 // updateBookOptions are the optional arguments for UpdateBook.
 type updateBookOptions struct {
 	db          NullString
@@ -55,7 +59,7 @@ func UpdateBook(id string, options updateBookOptions) (Book, error) {
 		var book Book
 
 		if err := validateBookID(tx, id); err != nil {
-			return book, err
+			return book, fmt.Errorf("bookmark ID validation failed while updating bookmark: %w", err)
 		}
 
 		if !options.name.Dirty && !options.url.Dirty && !options.description.Dirty && !options.parentID.Dirty {
@@ -64,25 +68,25 @@ func UpdateBook(id string, options updateBookOptions) (Book, error) {
 
 		if options.name.Dirty {
 			if err := validateName(options.name); err != nil {
-				return book, err
+				return book, fmt.Errorf("name validation failed while updating bookmark: %w", err)
 			}
 		}
 
 		if options.url.Dirty {
 			if err := validateURL(options.url); err != nil {
-				return book, err
+				return book, fmt.Errorf("URL validation failed while updating bookmark: %w", err)
 			}
 		}
 
 		if options.description.Dirty {
 			if err := validateDescription(options.description); err != nil {
-				return book, err
+				return book, fmt.Errorf("description validation failed while updating bookmark: %w", err)
 			}
 		}
 
 		if options.parentID.Dirty {
 			if err := validateParentID(tx, options.parentID); err != nil {
-				return book, err
+				return book, fmt.Errorf("parent ID validation failed while updating bookmark: %w", err)
 			}
 		}
 
@@ -92,7 +96,7 @@ func UpdateBook(id string, options updateBookOptions) (Book, error) {
 			description: options.description,
 			parentID:    options.parentID,
 		}); err != nil {
-			return book, err
+			return book, fmt.Errorf("error while updating bookmark: %w", err)
 		}
 
 		books, err := getBooksDB(tx, getBooksDBArgs{
@@ -100,7 +104,7 @@ func UpdateBook(id string, options updateBookOptions) (Book, error) {
 			includeBooks: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error getting bookmarks while updating bookmark: %w", err)
 		}
 
 		return books[0], nil

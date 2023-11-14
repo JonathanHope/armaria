@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"fmt"
+)
+
 // updateFolderOptions are the optional arguments for UpdateFolder.
 type updateFolderOptions struct {
 	db       NullString
@@ -38,7 +42,7 @@ func UpdateFolder(id string, options updateFolderOptions) (Book, error) {
 		var book Book
 
 		if err := validateParentID(tx, NullStringFrom(id)); err != nil {
-			return book, err
+			return book, fmt.Errorf("bookmark ID validation failed while updating folder: %w", err)
 		}
 
 		if !options.name.Dirty && !options.parentID.Dirty {
@@ -47,13 +51,13 @@ func UpdateFolder(id string, options updateFolderOptions) (Book, error) {
 
 		if options.name.Dirty {
 			if err := validateName(options.name); err != nil {
-				return book, err
+				return book, fmt.Errorf("name validation failed while updating folder: %w", err)
 			}
 		}
 
 		if options.parentID.Dirty {
 			if err := validateParentID(tx, options.parentID); err != nil {
-				return book, err
+				return book, fmt.Errorf("parent ID validation failed while updating folder: %w", err)
 			}
 		}
 
@@ -61,7 +65,7 @@ func UpdateFolder(id string, options updateFolderOptions) (Book, error) {
 			name:     options.name,
 			parentID: options.parentID,
 		}); err != nil {
-			return book, err
+			return book, fmt.Errorf("error while updating folder: %w", err)
 		}
 
 		books, err := getBooksDB(tx, getBooksDBArgs{
@@ -69,7 +73,7 @@ func UpdateFolder(id string, options updateFolderOptions) (Book, error) {
 			includeFolders: true,
 		})
 		if err != nil {
-			return book, err
+			return book, fmt.Errorf("error geting bookmarks while updating folder: %w", err)
 		}
 
 		return books[0], nil
