@@ -18,7 +18,6 @@ linters:
     - gofmt
     - gosec
     - makezero
-    - musttag
     - nilerr
     - nilnil
     - predeclared
@@ -27,7 +26,3 @@ linters:
     - unconvert
     - unparam
     - wastedassign
-run:
-  skip-files:
-    - lib/go_sqlite3_migrate.go
-    - test/armaria_test.go

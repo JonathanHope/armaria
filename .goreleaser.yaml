@@ -4,7 +4,7 @@ env:
 builds:
   - id: armaria-darwin-amd64
     binary: armaria
-    main: ./cli
+    main: ./cmd/cli
     goarch:
       - amd64
     goos:
@@ -18,7 +18,7 @@ builds:
 
   - id: armaria-darwin-arm64
     binary: armria
-    main: ./cli
+    main: ./cmd/cli
     goarch:
       - arm64
     goos:
@@ -32,7 +32,7 @@ builds:
       
   - id: armaria-linux-amd64
     binary: armaria
-    main: ./cli
+    main: ./cmd/cli
     env:
       - CC=x86_64-linux-gnu-gcc
       - CXX=x86_64-linux-gnu-g++
@@ -50,7 +50,7 @@ builds:
             
   - id: armaria-windows-amd64
     binary: armaria
-    main: ./cli
+    main: ./cmd/cli
     goarch:
       - amd64
     goos:

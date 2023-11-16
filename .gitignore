@@ -1,7 +1,9 @@
 *.db
 *.db-shm
 *.db-wal
-cli/cli
+cmd/cli/cli
 .direnv
 armaria
+armaria-host
 dist
+cmd/host/host

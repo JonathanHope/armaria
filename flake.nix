@@ -16,7 +16,7 @@
       devShell.x86_64-linux =
         pkgs.mkShell {
           buildInputs = with pkgs;[
-            go_1_20
+            go_1_21
             gopls
             go-task
             golangci-lint
