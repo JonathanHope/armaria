@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 func TestListBooksFolders(t *testing.T) {

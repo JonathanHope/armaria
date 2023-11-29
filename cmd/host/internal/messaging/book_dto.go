@@ -1,8 +1,8 @@
 package messaging
 
 import (
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 // BookDTO is a bookmark or folder that can be marshalled into JSON.

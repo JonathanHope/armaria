@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 func TestValidateURL(t *testing.T) {

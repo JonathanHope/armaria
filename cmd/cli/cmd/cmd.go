@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 // RootCmd is the top level CLI command for Armaria.
@@ -19,7 +19,8 @@ type RootCmd struct {
 	Update UpdateCmd `cmd:"" help:"Update a folder or bookmark."`
 	List   ListCmd   `cmd:"" help:"List folders, bookmarks, or tags."`
 
-	Config ConfigCmd `cmd:"" help:"Manage the configuration."`
+	Config   ConfigCmd   `cmd:"" help:"Manage the configuration."`
+	Manifest ManifestCmd `cmd:"" help:"Manage the app manifest."`
 }
 
 // RootCmdFactory creates a new RootCmd.
@@ -65,6 +66,17 @@ type ConfigCmd struct {
 type DBConfigCmd struct {
 	Get GetDBConfigCmd `cmd:"" help:"Get the location of the bookmarks database from the configuration."`
 	Set SetDBConfigCmd `cmd:"" help:"Set the location of the bookmarks database in the configuration."`
+}
+
+// ManifestCmd is a CLI command to manage the app manifest.
+type ManifestCmd struct {
+	Install InstallManifestCmd `cmd:"" help:"Install the app manifest"`
+}
+
+// InstallManifestCmd is a CLI command to the app manifest.
+type InstallManifestCmd struct {
+	Firefox InstallFirefoxManifestCmd `cmd:"" help:"Install the app manifest for Firefox."`
+	Chrome  InstallChromeManifestCmd  `cmd:"" help:"Install the app manifest for Chrome."`
 }
 
 // AddBookCmd is a CLI command to add a bookmark.
@@ -674,6 +686,52 @@ func (r *SetDBConfigCmd) Run(ctx *Context) error {
 	elapsed := time.Since(start)
 
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Set in %s", elapsed))
+
+	return nil
+}
+
+// InstallFirefoxManifestCmd is a CLI command to install the app manifest for Firefox.
+type InstallFirefoxManifestCmd struct {
+}
+
+// Run install app manifest for Firefox.
+func (r *InstallFirefoxManifestCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	err := armariaapi.InstallManifestFirefox()
+
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Installed in %s", elapsed))
+
+	return nil
+}
+
+// InstallChromeManifestCmd is a CLI command to install the app manifest for Chrome.
+type InstallChromeManifestCmd struct {
+}
+
+// Run install app manifest for Chrome.
+func (r *InstallChromeManifestCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	err := armariaapi.InstallManifestChrome()
+
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Installed in %s", elapsed))
 
 	return nil
 }

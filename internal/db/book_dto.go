@@ -3,8 +3,8 @@ package db
 import (
 	"strings"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 // bookDTO is a DTO to stuff DB results into.

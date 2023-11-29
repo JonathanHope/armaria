@@ -10,8 +10,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/samber/lo"
 	"golang.org/x/term"
 )
@@ -261,10 +261,10 @@ func formatConfigResult(writer io.Writer, formatter Formatter, value string) {
 // formatIsFolder formats an is folder value.
 func formatIsFolder(isFolder bool) string {
 	if isFolder {
-		return "🗁"
+		return "📁"
 	}
 
-	return "🕮"
+	return "📖"
 }
 
 // formatNullableString formats a nullable string.

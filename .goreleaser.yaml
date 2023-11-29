@@ -2,40 +2,50 @@ env:
   - CGO_ENABLED=1
 
 builds:
-  - id: armaria-darwin-amd64
-    binary: armaria
-    main: ./cmd/cli
-    goarch:
-      - amd64
-    goos:
-      - darwin
-    env:
-      - CC=o64-clang
-      - CXX=o64-clang++
-    flags:
-      - -trimpath
-      - -tags=fts5
+  # - id: armaria-darwin-amd64
+  #   binary: armaria
+  #   main: ./cmd/cli
+  #   goarch:
+  #     - amd64
+  #   goos:
+  #     - darwin
+  #   env:
+  #     - CC=zig cc -target x86_64-macos-none -g0
+  #     - CXX=zig c++ -target x86_64-macos-none -g0
+  #   flags:
+  #     - -trimpath
+  #     - -tags=fts5 netgo osusergo
+  #     - -buildmode=pie
+  #   ldflags:
+  #     - -s
+  #     - -w
 
-  - id: armaria-darwin-arm64
-    binary: armria
-    main: ./cmd/cli
-    goarch:
-      - arm64
-    goos:
-      - darwin
-    env:
-      - CC=oa64-clang
-      - CXX=oa64-clang++
-    flags:
-      - -trimpath
-      - -tags=fts5
+  # - id: armaria-darwin-arm64
+  #   binary: armria
+  #   main: ./cmd/cli
+  #   goarch:
+  #     - arm64
+  #   goos:
+  #     - darwin
+  #   env:
+  #     - CC=zig cc -target aarch64-macos-none -g0
+  #     - CXX=zig c++ -target aarch64-macos-none -g0
+  #   flags:
+  #     - -trimpath
+  #     - -tags=fts5 netgo osusergo
+  #     - -buildmode=pie
+  #   ldflags:
+  #     - -s
+  #     - -w
       
   - id: armaria-linux-amd64
     binary: armaria
     main: ./cmd/cli
     env:
-      - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
+      - CC=zig cc -target x86_64-linux-musl -g0
+      - CXX=zig c++ -target x86_64-linux-musl -g0
+      # https://github.com/mattn/go-sqlite3/issues/1164
+      - CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
     goarch:
       - amd64
     goos:
@@ -44,10 +54,28 @@ builds:
       - -trimpath
       - -tags=fts5
     ldflags:
-      - -extldflags "-lc -lrt -lpthread --static"
       - -s
       - -w
-            
+
+  - id: armaria-host-linux-amd64
+    binary: armaria-host
+    main: ./cmd/host
+    env:
+      - CC=zig cc -target x86_64-linux-musl -g0
+      - CXX=zig c++ -target x86_64-linux-musl -g0
+      # https://github.com/mattn/go-sqlite3/issues/1164
+      - CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
+    goarch:
+      - amd64
+    goos:
+      - linux
+    flags:
+      - -trimpath
+      - -tags=fts5
+    ldflags:
+      - -s
+      - -w
+
   - id: armaria-windows-amd64
     binary: armaria
     main: ./cmd/cli
@@ -56,27 +84,49 @@ builds:
     goos:
       - windows
     env:
-      - CC=x86_64-w64-mingw32-gcc
-      - CXX=x86_64-w64-mingw32-g++
+      - CC=zig cc -target x86_64-windows-gnu -g0
+      - CXX=zig c++ -target x86_64-windows-gnu -g0
     flags:
       - -trimpath
       - -buildmode=exe
       - -tags=fts5
+    ldflags:
+      - -s
+      - -w
 
-universal_binaries:
-  - id: armaria-darwin-universal
-    ids:
-      - armaria-darwin-amd64
-      - armaria-darwin-arm64
-    replace: true
-    name_template: "armaria"
+  - id: armaria-host-windows-amd64
+    binary: armaria-host
+    main: ./cmd/host
+    goarch:
+      - amd64
+    goos:
+      - windows
+    env:
+      - CC=zig cc -target x86_64-windows-gnu -g0
+      - CXX=zig c++ -target x86_64-windows-gnu -g0
+    flags:
+      - -trimpath
+      - -buildmode=exe
+      - -tags=fts5
+    ldflags:
+      - -s
+      - -w
+
+# universal_binaries:
+#   - id: armaria-darwin-universal
+#     ids:
+#       - armaria-darwin-amd64
+#       - armaria-darwin-arm64
+#     replace: true
+#     name_template: "armaria"
 
 archives:
   - id: w/version
     builds:
-      - armaria-darwin-universal
       - armaria-linux-amd64
+      - armaria-host-linux-amd64
       - armaria-windows-amd64
+      - armaria-host-windows-amd64
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format: zip
@@ -86,8 +136,45 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 
+gomod:
+  proxy: true
+
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
+
+sboms:
+  - artifacts: archive
+
+snapcrafts:
+  - id: armaria-snap
+    builds:
+      - armaria-linux-amd64
+      - armaria-host-linux-amd64
+    name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name: armaria
+    title: Armaria
+    icon: ./art/icon-light.svg
+    # publish: true
+    summary: Armaria is a fast local-first bookmark manager.
+    description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
+    confinement: strict
+    license: MIT
+    base: core18
+    apps:
+      armaria:  
+        command: armaria
+        plugs: ["armaria-dot-mozilla", "armaria-dot-chrome"]
+      armaria-host:
+        command: armaria-host
+    plugs:
+      armaria-dot-mozilla:
+        interface: personal-files
+        write:
+          - $HOME/.mozilla/native-messaging-hosts
+      armaria-dot-chrome:
+        interface: personal-files
+        write:
+          - $HOME/.config/google-chrome/NativeMessagingHosts

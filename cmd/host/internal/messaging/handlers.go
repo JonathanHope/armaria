@@ -1,8 +1,8 @@
 package messaging
 
 import (
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/samber/lo"
 )
 

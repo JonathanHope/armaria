@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/paths"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"

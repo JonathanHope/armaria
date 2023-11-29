@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/nullism/bqb"
 	"github.com/samber/lo"
 )

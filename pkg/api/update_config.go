@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/paths"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
@@ -26,7 +24,7 @@ func UpdateConfig(update UpdateConfigCallback) error {
 	}
 
 	if errors.Is(err, armaria.ErrConfigMissing) {
-		folder, err := paths.Folder(runtime.GOOS, os.UserHomeDir, filepath.Join)
+		folder, err := paths.Folder()
 		if err != nil {
 			return fmt.Errorf("error getting config folder path while updating config: %w", err)
 		}
