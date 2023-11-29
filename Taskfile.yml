@@ -1,50 +1,52 @@
 version: '3'
 
 tasks:
-  lint-lib:
-    dir: lib
-    cmds:
-      - golangci-lint run --config ../.golangci.yml  --timeout 3m
-  lint-cli:
-    dir: cli
-    cmds:
-      - golangci-lint run --config ../.golangci.yml --timeout 3m
-  lint-bdd:
-    dir: bdd
-    cmds:
-      - golangci-lint run --config ../.golangci.yml --timeout 3m
   lint:
     cmds:
-      - task: lint-lib
-      - task: lint-cli
-      - task: lint-bdd
+      - golangci-lint run --config .golangci.yml --timeout 3m
   test-bdd:
-    dir: bdd
+    dir: test
     cmds:
       - go test --tags "fts5"
-  test-lib:
-    dir: lib
+  test-internal:
+    dir: internal
     cmds:
-      - go test --tags "fts5"
+      - go test ./...
+  test-host:
+    dir: cmd/host
+    cmds:
+      - go test --tags "fts5" ./...
   test:
     cmds:
+      - task: test-internal
+      - task : test-host
       - task: test-bdd
-      - task: test-lib
-  build:
-    dir: cli
+  build-cli:
+    dir: cmd/cli
     cmds:
-      - go build --tags "fts5" -ldflags "-s -w"
-      - cp cli ../armaria
+      - go build --tags "fts5"
+      - cp cli ../../armaria
+  build-host:
+    dir: cmd/host
+    cmds:
+      - go build --tags "fts5"
+      - cp host ../../armaria-host
+  build:
+    cmds:
+      - task: build-cli
+      - task: build-host
   migrate-up:
     cmds:
-      - goose -dir ./lib/migrations sqlite3 ./bookmarks.db up
+      - goose -dir ./internal/db/migrations sqlite3 ./bookmarks.db up
   migrate-down:
     cmds:
-      - goose -dir ./lib/migrations sqlite3 ./bookmarks.db down
+      - goose -dir ./internal/db/migrations sqlite3 ./bookmarks.db down
   clean:
     cmds:
       - rm -f armaria
-      - rm -f cli/cli
+      - rm -f armaria-host
+      - rm -f cmd/cli/cli
+      - rm -f cmd/host/host
       - find . -name "*.db" -type f -delete
       - find . -name "*.db-shm" -type f -delete
       - find . -name "*.db-wal" -type f -delete
@@ -54,3 +56,7 @@ tasks:
   release-snapshot:
     cmds:
       - docker run -v $(pwd):/src -w /src -i goreleaser/goreleaser-cross:v1.20 release --snapshot
+  install-native-manifest:
+    cmds:
+      - mkdir -p ~/.mozilla/native-messaging-hosts/
+      - cp armaria.json ~/.mozilla/native-messaging-hosts/
