@@ -12,10 +12,10 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/google/shlex"
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/cmd/cli/cmd"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 // invokeCli runs the Armaria CLI with the provided args.

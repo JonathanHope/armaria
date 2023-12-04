@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/db"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/samber/lo"
 )
 

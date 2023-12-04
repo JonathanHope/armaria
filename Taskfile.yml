@@ -52,11 +52,14 @@ tasks:
       - find . -name "*.db-wal" -type f -delete
   release:
     cmds:
-      - docker run -v $(pwd):/src -w /src -e GITHUB_TOKEN=$GITHUB_TOKEN -i goreleaser/goreleaser-cross:v1.20 release
+      - goreleaser release
   release-snapshot:
     cmds:
-      - docker run -v $(pwd):/src -w /src -i goreleaser/goreleaser-cross:v1.20 release --snapshot
+      - goreleaser release --snapshot --clean
   install-native-manifest:
     cmds:
       - mkdir -p ~/.mozilla/native-messaging-hosts/
       - cp armaria.json ~/.mozilla/native-messaging-hosts/
+  copy-snap:
+    cmds:
+      - scp dist/armaria_0.0.6-next_linux_amd64.snap jhope@192.168.122.176:/home/jhope

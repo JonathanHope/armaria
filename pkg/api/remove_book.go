@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jonathanhope/armaria"
 	"github.com/jonathanhope/armaria/internal/db"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/internal/validate"
+	"github.com/jonathanhope/armaria/pkg/model"
 )
 
 // removeBookOptions are the optional arguments for RemoveBook.
