@@ -166,15 +166,15 @@ snapcrafts:
     apps:
       armaria:  
         command: armaria
-        plugs: ["armaria-dot-mozilla", "armaria-dot-chrome"]
+        plugs: ["dot-mozilla-armaria", "dot-chrome-armaria"]
       armaria-host:
         command: armaria-host
     plugs:
-      armaria-dot-mozilla:
+      dot-mozilla-armaria:
         interface: personal-files
         write:
           - $HOME/.mozilla/native-messaging-hosts
-      armaria-dot-chrome:
+      dot-chrome-armaria:
         interface: personal-files
         write:
           - $HOME/.config/google-chrome/NativeMessagingHosts
