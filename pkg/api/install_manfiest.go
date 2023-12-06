@@ -55,7 +55,10 @@ func installManifest(path string) error {
 		Path:              hostPath,
 		HostType:          "stdio",
 		AllowedExtensions: []string{"armaria@armaria.net"},
-		AllowedOrigins:    []string{"chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/"},
+		AllowedOrigins: []string{
+			"chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/",
+			"chrome-extension://fbnilfpngakppdkddndcnckolmlpghdf/",
+		},
 	}
 
 	buffer, err := json.Marshal(manifest)
