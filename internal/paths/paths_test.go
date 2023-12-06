@@ -391,3 +391,77 @@ func TestChromeManifestPath(t *testing.T) {
 		})
 	}
 }
+
+func TestChromiumManifestPath(t *testing.T) {
+	type test struct {
+		goos          string
+		folderPath    string
+		folderCreated bool
+		snapRealHome  string
+		manifestPath  string
+	}
+
+	tests := []test{
+		{
+			goos:          "windows",
+			folderPath:    "~/AppData/Local/Armaria",
+			folderCreated: true,
+			manifestPath:  "~/AppData/Local/Armaria/armaria.json",
+		},
+		{
+			goos:          "linux",
+			folderPath:    "~/.config/chromium/NativeMessagingHosts",
+			folderCreated: true,
+			manifestPath:  "~/.config/chromium/NativeMessagingHosts/armaria.json",
+		},
+		{
+			goos:          "linux",
+			folderPath:    "~/snap/.config/chromium/NativeMessagingHosts",
+			folderCreated: true,
+			snapRealHome:  "~/snap",
+			manifestPath:  "~/snap/.config/chromium/NativeMessagingHosts/armaria.json",
+		},
+		{
+			goos:          "darwin",
+			folderPath:    "~/Library/Application Support/Chromium/NativeMessagingHosts",
+			folderCreated: true,
+			manifestPath:  "~/Library/Application Support/Chromium/NativeMessagingHosts/armaria.json",
+		},
+	}
+
+	userHome := func() (string, error) {
+		return "~", nil
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("GOOS: %s, SNAP_REAL_HOME: %s", tc.goos, tc.snapRealHome), func(t *testing.T) {
+			folderCreated := false
+
+			mkDirAll := func(path string, perm os.FileMode) error {
+				folderCreated = true
+				if path != tc.folderPath {
+					t.Errorf("folder: got %+v; want %+v", path, tc.folderPath)
+				}
+
+				return nil
+			}
+
+			getenv := func(key string) string {
+				return tc.snapRealHome
+			}
+
+			got, err := chromiumManifestInternal(tc.goos, getenv, userHome, path.Join, mkDirAll)
+			if err != nil {
+				t.Fatalf("unexpected error: %+v", err)
+			}
+
+			if folderCreated != tc.folderCreated {
+				t.Fatalf("folder created: got %+v; want %+v", folderCreated, tc.folderCreated)
+			}
+
+			if got != tc.manifestPath {
+				t.Errorf("manfiestPath: got %+v; want %+v", got, tc.manifestPath)
+			}
+		})
+	}
+}

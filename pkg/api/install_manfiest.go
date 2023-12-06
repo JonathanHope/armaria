@@ -31,6 +31,16 @@ func InstallManifestChrome() error {
 	return installManifest(path)
 }
 
+// InstallManifestChromium installs the app manifest for Firefox.
+func InstallManifestChromium() error {
+	path, err := paths.ChromiumManifest()
+	if err != nil {
+		return fmt.Errorf("error getting chromium manfiest path while installing manifest: %w", err)
+	}
+
+	return installManifest(path)
+}
+
 // installManifest installs the app manifest.
 func installManifest(path string) error {
 	hostPath, err := paths.Host()
@@ -45,7 +55,7 @@ func installManifest(path string) error {
 		Path:              hostPath,
 		HostType:          "stdio",
 		AllowedExtensions: []string{"armaria@armaria.net"},
-		AllowedOrigins:    []string{"chrome-extension://armaria/"},
+		AllowedOrigins:    []string{"chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/"},
 	}
 
 	buffer, err := json.Marshal(manifest)

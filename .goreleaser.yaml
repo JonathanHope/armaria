@@ -166,7 +166,7 @@ snapcrafts:
     apps:
       armaria:  
         command: armaria
-        plugs: ["dot-mozilla", "dot-chrome"]
+        plugs: ["dot-mozilla", "dot-chrome", "dot-chromium"]
       armaria-host:
         command: armaria-host
     plugs:
@@ -178,3 +178,7 @@ snapcrafts:
         interface: personal-files
         write:
           - $HOME/.config/google-chrome/NativeMessagingHosts
+      dot-chromium:
+        interface: personal-files
+        write:
+          - $HOME/.config/chromium/NativeMessagingHosts

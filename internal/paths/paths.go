@@ -222,6 +222,41 @@ func chromeManifestInternal(goos string, getenv getenvFn, userHome userHomeFn, j
 	return join(folder, manifestFilename), nil
 }
 
+// Chromium Manifest gets the path to the Chromium app manifest.
+// The path is different per platform and maps to the following:
+// - Linux: ~/.config/chromium/NativeMessagingHosts
+// - Windows: ~/AppData/Local/Armaria
+// - Mac: ~/Library/Application Support/Chromium
+func ChromiumManifest() (string, error) {
+	return chromiumManifestInternal(runtime.GOOS, os.Getenv, os.UserHomeDir, filepath.Join, os.MkdirAll)
+}
+
+// chromiumManifestInternal allows DI for ChromiumManifest.
+func chromiumManifestInternal(goos string, getenv getenvFn, userHome userHomeFn, join joinFn, mkDirAll mkDirAllFn) (string, error) {
+	home, err := realHome(getenv, userHome)
+	if err != nil {
+		return "", fmt.Errorf("error getting real home dir while getting chromium manifest path: %w", err)
+	}
+
+	var folder string
+	if goos == "linux" {
+		folder = join(home, ".config", "chromium", "NativeMessagingHosts")
+	} else if goos == "windows" {
+		// The manifest can be anywhere in Windows, but it needs a supporting registry entry.
+		folder = join(home, "AppData", "Local", "Armaria")
+	} else if goos == "darwin" {
+		folder = join(home, "Library", "Application Support", "Chromium", "NativeMessagingHosts")
+	} else {
+		panic("Unsupported operating system")
+	}
+
+	if err = mkDirAll(folder, os.ModePerm); err != nil {
+		return "", fmt.Errorf("error creating folder while getting chromium manifest path: %w", err)
+	}
+
+	return join(folder, manifestFilename), nil
+}
+
 // realHome returns the true home directory of the current user.
 // Snap will replace the $HOME env var with a sandboxed directory.
 func realHome(getenv getenvFn, userHome userHomeFn) (string, error) {
