@@ -75,8 +75,9 @@ type ManifestCmd struct {
 
 // InstallManifestCmd is a CLI command to the app manifest.
 type InstallManifestCmd struct {
-	Firefox InstallFirefoxManifestCmd `cmd:"" help:"Install the app manifest for Firefox."`
-	Chrome  InstallChromeManifestCmd  `cmd:"" help:"Install the app manifest for Chrome."`
+	Firefox  InstallFirefoxManifestCmd  `cmd:"" help:"Install the app manifest for Firefox."`
+	Chrome   InstallChromeManifestCmd   `cmd:"" help:"Install the app manifest for Chrome."`
+	Chromium InstallChromiumManifestCmd `cmd:"" help:"Install the app manifest for Chromium."`
 }
 
 // AddBookCmd is a CLI command to add a bookmark.
@@ -722,6 +723,29 @@ func (r *InstallChromeManifestCmd) Run(ctx *Context) error {
 	start := time.Now()
 
 	err := armariaapi.InstallManifestChrome()
+
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Installed in %s", elapsed))
+
+	return nil
+}
+
+// InstallChromiumManifestCmd is a CLI command to install the app manifest for Chromium.
+type InstallChromiumManifestCmd struct {
+}
+
+// Run install app manifest for Chromium.
+func (r *InstallChromiumManifestCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	err := armariaapi.InstallManifestChromium()
 
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
