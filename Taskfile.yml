@@ -50,16 +50,12 @@ tasks:
       - find . -name "*.db" -type f -delete
       - find . -name "*.db-shm" -type f -delete
       - find . -name "*.db-wal" -type f -delete
+  vulns:
+    cmds:
+      - snyk test
   release:
     cmds:
       - goreleaser release
   release-snapshot:
     cmds:
       - goreleaser release --snapshot --clean
-  install-native-manifest:
-    cmds:
-      - mkdir -p ~/.mozilla/native-messaging-hosts/
-      - cp armaria.json ~/.mozilla/native-messaging-hosts/
-  copy-snap:
-    cmds:
-      - scp dist/armaria_0.0.6-next_linux_amd64.snap jhope@192.168.122.176:/home/jhope

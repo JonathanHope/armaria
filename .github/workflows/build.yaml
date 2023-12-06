@@ -31,3 +31,8 @@ jobs:
       - name: Lint
         run: task lint
         shell: nix develop --command bash -e {0}
+      - name: Vulns
+        run: snyk auth $SNYK_TOKEN && task vulns
+        shell: nix develop --command bash -e {0}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
