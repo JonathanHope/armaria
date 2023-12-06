@@ -25,6 +25,7 @@
             zig.packages.${system}.master
             goreleaser
             syft
+            snyk
           ];
           shellHook = ''
             export PATH=$PWD/tools:$PATH
