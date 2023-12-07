@@ -72,14 +72,18 @@ func databaseInternal(inputPath null.NullString, configPath string, goos string,
 // Config gets the path to the config file.
 // The config file is a TOML file located at getFolderPath() + "bookmarks.db".
 func Config() (string, error) {
-	return configInternal(runtime.GOOS, os.UserHomeDir, filepath.Join, os.Getenv)
+	return configInternal(runtime.GOOS, os.UserHomeDir, filepath.Join, os.Getenv, os.MkdirAll)
 }
 
 // configInternal allows DI for GetConfigPath.
-func configInternal(goos string, userHome userHomeFn, join joinFn, getenv getenvFn) (string, error) {
+func configInternal(goos string, userHome userHomeFn, join joinFn, getenv getenvFn, mkDirAll mkDirAllFn) (string, error) {
 	folder, err := folderInternal(goos, userHome, join, getenv)
 	if err != nil {
 		return "", fmt.Errorf("error getting folder path while getting config path: %w", err)
+	}
+
+	if err = mkDirAll(folder, os.ModePerm); err != nil {
+		return "", fmt.Errorf("error creating folder while getting config path: %w", err)
 	}
 
 	return join(folder, configFilename), nil

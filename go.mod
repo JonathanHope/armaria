@@ -15,10 +15,10 @@ require (
 	github.com/knadh/koanf/providers/structs v0.1.0
 	github.com/knadh/koanf/v2 v2.0.1
 	github.com/mattn/go-sqlite3 v1.14.18
+	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
 	github.com/nullism/bqb v1.7.1
 	github.com/pressly/goose/v3 v3.16.0
 	github.com/samber/lo v1.38.1
-	golang.org/x/term v0.14.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
 )
 
