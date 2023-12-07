@@ -121,10 +121,17 @@ builds:
 #     name_template: "armaria"
 
 archives:
-  - id: w/version
+  - id: armaria-linux-archive
     builds:
       - armaria-linux-amd64
       - armaria-host-linux-amd64
+    name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: false
+    format: zip
+    files:
+      - none*
+  - id: armaria-windows-archive
+    builds:
       - armaria-windows-amd64
       - armaria-host-windows-amd64
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -158,7 +165,7 @@ snapcrafts:
     title: Armaria
     icon: ./art/icon-light.svg
     # publish: true
-    summary: Armaria is a fast local-first bookmark manager.
+    summary: Armaria is a fast, open, and local first bookmarks manager.
     description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
     confinement: strict
     license: MIT
@@ -182,3 +189,27 @@ snapcrafts:
         interface: personal-files
         write:
           - $HOME/.config/chromium/NativeMessagingHosts
+
+chocolateys:
+  - name: armaria
+    owners: Jonathan Hope
+    authors: Jonathan Hope
+    title: Armaria
+    project_url: https://github.com/JonathanHope/armaria
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    icon_url: "https://github.com/JonathanHope/armaria/blob/main/art/cabinet-light-128.svg"
+    copyright: Jonathan Hope
+    license_url: https://github.com/JonathanHope/armaria/blob/main/LICENSE
+    require_license_acceptance: false
+    project_source_url: https://github.com/JonathanHope/armaria
+    docs_url: https://github.com/JonathanHope/armaria/README.org
+    bug_tracker_url: https://github.com/JonathanHope/armaria/issues
+    tags: "bookmarks"
+    summary: Armaria is a fast, open, and local first bookmarks manager .
+    description: |
+      Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
+    release_notes: "https://github.com/JonathanHope/armaria/releases/tag/{{ .Tag }}"
+    source_repo: "https://push.chocolatey.org/"
+    ids:
+      - armaria-windows-archive
+    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"

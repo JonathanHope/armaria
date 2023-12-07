@@ -13,26 +13,36 @@ func TestGetConfigPath(t *testing.T) {
 	type test struct {
 		goos          string
 		configPath    string
+		folderPath    string
+		folderCreated bool
 		snapCommonDir string
 	}
 
 	tests := []test{
 		{
-			goos:       "windows",
-			configPath: "~/AppData/Local/Armaria/armaria.toml",
+			goos:          "windows",
+			configPath:    "~/AppData/Local/Armaria/armaria.toml",
+			folderPath:    "~/AppData/Local/Armaria",
+			folderCreated: true,
 		},
 		{
-			goos:       "linux",
-			configPath: "~/.armaria/armaria.toml",
+			goos:          "linux",
+			configPath:    "~/.armaria/armaria.toml",
+			folderPath:    "~/.armaria",
+			folderCreated: true,
 		},
 		{
 			goos:          "linux",
 			configPath:    "~/snap/.armaria/armaria.toml",
+			folderPath:    "~/snap/.armaria",
 			snapCommonDir: "~/snap",
+			folderCreated: true,
 		},
 		{
-			goos:       "darwin",
-			configPath: "~/Library/Application Support/Armaria/armaria.toml",
+			goos:          "darwin",
+			configPath:    "~/Library/Application Support/Armaria/armaria.toml",
+			folderPath:    "~/Library/Application Support/Armaria",
+			folderCreated: true,
 		},
 	}
 
@@ -41,14 +51,29 @@ func TestGetConfigPath(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		folderCreated := false
+
 		t.Run(fmt.Sprintf("GOOS: %s, SNAP_USER_COMMON: %s", tc.goos, tc.snapCommonDir), func(t *testing.T) {
+			mkDirAll := func(path string, perm os.FileMode) error {
+				folderCreated = true
+				if path != tc.folderPath {
+					t.Errorf("folder: got %+v; want %+v", path, tc.folderPath)
+				}
+
+				return nil
+			}
+
 			getenv := func(key string) string {
 				return tc.snapCommonDir
 			}
 
-			got, err := configInternal(tc.goos, userHome, path.Join, getenv)
+			got, err := configInternal(tc.goos, userHome, path.Join, getenv, mkDirAll)
 			if err != nil {
 				t.Fatalf("unexpected error: %+v", err)
+			}
+
+			if folderCreated != tc.folderCreated {
+				t.Fatalf("folder created: got %+v; want %+v", folderCreated, tc.folderCreated)
 			}
 
 			if got != tc.configPath {

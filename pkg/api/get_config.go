@@ -1,7 +1,9 @@
 package armariaapi
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/jonathanhope/armaria/internal/paths"
@@ -19,6 +21,10 @@ func GetConfig() (armaria.Config, error) {
 	configPath, err := paths.Config()
 	if err != nil {
 		return config, fmt.Errorf("error getting config path while getting config: %w", err)
+	}
+
+	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
+		return config, nil
 	}
 
 	var k = koanf.New(".")

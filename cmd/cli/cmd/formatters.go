@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/nathan-fiscaletti/consolesize-go"
 	"github.com/samber/lo"
-	"golang.org/x/term"
 )
 
 // The Armaria CLI can format its output in multiple ways.
@@ -148,10 +147,7 @@ func formatBookResults(writer io.Writer, formatter Formatter, books []armaria.Bo
 		fmt.Fprintln(writer, string(json))
 
 	case FormatterPretty:
-		width, _, err := term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			panic(err)
-		}
+		width, _ := consolesize.GetConsoleSize()
 
 		headerStyle := lipgloss.
 			NewStyle().
@@ -210,10 +206,7 @@ func formatTagResults(writer io.Writer, formatter Formatter, tags []string) {
 		fmt.Fprintln(writer, string(json))
 
 	case FormatterPretty:
-		width, _, err := term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			panic(err)
-		}
+		width, _ := consolesize.GetConsoleSize()
 
 		style := lipgloss.
 			NewStyle().
@@ -237,10 +230,7 @@ func formatConfigResult(writer io.Writer, formatter Formatter, value string) {
 		fmt.Fprintf(writer, "\"%s\"\n", value)
 
 	case FormatterPretty:
-		width, _, err := term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			panic(err)
-		}
+		width, _ := consolesize.GetConsoleSize()
 
 		style := lipgloss.
 			NewStyle().
