@@ -202,7 +202,7 @@ chocolateys:
     license_url: https://github.com/JonathanHope/armaria/blob/main/LICENSE
     require_license_acceptance: false
     project_source_url: https://github.com/JonathanHope/armaria
-    docs_url: https://github.com/JonathanHope/armaria/README.org
+    docs_url: https://github.com/JonathanHope/armaria/blob/main/README.org
     bug_tracker_url: https://github.com/JonathanHope/armaria/issues
     tags: "bookmarks"
     summary: Armaria is a fast, open, and local first bookmarks manager .
