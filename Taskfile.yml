@@ -24,7 +24,7 @@ tasks:
   build-cli:
     dir: cmd/cli
     cmds:
-      - go build --tags "fts5"
+      - go build --tags "fts5" -ldflags="-X main.version=local"
       - cp cli ../../armaria
   build-host:
     dir: cmd/host

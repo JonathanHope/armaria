@@ -7,6 +7,8 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/cmd"
 )
 
+var version string
+
 func main() {
 	rootCmd := cmd.RootCmdFactory()
 	ctx := kong.Parse(&rootCmd)
@@ -15,7 +17,8 @@ func main() {
 		DB:         rootCmd.DB,
 		Formatter:  rootCmd.Formatter,
 		Writer:     os.Stdout,
-		ReturnCode: os.Exit})
+		ReturnCode: os.Exit,
+		Version:    version})
 
 	ctx.FatalIfErrorf(err)
 }
