@@ -19,6 +19,7 @@ builds:
   #   ldflags:
   #     - -s
   #     - -w
+  #     - -X "main.version={{ .Version }}"
 
   # - id: armaria-darwin-arm64
   #   binary: armria
@@ -37,6 +38,7 @@ builds:
   #   ldflags:
   #     - -s
   #     - -w
+  #     - -X "main.version={{ .Version }}"
       
   - id: armaria-linux-amd64
     binary: armaria
@@ -56,6 +58,7 @@ builds:
     ldflags:
       - -s
       - -w
+      - -X "main.version={{ .Version }}"
 
   - id: armaria-host-linux-amd64
     binary: armaria-host
@@ -93,6 +96,7 @@ builds:
     ldflags:
       - -s
       - -w
+      - -X "main.version={{ .Version }}"
 
   - id: armaria-host-windows-amd64
     binary: armaria-host

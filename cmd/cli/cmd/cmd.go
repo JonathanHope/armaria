@@ -21,6 +21,8 @@ type RootCmd struct {
 
 	Config   ConfigCmd   `cmd:"" help:"Manage the configuration."`
 	Manifest ManifestCmd `cmd:"" help:"Manage the app manifest."`
+
+	Version VersionCmd `cmd:"" help:"Print the current version."`
 }
 
 // RootCmdFactory creates a new RootCmd.
@@ -756,6 +758,17 @@ func (r *InstallChromiumManifestCmd) Run(ctx *Context) error {
 	elapsed := time.Since(start)
 
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Installed in %s", elapsed))
+
+	return nil
+}
+
+// VersionCmd is a CLI command to print the current version.
+type VersionCmd struct {
+}
+
+// Run print the current version.
+func (r *VersionCmd) Run(ctx *Context) error {
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf(ctx.Version))
 
 	return nil
 }

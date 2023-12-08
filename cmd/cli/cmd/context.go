@@ -10,4 +10,5 @@ type Context struct {
 	Formatter  Formatter // how to format the output
 	Writer     io.Writer // where to write output
 	ReturnCode func(int) // set the return code
+	Version    string    // the current version of Armaria
 }
