@@ -20,47 +20,54 @@ type updateBookOptions struct {
 }
 
 // DefaultUpdateBookOptions are the default options for UpdateBook.
-func DefaultUpdateBookOptions() updateBookOptions {
-	return updateBookOptions{}
+func DefaultUpdateBookOptions() *updateBookOptions {
+	return &updateBookOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *updateBookOptions) WithDB(db string) {
+func (o *updateBookOptions) WithDB(db string) *updateBookOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // WithName updates the name of a bookmark.
-func (o *updateBookOptions) WithName(name string) {
+func (o *updateBookOptions) WithName(name string) *updateBookOptions {
 	o.Name = null.NullStringFrom(name)
+	return o
 }
 
 // WithURL updates the URL of a bookmark.
-func (o *updateBookOptions) WithURL(url string) {
+func (o *updateBookOptions) WithURL(url string) *updateBookOptions {
 	o.URL = null.NullStringFrom(url)
+	return o
 }
 
 // WithDescription updates the description of a bookmark.
-func (o *updateBookOptions) WithDescription(description string) {
+func (o *updateBookOptions) WithDescription(description string) *updateBookOptions {
 	o.Description = null.NullStringFrom(description)
+	return o
 }
 
 // WithParentID updates the parentID of a bookmark.
-func (o *updateBookOptions) WithParentID(parentID string) {
+func (o *updateBookOptions) WithParentID(parentID string) *updateBookOptions {
 	o.ParentID = null.NullStringFrom(parentID)
+	return o
 }
 
 // WithoutDescription removes the description of a bookmark.
-func (o *updateBookOptions) WithoutDescription() {
+func (o *updateBookOptions) WithoutDescription() *updateBookOptions {
 	o.Description = null.NullStringFromPtr(nil)
+	return o
 }
 
 // WithoutParentID removes the parent ID of a bookmark.
-func (o *updateBookOptions) WithoutParentID() {
+func (o *updateBookOptions) WithoutParentID() *updateBookOptions {
 	o.ParentID = null.NullStringFromPtr(nil)
+	return o
 }
 
 // UpdateBook updates a bookmark in the bookmarks database.
-func UpdateBook(id string, options updateBookOptions) (armaria.Book, error) {
+func UpdateBook(id string, options *updateBookOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while updating bookmark: %w", err)

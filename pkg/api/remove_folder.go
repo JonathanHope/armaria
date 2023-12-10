@@ -17,17 +17,18 @@ type removeFolderOptions struct {
 }
 
 // DefaultRemoveFolderOptions are the default options for RemoveFolder.
-func DefaultRemoveFolderOptions() removeFolderOptions {
-	return removeFolderOptions{}
+func DefaultRemoveFolderOptions() *removeFolderOptions {
+	return &removeFolderOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *removeFolderOptions) WithDB(db string) {
+func (o *removeFolderOptions) WithDB(db string) *removeFolderOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // RemoveFolder removes a folder from the bookmarks database.
-func RemoveFolder(id string, options removeFolderOptions) error {
+func RemoveFolder(id string, options *removeFolderOptions) error {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return fmt.Errorf("error getting config while removing folder: %w", err)

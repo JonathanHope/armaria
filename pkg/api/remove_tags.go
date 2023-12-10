@@ -16,17 +16,18 @@ type removeTagsOptions struct {
 }
 
 // DefaultRemoveTagsOptions are the default options for RemoveTags.
-func DefaultRemoveTagsOptions() removeTagsOptions {
-	return removeTagsOptions{}
+func DefaultRemoveTagsOptions() *removeTagsOptions {
+	return &removeTagsOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *removeTagsOptions) WithDB(db string) {
+func (o *removeTagsOptions) WithDB(db string) *removeTagsOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // RemoveTags removes tags from a bookmark in the bookmarks database.
-func RemoveTags(id string, tags []string, options removeTagsOptions) (armaria.Book, error) {
+func RemoveTags(id string, tags []string, options *removeTagsOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while removing tags: %w", err)

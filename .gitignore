@@ -2,8 +2,11 @@
 *.db-shm
 *.db-wal
 cmd/cli/cli
+cmd/host/host
+cmd/seeder/seeder
 .direnv
 armaria
 armaria-host
+armaria-seeder
 dist
-cmd/host/host
+.vscode

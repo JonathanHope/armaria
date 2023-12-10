@@ -69,6 +69,8 @@ func formatError(writer io.Writer, formatter Formatter, err error) {
 		errorString = "Bookmark not found"
 	} else if errors.Is(err, armaria.ErrFolderNotFound) {
 		errorString = "Folder not found"
+	} else if errors.Is(err, armaria.ErrNotFound) {
+		errorString = "Bookmark or folder not found"
 	} else if errors.Is(err, armaria.ErrNameTooShort) {
 		errorString = "Name too short"
 	} else if errors.Is(err, armaria.ErrNameTooLong) {
@@ -245,6 +247,34 @@ func formatConfigResult(writer io.Writer, formatter Formatter, value string) {
 		} else {
 			fmt.Fprintln(writer, style.Render(fmt.Sprintf("⚙ %s", value)))
 		}
+	}
+}
+
+// formatParentNames formats a collection of parent names.
+func formatParentNames(writer io.Writer, formatter Formatter, parentNames []string) {
+	switch formatter {
+
+	case FormatterJSON:
+		json, err := json.Marshal(&parentNames)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Fprintln(writer, string(json))
+
+	case FormatterPretty:
+		width, _ := consolesize.GetConsoleSize()
+
+		style := lipgloss.
+			NewStyle().
+			Bold(true).
+			PaddingLeft(1).
+			PaddingRight(1).
+			BorderStyle(lipgloss.RoundedBorder()).
+			MaxWidth(width - 2)
+
+		fmt.Fprintln(writer, style.Render(strings.Join(parentNames, " > ")))
 	}
 }
 

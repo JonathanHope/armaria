@@ -12,14 +12,14 @@ tasks:
     dir: internal
     cmds:
       - go test ./...
-  test-host:
-    dir: cmd/host
+  test-cmd:
+    dir: cmd
     cmds:
       - go test --tags "fts5" ./...
   test:
     cmds:
       - task: test-internal
-      - task : test-host
+      - task : test-cmd
       - task: test-bdd
   build-cli:
     dir: cmd/cli
@@ -31,10 +31,16 @@ tasks:
     cmds:
       - go build --tags "fts5"
       - cp host ../../armaria-host
+  build-seeder:
+    dir: cmd/seeder
+    cmds:
+      - go build --tags "fts5"
+      - cp seeder ../../armaria-seeder
   build:
     cmds:
       - task: build-cli
       - task: build-host
+      - task: build-seeder
   migrate-up:
     cmds:
       - goose -dir ./internal/db/migrations sqlite3 ./bookmarks.db up
@@ -45,8 +51,10 @@ tasks:
     cmds:
       - rm -f armaria
       - rm -f armaria-host
+      - rm -f armaria-seeder
       - rm -f cmd/cli/cli
       - rm -f cmd/host/host
+      - rm -f cmd/seeder/seeder
       - find . -name "*.db" -type f -delete
       - find . -name "*.db-shm" -type f -delete
       - find . -name "*.db-wal" -type f -delete
