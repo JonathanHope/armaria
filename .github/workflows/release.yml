@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,6 +18,10 @@ jobs:
           fetch-depth: 0
       - name: Install Nix
         uses: cachix/install-nix-action@v22
+      - name: Setup Docker
+        run: |
+          brew install docker
+          colima start
       - name: Release
         run: task release
         shell: nix develop --command bash -e {0}

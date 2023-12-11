@@ -1,45 +1,82 @@
 env:
   - CGO_ENABLED=1
+  - SDK=/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk
 
 builds:
-  # - id: armaria-darwin-amd64
-  #   binary: armaria
-  #   main: ./cmd/cli
-  #   goarch:
-  #     - amd64
-  #   goos:
-  #     - darwin
-  #   env:
-  #     - CC=zig cc -target x86_64-macos-none -g0
-  #     - CXX=zig c++ -target x86_64-macos-none -g0
-  #   flags:
-  #     - -trimpath
-  #     - -tags=fts5 netgo osusergo
-  #     - -buildmode=pie
-  #   ldflags:
-  #     - -s
-  #     - -w
-  #     - -X "main.version={{ .Version }}"
+  - id: armaria-darwin-amd64
+    binary: armaria
+    main: ./cmd/cli
+    goarch:
+      - amd64
+    goos:
+      - darwin
+    env:
+      - CC=zig cc -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+      - CXX=zig c++ -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+    flags:
+      - -trimpath
+      - -tags=fts5
+      - -buildmode=pie
+    ldflags:
+      - -s
+      - -w
+      - -X "main.version={{ .Version }}"
 
-  # - id: armaria-darwin-arm64
-  #   binary: armria
-  #   main: ./cmd/cli
-  #   goarch:
-  #     - arm64
-  #   goos:
-  #     - darwin
-  #   env:
-  #     - CC=zig cc -target aarch64-macos-none -g0
-  #     - CXX=zig c++ -target aarch64-macos-none -g0
-  #   flags:
-  #     - -trimpath
-  #     - -tags=fts5 netgo osusergo
-  #     - -buildmode=pie
-  #   ldflags:
-  #     - -s
-  #     - -w
-  #     - -X "main.version={{ .Version }}"
-      
+  - id: armaria-host-darwin-amd64
+    binary: armaria
+    main: ./cmd/host
+    goarch:
+      - amd64
+    goos:
+      - darwin
+    env:
+      - CC=zig cc -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+      - CXX=zig c++ -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+    flags:
+      - -trimpath
+      - -tags=fts5
+      - -buildmode=pie
+    ldflags:
+      - -s
+      - -w
+
+  - id: armaria-darwin-arm64
+    binary: armria
+    main: ./cmd/cli
+    goarch:
+      - arm64
+    goos:
+      - darwin
+    env:
+      - CC=zig cc -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+      - CXX=zig c++ -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+    flags:
+      - -trimpath
+      - -tags=fts5
+      - -buildmode=pie
+    ldflags:
+      - -s
+      - -w
+      - -X "main.version={{ .Version }}"
+
+  - id: armaria-host-darwin-arm64
+    binary: armria
+    main: ./cmd/host
+    goarch:
+      - arm64
+    goos:
+      - darwin
+    env:
+      - CC=zig cc -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+      - CXX=zig c++ -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
+    flags:
+      - -trimpath
+      - -tags=fts5
+      - -buildmode=pie
+    ldflags:
+      - -s
+      - -w
+
   - id: armaria-linux-amd64
     binary: armaria
     main: ./cmd/cli
@@ -116,13 +153,19 @@ builds:
       - -s
       - -w
 
-# universal_binaries:
-#   - id: armaria-darwin-universal
-#     ids:
-#       - armaria-darwin-amd64
-#       - armaria-darwin-arm64
-#     replace: true
-#     name_template: "armaria"
+universal_binaries:
+  - id: armaria-darwin-universal
+    ids:
+      - armaria-darwin-amd64
+      - armaria-darwin-arm64
+    replace: true
+    name_template: "armaria"
+  - id: armaria-host-darwin-universal
+    ids:
+      - armaria-host-darwin-amd64
+      - armaria-host-darwin-arm64
+    replace: true
+    name_template: "armaria-host"
 
 archives:
   - id: armaria-linux-archive
@@ -138,6 +181,15 @@ archives:
     builds:
       - armaria-windows-amd64
       - armaria-host-windows-amd64
+    name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: false
+    format: zip
+    files:
+      - none*
+  - id: armaria-macos-archive
+    builds:
+      - armaria-darwin-universal
+      - armaria-host-darwin-universal
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format: zip
@@ -217,3 +269,4 @@ chocolateys:
     ids:
       - armaria-windows-archive
     api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
+    skip_publish: true
