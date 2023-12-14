@@ -52,7 +52,7 @@ tasks:
       - find . -name "*.db-wal" -type f -delete
   vulns:
     cmds:
-      - snyk test
+      - ./tools/snyk
   release:
     cmds:
       - goreleaser release

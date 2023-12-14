@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+docker run -v $PWD:/app --env SNYK_TOKEN snyk/snyk:golang 
