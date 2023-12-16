@@ -256,7 +256,7 @@ winget:
     package_identifier: Armaria.Armaria
     ids:
       - armaria-windows-archive
-    url_template: "https://githu1b.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     path: manifests/a/Armaria/Armaria/{{ .Tag }}
     commit_msg_template: "{{ .PackageIdentifier }}: {{ .Tag }}"
     homepage: https://github.com/JonathanHope/armaria
