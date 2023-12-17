@@ -257,8 +257,8 @@ winget:
     ids:
       - armaria-windows-archive
     url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    path: manifests/a/Armaria/Armaria/{{ .Tag }}
-    commit_msg_template: "{{ .PackageIdentifier }}: {{ .Tag }}"
+    path: manifests/a/Armaria/Armaria/{{ .Version }}
+    commit_msg_template: "{{ .PackageIdentifier }}: {{ .Version }}"
     homepage: https://github.com/JonathanHope/armaria
     description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
     license_url: https://github.com/JonathanHope/armaria/blob/main/LICENSE
@@ -273,5 +273,5 @@ winget:
     repository:
       owner: JonathanHope
       name: winget-pkgs
-      branch: "{{.ProjectName}}-{{.Tag}}"
+      branch: "{{.ProjectName}}-{{.Version}}"
       token: "{{ .Env.WINGET_AUTH_TOKEN }}"
