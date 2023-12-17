@@ -290,7 +290,6 @@ brews:
     homepage: "https://github.com/JonathanHope/armaria"
     description: Armaria is a fast, open, and local first bookmarks manager.
     license: "MIT"
-    skip_upload: true
     repository:
       owner: JonathanHope
       name: homebrew-armaria
