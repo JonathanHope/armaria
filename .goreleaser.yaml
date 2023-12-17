@@ -275,3 +275,24 @@ winget:
       name: winget-pkgs
       branch: "{{.ProjectName}}-{{.Version}}"
       token: "{{ .Env.WINGET_AUTH_TOKEN }}"
+
+brews:
+  - name: armaria
+    ids:
+    - armaria-macos-archive
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    download_strategy: CurlDownloadStrategy
+    commit_author:
+      name: Jonathan Hope
+      email: jhope@fastmail.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    folder: Formula
+    homepage: "https://github.com/JonathanHope/armaria"
+    description: Armaria is a fast, open, and local first bookmarks manager.
+    license: "MIT"
+    skip_upload: true
+    repository:
+      owner: JonathanHope
+      name: homebrew-armaria
+      branch: main
+      token: "{{ .Env.TAP_AUTH_TOKEN }}"
