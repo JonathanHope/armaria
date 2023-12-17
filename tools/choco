@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-docker run -v $PWD:/build -w /build chocolatey/choco:v2.2.2-linux choco $@
