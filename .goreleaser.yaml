@@ -246,27 +246,52 @@ snapcrafts:
         write:
           - $HOME/.config/chromium/NativeMessagingHosts
 
-chocolateys:
-  - name: armaria
-    owners: Jonathan Hope
-    authors: Jonathan Hope
-    title: Armaria
-    project_url: https://github.com/JonathanHope/armaria
-    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    icon_url: "https://github.com/JonathanHope/armaria/blob/main/art/cabinet-light-128.svg"
-    copyright: Jonathan Hope
-    license_url: https://github.com/JonathanHope/armaria/blob/main/LICENSE
-    require_license_acceptance: false
-    project_source_url: https://github.com/JonathanHope/armaria
-    docs_url: https://github.com/JonathanHope/armaria/blob/main/README.org
-    bug_tracker_url: https://github.com/JonathanHope/armaria/issues
-    tags: "bookmarks"
-    summary: Armaria is a fast, open, and local first bookmarks manager .
-    description: |
-      Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
-    release_notes: "https://github.com/JonathanHope/armaria/releases/tag/{{ .Tag }}"
-    source_repo: "https://push.chocolatey.org/"
+winget:
+  - name: Armaria
+    publisher: Jonathan Hope
+    short_description: Armaria is a fast, open, and local first bookmarks manager.
+    license: "mit"
+    publisher_url: https://github.com/JonathanHope/armaria
+    publisher_support_url: https://github.com/JonathanHope/armaria/issues/new
+    package_identifier: Armaria.Armaria
     ids:
       - armaria-windows-archive
-    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
-    skip_publish: true
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    path: manifests/a/Armaria/Armaria/{{ .Version }}
+    commit_msg_template: "{{ .PackageIdentifier }}: {{ .Version }}"
+    homepage: https://github.com/JonathanHope/armaria
+    description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
+    license_url: https://github.com/JonathanHope/armaria/blob/main/LICENSE
+    copyright: Jonathan Hope
+    release_notes: "{{.Changelog}}"
+    release_notes_url: "https://github.com/JonathanHope/armaria/releases/tag/{{ .Tag }}"
+    tags:
+      - bookmarks
+    commit_author:  
+      name: Jonathan Hope
+      email: jhope@fastmail.com
+    repository:
+      owner: JonathanHope
+      name: winget-pkgs
+      branch: "{{.ProjectName}}-{{.Version}}"
+      token: "{{ .Env.WINGET_AUTH_TOKEN }}"
+
+brews:
+  - name: armaria
+    ids:
+    - armaria-macos-archive
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    download_strategy: CurlDownloadStrategy
+    commit_author:
+      name: Jonathan Hope
+      email: jhope@fastmail.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    folder: Formula
+    homepage: "https://github.com/JonathanHope/armaria"
+    description: Armaria is a fast, open, and local first bookmarks manager.
+    license: "MIT"
+    repository:
+      owner: JonathanHope
+      name: homebrew-armaria
+      branch: main
+      token: "{{ .Env.TAP_AUTH_TOKEN }}"
