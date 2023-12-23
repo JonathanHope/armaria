@@ -16,17 +16,18 @@ type removeBookOptions struct {
 }
 
 // DefaultRemoveBookOptions are the default options for RemoveBook.
-func DefaultRemoveBookOptions() removeBookOptions {
-	return removeBookOptions{}
+func DefaultRemoveBookOptions() *removeBookOptions {
+	return &removeBookOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *removeBookOptions) WithDB(db string) {
+func (o *removeBookOptions) WithDB(db string) *removeBookOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // RemoveBook removes a bookmark from the bookmarks database.
-func RemoveBook(id string, options removeBookOptions) (err error) {
+func RemoveBook(id string, options *removeBookOptions) (err error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return fmt.Errorf("error getting config while removing bookmark: %w", err)

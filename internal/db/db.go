@@ -399,3 +399,26 @@ func CleanOrphanedTags(tx Transaction, tags []string) error {
 
 	return exec(tx, remove)
 }
+
+// GetBookFolderParents returns the parent names of a bookmark or folder.
+func GetBookFolderParents(tx Transaction, ID string) ([]string, error) {
+	first := bqb.New(`SELECT "child"."id"`)
+	first.Comma(`"child"."url"`)
+	first.Comma(`"child"."name"`)
+	first.Comma(`"child"."parent_id"`)
+	first.Space(`FROM "bookmarks" AS "child"`)
+	first.Space(`WHERE "child"."id" = ?`, ID)
+
+	rest := bqb.New(`SELECT "child"."id"`)
+	rest.Comma(`"child"."url"`)
+	rest.Comma(`"child"."name"`)
+	rest.Comma(`"child"."parent_id"`)
+	rest.Space(`FROM "bookmarks" AS "child"`)
+	rest.Space(`INNER JOIN BOOK ON BOOK.parent_id = "child"."id"`)
+
+	parents := bqb.New(`WITH RECURSIVE BOOK AS (? UNION ALL ?)`, first, rest)
+	parents.Space(`SELECT "name"`)
+	parents.Space(`FROM BOOK`)
+
+	return query[string](tx, parents)
+}

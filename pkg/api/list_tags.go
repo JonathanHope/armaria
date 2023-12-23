@@ -20,39 +20,44 @@ type listTagsOptions struct {
 }
 
 // DefaultListTagsOptions are the default options for ListTags.
-func DefaultListTagsOptions() listTagsOptions {
-	return listTagsOptions{
+func DefaultListTagsOptions() *listTagsOptions {
+	return &listTagsOptions{
 		Direction: armaria.DirectionAsc,
 	}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *listTagsOptions) WithDB(db string) {
+func (o *listTagsOptions) WithDB(db string) *listTagsOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // WithQuery searches on tags.
-func (o *listTagsOptions) WithQuery(query string) {
+func (o *listTagsOptions) WithQuery(query string) *listTagsOptions {
 	o.Query = null.NullStringFrom(query)
+	return o
 }
 
 // WithAfter returns results after an ID.
-func (o *listTagsOptions) WithAfter(after string) {
+func (o *listTagsOptions) WithAfter(after string) *listTagsOptions {
 	o.After = null.NullStringFrom(after)
+	return o
 }
 
 // WithDirection sets the direction to order by.
-func (o *listTagsOptions) WithDirection(direction armaria.Direction) {
+func (o *listTagsOptions) WithDirection(direction armaria.Direction) *listTagsOptions {
 	o.Direction = direction
+	return o
 }
 
 // withFirst sets the max number of results to return.
-func (o *listTagsOptions) WithFirst(first int64) {
+func (o *listTagsOptions) WithFirst(first int64) *listTagsOptions {
 	o.First = null.NullInt64From(first)
+	return o
 }
 
 // ListTags lists tags in the bookmarks database.
-func ListTags(options listTagsOptions) ([]string, error) {
+func ListTags(options *listTagsOptions) ([]string, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return nil, fmt.Errorf("error getting config while listing tags: %w", err)

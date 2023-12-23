@@ -21,37 +21,42 @@ type addBookOptions struct {
 }
 
 // DefaultAddBookOptions are the default options for AddBook.
-func DefaultAddBookOptions() addBookOptions {
-	return addBookOptions{}
+func DefaultAddBookOptions() *addBookOptions {
+	return &addBookOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *addBookOptions) WithDB(db string) {
+func (o *addBookOptions) WithDB(db string) *addBookOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // WithName sets the bookmark's name.
-func (o *addBookOptions) WithName(name string) {
+func (o *addBookOptions) WithName(name string) *addBookOptions {
 	o.Name = null.NullStringFrom(name)
+	return o
 }
 
 // WithDescription sets the bookmark's description.
-func (o *addBookOptions) WithDescription(description string) {
+func (o *addBookOptions) WithDescription(description string) *addBookOptions {
 	o.Description = null.NullStringFrom(description)
+	return o
 }
 
 // WithParentID sets the bookmark's parent ID.
-func (o *addBookOptions) WithParentID(parentID string) {
+func (o *addBookOptions) WithParentID(parentID string) *addBookOptions {
 	o.ParentID = null.NullStringFrom(parentID)
+	return o
 }
 
 // WithTags sets the bookmark's tags.
-func (o *addBookOptions) WithTags(tags []string) {
+func (o *addBookOptions) WithTags(tags []string) *addBookOptions {
 	o.Tags = tags
+	return o
 }
 
 // AddBook adds a bookmark to the bookmarks database.
-func AddBook(url string, options addBookOptions) (armaria.Book, error) {
+func AddBook(url string, options *addBookOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while adding bookmark: %w", err)

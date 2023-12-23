@@ -77,6 +77,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the folllowing tags exist:$`, theFollowingTagsExist)
 	ctx.Step(`^the following error is returned:$`, theFollowingErrorIsReturned)
 	ctx.Step(`^the folllowing tags are returned:$`, theFolllowingTagsAreReturned)
+	ctx.Step(`^the folllowing names are returned:$`, theFolllowingNamesAreReturned)
 	ctx.Step(`^the folllowing books are returned:$`, theFolllowingBooksAreReturned)
 }
 
@@ -259,6 +260,32 @@ func theFolllowingTagsAreReturned(ctx context.Context, table *godog.Table) error
 	diff := cmp.Diff(expected, actual)
 	if diff != "" {
 		return fmt.Errorf("Expected and actual tags different:\n%s", diff)
+	}
+
+	return nil
+}
+
+// theFolllowingNamesAreReturned compares the JSON output of the CLI with a set of names.
+func theFolllowingNamesAreReturned(ctx context.Context, table *godog.Table) error {
+	output, ok := ctx.Value(outputContextKey{}).(string)
+	if !ok {
+		return errors.New("Missing output")
+	}
+
+	var expected []string
+	for _, row := range table.Rows {
+		expected = append(expected, row.Cells[0].Value)
+	}
+
+	var actual []string
+	err := json.Unmarshal([]byte(output), &actual)
+	if err != nil {
+		return err
+	}
+
+	diff := cmp.Diff(expected, actual)
+	if diff != "" {
+		return fmt.Errorf("Expected and actual names different:\n%s", diff)
 	}
 
 	return nil

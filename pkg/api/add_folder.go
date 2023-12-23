@@ -17,22 +17,24 @@ type addFolderOptions struct {
 }
 
 // DefaultAddFolderOptions are the default options for AddFolder.
-func DefaultAddFolderOptions() addFolderOptions {
-	return addFolderOptions{}
+func DefaultAddFolderOptions() *addFolderOptions {
+	return &addFolderOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *addFolderOptions) WithDB(db string) {
+func (o *addFolderOptions) WithDB(db string) *addFolderOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // WithParentID sets the folders' parent ID.
-func (o *addFolderOptions) WithParentID(parentID string) {
+func (o *addFolderOptions) WithParentID(parentID string) *addFolderOptions {
 	o.ParentID = null.NullStringFrom(parentID)
+	return o
 }
 
 // AddFolder adds a folder to the bookmarks database.
-func AddFolder(name string, options addFolderOptions) (armaria.Book, error) {
+func AddFolder(name string, options *addFolderOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while adding folder: %w", err)

@@ -18,32 +18,36 @@ type updateFolderOptions struct {
 }
 
 // DefaultUpdateFolderOptions are the default options for UpdateFolder.
-func DefaultUpdateFolderOptions() updateFolderOptions {
-	return updateFolderOptions{}
+func DefaultUpdateFolderOptions() *updateFolderOptions {
+	return &updateFolderOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *updateFolderOptions) WithDB(db string) {
+func (o *updateFolderOptions) WithDB(db string) *updateFolderOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // WithName updates the name of a folder.
-func (o *updateFolderOptions) WithName(name string) {
+func (o *updateFolderOptions) WithName(name string) *updateFolderOptions {
 	o.Name = null.NullStringFrom(name)
+	return o
 }
 
 // WithParentID updates the parentID of a folder.
-func (o *updateFolderOptions) WithParentID(parentID string) {
+func (o *updateFolderOptions) WithParentID(parentID string) *updateFolderOptions {
 	o.ParentID = null.NullStringFrom(parentID)
+	return o
 }
 
 // WithoutParentID removes the parent ID of a folder.
-func (o *updateFolderOptions) WithoutParentID() {
+func (o *updateFolderOptions) WithoutParentID() *updateFolderOptions {
 	o.ParentID = null.NullStringFromPtr(nil)
+	return o
 }
 
 // UpdateFolder updates a folder in the bookmarks database.
-func UpdateFolder(id string, options updateFolderOptions) (armaria.Book, error) {
+func UpdateFolder(id string, options *updateFolderOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while updating folder: %w", err)

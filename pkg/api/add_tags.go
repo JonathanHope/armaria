@@ -17,17 +17,18 @@ type addTagsOptions struct {
 }
 
 // DefaultAddTagsOptions are the default options for AddTags.
-func DefaultAddTagsOptions() addTagsOptions {
-	return addTagsOptions{}
+func DefaultAddTagsOptions() *addTagsOptions {
+	return &addTagsOptions{}
 }
 
 // WithDB sets the location of the bookmarks database.
-func (o *addTagsOptions) WithDB(db string) {
+func (o *addTagsOptions) WithDB(db string) *addTagsOptions {
 	o.DB = null.NullStringFrom(db)
+	return o
 }
 
 // AddTags adds tags to a bookmark in the bookmarks database.
-func AddTags(id string, tags []string, options addTagsOptions) (armaria.Book, error) {
+func AddTags(id string, tags []string, options *addTagsOptions) (armaria.Book, error) {
 	config, err := GetConfig()
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		return armaria.Book{}, fmt.Errorf("error getting config while adding tag: %w", err)

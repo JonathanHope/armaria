@@ -25,8 +25,9 @@
             zig.packages.${system}.master-2023-08-15
             goreleaser
             syft
-            # snyk
+            delve
           ];
+          hardeningDisable = [ "fortify" ];
           shellHook = ''
             export PATH=$PWD/tools:$PATH
           '';

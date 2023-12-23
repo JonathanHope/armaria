@@ -13,6 +13,8 @@ var (
 	ErrFolderNotFound = errors.New("folder not found")
 	// ErrTagNotFound is returned when a target tag was not found.
 	ErrTagNotFound = errors.New("tag not found")
+	// ErrNotFound is returned when a target bookmark or folder was not found.
+	ErrNotFound = errors.New("bookmark or folder not found")
 	// ErrURLTooShort is returned when a provided URL is too short.
 	ErrURLTooShort = errors.New("URL too short")
 	// ErrURLTooLong is too long when a provided URL is too long.

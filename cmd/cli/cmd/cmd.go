@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jonathanhope/armaria/cmd/cli/tui"
 	"github.com/jonathanhope/armaria/pkg/api"
 	"github.com/jonathanhope/armaria/pkg/model"
 )
@@ -18,9 +19,12 @@ type RootCmd struct {
 	Remove RemoveCmd `cmd:"" help:"Remove a folder, bookmark, or tag."`
 	Update UpdateCmd `cmd:"" help:"Update a folder or bookmark."`
 	List   ListCmd   `cmd:"" help:"List folders, bookmarks, or tags."`
+	Get    GetCmd    `cmd:"" help:"Get a folder or bookmark."`
 
 	Config   ConfigCmd   `cmd:"" help:"Manage the configuration."`
 	Manifest ManifestCmd `cmd:"" help:"Manage the app manifest."`
+
+	TUI TUICommand `cmd:"" help:"Start the TUI."`
 
 	Version VersionCmd `cmd:"" help:"Print the current version."`
 }
@@ -40,10 +44,11 @@ type AddCmd struct {
 
 // ListCmd is a CLI command to list bookmarks/folders/tags.
 type ListCmd struct {
-	All     ListAllCmd     `cmd:"" help:"List bookmarks and folders."`
-	Books   ListBooksCmd   `cmd:"" help:"List bookmarks."`
-	Folders ListFoldersCmd `cmd:"" help:"List folders."`
-	Tags    ListTagsCmd    `cmd:"" help:"List tags."`
+	All         ListAllCmd         `cmd:"" help:"List bookmarks and folders."`
+	Books       ListBooksCmd       `cmd:"" help:"List bookmarks."`
+	Folders     ListFoldersCmd     `cmd:"" help:"List folders."`
+	Tags        ListTagsCmd        `cmd:"" help:"List tags."`
+	ParentNames ListParentNamesCmd `cmd:"" help:"List parent names."`
 }
 
 // UpdateCmd is a CLI command to update a bookmark or folder.
@@ -57,6 +62,11 @@ type RemoveCmd struct {
 	Book   RemoveBookCmd   `cmd:"" help:"Remove a bookmark."`
 	Folder RemoveFolderCmd `cmd:"" help:"Remove a folder."`
 	Tag    RemoveTagsCmd   `cmd:"" help:"Remove tags from a bookmark."`
+}
+
+// GetCmd is a CLI command to get bookmarks/folders.
+type GetCmd struct {
+	All GetAllCmd `cmd:"" help:"Get a bookmark or folder."`
 }
 
 // ConfigCmd is a CLI command to manage config.
@@ -441,6 +451,35 @@ func (r *ListTagsCmd) Run(ctx *Context) error {
 	return nil
 }
 
+// ListParentNamesCmd is a CLI command to get the parent names of a bookmark/folder.
+type ListParentNamesCmd struct {
+	ID string `arg:"" name:"id" help:"ID of the bookmark/folder to the parent names of."`
+}
+
+// Run get the parent names of a bookmark
+func (r *ListParentNamesCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	options := armariaapi.DefaultGetParentNameOptions()
+	if ctx.DB != nil {
+		options.WithDB(*ctx.DB)
+	}
+
+	names, err := armariaapi.GetParentNames(r.ID, options)
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatParentNames(ctx.Writer, ctx.Formatter, names)
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Listed in %s", elapsed))
+
+	return nil
+}
+
 // UpdateBookCmd is a CLI command to update a bookmark.
 type UpdateBookCmd struct {
 	Folder        *string `help:"Folder to move this bookmark to."`
@@ -643,6 +682,35 @@ func (r *RemoveTagsCmd) Run(ctx *Context) error {
 	return nil
 }
 
+// GetAllCmd is a CLI command to get a bookmark or folder.
+type GetAllCmd struct {
+	ID string `arg:"" name:"id" help:"ID of the bookmark or folder to get."`
+}
+
+// Run get bookmark or folder.
+func (r *GetAllCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	options := armariaapi.DefaultGetBookOptions()
+	if ctx.DB != nil {
+		options.WithDB(*ctx.DB)
+	}
+
+	book, err := armariaapi.GetBook(r.ID, options)
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatBookResults(ctx.Writer, ctx.Formatter, []armaria.Book{book})
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Got in %s", elapsed))
+
+	return nil
+}
+
 // GetDBConfigCmd is a CLI command to get the location of the bookmarks database from the config.
 type GetDBConfigCmd struct {
 }
@@ -769,6 +837,22 @@ type VersionCmd struct {
 // Run print the current version.
 func (r *VersionCmd) Run(ctx *Context) error {
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf(ctx.Version))
+
+	return nil
+}
+
+// TUICommand is a CLI command to start the TUI.
+type TUICommand struct {
+}
+
+// Run start the TUI.
+func (r *TUICommand) Run(ctx *Context) error {
+	p := tui.Program()
+	if _, err := p.Run(); err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
 
 	return nil
 }

@@ -48,7 +48,6 @@ func installManifest(path string) error {
 		return fmt.Errorf("error getting host path while installing manifest: %w", err)
 	}
 
-	// TODO The extension IDs here aren't real.
 	manifest := armaria.Manifest{
 		Name:              "armaria",
 		Description:       "Armaria is a fast local-first bookmarks manager.",
