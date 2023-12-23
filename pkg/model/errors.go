@@ -47,4 +47,6 @@ var (
 	ErrQueryTooShort = errors.New("query too short")
 	// ErrConfigMissing is returned when the config file is missing.
 	ErrConfigMissing = errors.New("config missing")
+	// ErrInvalidOrdering is returned previous book >= next book for manual ordering.
+	ErrInvalidOrdering = errors.New("invalid ordering")
 )

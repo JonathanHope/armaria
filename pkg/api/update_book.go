@@ -12,11 +12,13 @@ import (
 
 // updateBookOptions are the optional arguments for UpdateBook.
 type updateBookOptions struct {
-	DB          null.NullString
-	Name        null.NullString
-	URL         null.NullString
-	Description null.NullString
-	ParentID    null.NullString
+	DB           null.NullString
+	Name         null.NullString
+	URL          null.NullString
+	Description  null.NullString
+	ParentID     null.NullString
+	PreviousBook null.NullString
+	NextBook     null.NullString
 }
 
 // DefaultUpdateBookOptions are the default options for UpdateBook.
@@ -66,6 +68,18 @@ func (o *updateBookOptions) WithoutParentID() *updateBookOptions {
 	return o
 }
 
+// WithOrderBefore moves the bookmark to be before the provided book.
+func (o *updateBookOptions) WithOrderBefore(id string) *updateBookOptions {
+	o.NextBook = null.NullStringFrom(id)
+	return o
+}
+
+// WithOrderAfter moves the bookmark to be after the provided book.
+func (o *updateBookOptions) WithOrderAfter(id string) *updateBookOptions {
+	o.PreviousBook = null.NullStringFrom(id)
+	return o
+}
+
 // UpdateBook updates a bookmark in the bookmarks database.
 func UpdateBook(id string, options *updateBookOptions) (armaria.Book, error) {
 	config, err := GetConfig()
@@ -78,7 +92,7 @@ func UpdateBook(id string, options *updateBookOptions) (armaria.Book, error) {
 			return armaria.Book{}, fmt.Errorf("bookmark ID validation failed while updating bookmark: %w", err)
 		}
 
-		if !options.Name.Dirty && !options.URL.Dirty && !options.Description.Dirty && !options.ParentID.Dirty {
+		if !options.Name.Dirty && !options.URL.Dirty && !options.Description.Dirty && !options.ParentID.Dirty && !options.PreviousBook.Dirty && !options.NextBook.Dirty {
 			return armaria.Book{}, armaria.ErrNoUpdate
 		}
 
@@ -106,11 +120,17 @@ func UpdateBook(id string, options *updateBookOptions) (armaria.Book, error) {
 			}
 		}
 
+		current, err := validate.Ordering(tx, options.PreviousBook, options.NextBook)
+		if err != nil {
+			return armaria.Book{}, fmt.Errorf("ordering validation failed while updating bookmark: %w", err)
+		}
+
 		if err := db.UpdateBook(tx, id, db.UpdateBookArgs{
 			Name:        options.Name,
 			URL:         options.URL,
 			Description: options.Description,
 			ParentID:    options.ParentID,
+			Order:       current,
 		}); err != nil {
 			return armaria.Book{}, fmt.Errorf("error while updating bookmark: %w", err)
 		}

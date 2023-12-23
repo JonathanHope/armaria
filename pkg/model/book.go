@@ -10,4 +10,5 @@ type Book struct {
 	IsFolder    bool     // true if folder, and false otherwise
 	ParentName  *string  // name of parent folder if bookmark/folder has one
 	Tags        []string // tags applied to the bookmark
+	Order       string   // user managed order of the bookmark
 }

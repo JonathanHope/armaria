@@ -12,9 +12,11 @@ import (
 
 // updateFolderOptions are the optional arguments for UpdateFolder.
 type updateFolderOptions struct {
-	DB       null.NullString
-	Name     null.NullString
-	ParentID null.NullString
+	DB           null.NullString
+	Name         null.NullString
+	ParentID     null.NullString
+	PreviousBook null.NullString
+	NextBook     null.NullString
 }
 
 // DefaultUpdateFolderOptions are the default options for UpdateFolder.
@@ -46,6 +48,18 @@ func (o *updateFolderOptions) WithoutParentID() *updateFolderOptions {
 	return o
 }
 
+// WithOrderBefore moves the bookmark to be before the provided book.
+func (o *updateFolderOptions) WithOrderBefore(id string) *updateFolderOptions {
+	o.NextBook = null.NullStringFrom(id)
+	return o
+}
+
+// WithOrderAfter moves the bookmark to be after the provided book.
+func (o *updateFolderOptions) WithOrderAfter(id string) *updateFolderOptions {
+	o.PreviousBook = null.NullStringFrom(id)
+	return o
+}
+
 // UpdateFolder updates a folder in the bookmarks database.
 func UpdateFolder(id string, options *updateFolderOptions) (armaria.Book, error) {
 	config, err := GetConfig()
@@ -58,7 +72,7 @@ func UpdateFolder(id string, options *updateFolderOptions) (armaria.Book, error)
 			return armaria.Book{}, fmt.Errorf("bookmark ID validation failed while updating folder: %w", err)
 		}
 
-		if !options.Name.Dirty && !options.ParentID.Dirty {
+		if !options.Name.Dirty && !options.ParentID.Dirty && !options.PreviousBook.Dirty && !options.NextBook.Dirty {
 			return armaria.Book{}, armaria.ErrNoUpdate
 		}
 
@@ -74,9 +88,15 @@ func UpdateFolder(id string, options *updateFolderOptions) (armaria.Book, error)
 			}
 		}
 
+		current, err := validate.Ordering(tx, options.PreviousBook, options.NextBook)
+		if err != nil {
+			return armaria.Book{}, fmt.Errorf("ordering validation failed while updating bookmark: %w", err)
+		}
+
 		if err := db.UpdateFolder(tx, id, db.UpdateFolderArgs{
 			Name:     options.Name,
 			ParentID: options.ParentID,
+			Order:    current,
 		}); err != nil {
 			return armaria.Book{}, fmt.Errorf("error while updating folder: %w", err)
 		}

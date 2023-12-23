@@ -85,6 +85,57 @@ Feature: Update Bookmarks with CLI
       | [id]        | NULL      | false     | https://jho.pe | https://jho.pe | NULL        |      |
 
   @cli @update_book
+  Scenario: Can move bookmark to start of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | {id_1} | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | {id_2} | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+      | {id_3} | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+    When I run it with the following args:
+      """
+      update book [id_2] --before [id_1] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | [id_2] | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+      | [id_1] | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | [id_3] | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+
+  @cli @update_book
+  Scenario: Can move bookmark to end of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | {id_1} | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | {id_2} | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+      | {id_3} | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+    When I run it with the following args:
+      """
+      update book [id_2] --after [id_3] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | [id_1] | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | [id_3] | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+      | [id_2] | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+
+  @cli @update_book
+  Scenario: Can move bookmark to midddle of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | {id_1} | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | {id_2} | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+      | {id_3} | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+    When I run it with the following args:
+      """
+      update book [id_1] --after [id_2] --before [id_3] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name              | url               | description | tags |
+      | [id_2] | NULL      | false     | https://two.com   | https://two.com   | NULL        |      |
+      | [id_1] | NULL      | false     | https://one.com   | https://one.com   | NULL        |      |
+      | [id_3] | NULL      | false     | https://three.com | https://three.com | NULL        |      |
+
+  @cli @update_book
   Scenario: Bookmark must exist
     When I run it with the following args:
       """

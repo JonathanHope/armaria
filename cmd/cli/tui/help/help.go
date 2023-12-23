@@ -14,28 +14,28 @@ type Binding struct {
 	Help    string // what the key does
 }
 
-// model is the model for help.
+// HelpModel is the HelpModel for help.
 // The help screen shows keybindings.
-type model struct {
+type HelpModel struct {
 	contexts []string  // the different context to show keybindings for
 	bindings []Binding // the different keybindings
 }
 
 // InitialModel builds the model.
-func InitialModel(contexts []string, bindings []Binding) tea.Model {
-	return model{
+func InitialModel(contexts []string, bindings []Binding) HelpModel {
+	return HelpModel{
 		contexts: contexts,
 		bindings: bindings,
 	}
 }
 
 // Update handles a message.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
 	return m, nil
 }
 
 // View renders the model.
-func (m model) View() string {
+func (m HelpModel) View() string {
 	headers := []string{""}
 	headers = append(headers, m.contexts...)
 
@@ -97,6 +97,6 @@ func (m model) View() string {
 }
 
 // Init initializes the model.
-func (m model) Init() tea.Cmd {
+func (m HelpModel) Init() tea.Cmd {
 	return nil
 }

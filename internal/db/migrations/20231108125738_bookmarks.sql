@@ -8,6 +8,7 @@ CREATE TABLE "bookmarks" (
   "url" TEXT CHECK("url" IS NULL OR LENGTH("url") <= 2048),
   "description" TEXT CHECK("description" IS NULL OR LENGTH("description") <= 4096),
   "modified" TEXT NOT NULL DEFAULT(datetime()),
+  "order" TEXT NOT NULL,
   FOREIGN KEY("parent_id") REFERENCES "bookmarks"("id"),
   CHECK ("is_folder" IN (0, 1)),
   CHECK (("is_folder" = 0 AND "url" IS NOT NULL) OR ("is_folder" = 1 AND "url" IS NULL))
@@ -47,6 +48,9 @@ ON "bookmarks"("name");
 
 CREATE INDEX "ix_bookmarks_modified"
 ON "bookmarks"("modifed");
+
+CREATE INDEX "ix_bookmarks_order"
+ON "bookmarks"("order");
 
 CREATE TRIGGER "after_bookmarks_insert" AFTER INSERT ON "bookmarks" BEGIN
   INSERT INTO bookmarks_fts (
@@ -107,6 +111,8 @@ DROP INDEX "ix_bookmarks_tags_tag";
 DROP INDEX "ix_bookmarks_name";
 
 DROP INDEX "ix_bookmarks_modified";
+
+DROP INDEX "ix_bookmarks_order";
 
 DROP TRIGGER "after_bookmarks_insert";
 
