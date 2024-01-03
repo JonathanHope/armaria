@@ -29,3 +29,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WINGET_AUTH_TOKEN: ${{ secrets.WINGET_AUTH_TOKEN }}
           TAP_AUTH_TOKEN: ${{ secrets.TAP_AUTH_TOKEN }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
