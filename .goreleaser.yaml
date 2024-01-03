@@ -220,7 +220,7 @@ snapcrafts:
     name: armaria
     title: Armaria
     icon: ./art/icon-light.svg
-    # publish: true
+    publish: true
     summary: Armaria is a fast, open, and local first bookmarks manager.
     description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
     confinement: strict
@@ -229,19 +229,19 @@ snapcrafts:
     apps:
       armaria:  
         command: armaria
-        plugs: ["dot-mozilla", "dot-chrome", "dot-chromium"]
+        plugs: ["dot-mozilla-native-messaging-hosts", "dot-config-google-chrome-native-messaging-hosts", "dot-config-chromium-native-messaging-hosts"]
       armaria-host:
         command: armaria-host
     plugs:
-      dot-mozilla:
+      dot-mozilla-native-messaging-hosts:
         interface: personal-files
         write:
           - $HOME/.mozilla/native-messaging-hosts
-      dot-chrome:
+      dot-config-google-chrome-native-messaging-hosts:
         interface: personal-files
         write:
           - $HOME/.config/google-chrome/NativeMessagingHosts
-      dot-chromium:
+      dot-config-chromium-native-messaging-hosts:
         interface: personal-files
         write:
           - $HOME/.config/chromium/NativeMessagingHosts
