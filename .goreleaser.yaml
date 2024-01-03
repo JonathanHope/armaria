@@ -211,6 +211,10 @@ changelog:
 sboms:
   - artifacts: archive
 
+release:
+  extra_files:
+    - glob: ./**/*.snap
+
 snapcrafts:
   - id: armaria-snap
     builds:
