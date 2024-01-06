@@ -12,9 +12,9 @@ import (
 const BlinkSpeed = 600 // how quickly to blink the cursor
 const Padding = 1      // how much left and right padding to add
 
-// model is the model for a textinput.
+// TextInputModel is the TextInputModel for a textinput.
 // The textinput allows users to enter and modify text.
-type model struct {
+type TextInputModel struct {
 	name       string  // name of the text input
 	prompt     string  // prompt for the input
 	text       string  // the current text being inputted
@@ -27,16 +27,21 @@ type model struct {
 }
 
 // InitialModel builds the model.
-func InitialModel(name string, prompt string) model {
-	return model{
+func InitialModel(name string, prompt string) TextInputModel {
+	return TextInputModel{
 		name:    name,
 		prompt:  prompt,
 		sleeper: timeSleeper{},
 	}
 }
 
+// Text returns the curent text in the input.
+func (m *TextInputModel) Text() string {
+	return m.text
+}
+
 // toEnd moves the cursor to the end of the textinput.
-func (m *model) toEnd() {
+func (m *TextInputModel) toEnd() {
 	m.cursor = len(m.text)
 	if m.cursor > m.available()-1 {
 		diff := m.cursor - (m.available() - 1)
@@ -46,7 +51,7 @@ func (m *model) toEnd() {
 }
 
 // Update handles a message.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case msgs.FocusMsg:
@@ -171,12 +176,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // available returns the available space for text.
-func (m model) available() int {
+func (m TextInputModel) available() int {
 	return m.width - len(m.prompt)
 }
 
 // View renders the model.
-func (m model) View() string {
+func (m TextInputModel) View() string {
 	promptStyle := lipgloss.
 		NewStyle().
 		Bold(true).
@@ -226,12 +231,12 @@ func (m model) View() string {
 }
 
 // Init initializes the model.
-func (m model) Init() tea.Cmd {
+func (m TextInputModel) Init() tea.Cmd {
 	return nil
 }
 
 // blinkCmd makes the cursor blink.
-func (m *model) blinkCmd() tea.Cmd {
+func (m *TextInputModel) blinkCmd() tea.Cmd {
 	return func() tea.Msg {
 		// By sleeping and then returning another BlinkMsg we can make the cursor blink.
 		m.sleeper.sleep(BlinkSpeed * time.Millisecond)
@@ -240,9 +245,9 @@ func (m *model) blinkCmd() tea.Cmd {
 }
 
 // inputChangedCmd publishes a message with the current text.
-func (m model) inputChangedCmd() tea.Cmd {
+func (m TextInputModel) inputChangedCmd() tea.Cmd {
 	return func() tea.Msg {
-		return msgs.InputChangedMsg{Name: m.name, Text: m.text}
+		return msgs.InputChangedMsg{Name: m.name}
 	}
 }
 

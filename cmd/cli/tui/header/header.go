@@ -9,9 +9,9 @@ import (
 	"github.com/samber/lo"
 )
 
-// model is the model for a header.
+// HeaderModel is the HeaderModel for a header.
 // The header displays state information such as breadcrumbs for the selected book.
-type model struct {
+type HeaderModel struct {
 	name    string   // name of the header
 	title   string   // title of the app
 	nav     string   // breadcrumbs for the currently selected book
@@ -20,15 +20,15 @@ type model struct {
 }
 
 // InitialModel builds the model.
-func InitialModel(name string, title string) tea.Model {
-	return model{
+func InitialModel(name string, title string) HeaderModel {
+	return HeaderModel{
 		name:  name,
 		title: title,
 	}
 }
 
 // Update handles a message.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m HeaderModel) Update(msg tea.Msg) (HeaderModel, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case msgs.SizeMsg:
@@ -48,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View renders the model.
-func (m model) View() string {
+func (m HeaderModel) View() string {
 	const cellPadding = 1
 
 	cellWidth := m.width / 2
@@ -114,6 +114,6 @@ func (m model) View() string {
 }
 
 // Init initializes the model.
-func (m model) Init() tea.Cmd {
+func (m HeaderModel) Init() tea.Cmd {
 	return nil
 }

@@ -46,6 +46,57 @@ Feature: Update Folders with CLI
       | [id]        | NULL      | true      | blogs | NULL | NULL        |      |
 
   @cli @update_folder
+  Scenario: Can move folder to start of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | {id_1} | NULL      | true      | one   | NULL | NULL        |      |
+      | {id_2} | NULL      | true      | two   | NULL | NULL        |      |
+      | {id_3} | NULL      | true      | three | NULL | NULL        |      |
+    When I run it with the following args:
+      """
+      update folder [id_2] --before [id_1] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | [id_2] | NULL      | true      | two   | NULL | NULL        |      |
+      | [id_1] | NULL      | true      | one   | NULL | NULL        |      |
+      | [id_3] | NULL      | true      | three | NULL | NULL        |      |
+
+  @cli @update_folder
+  Scenario: Can move folder to end of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | {id_1} | NULL      | true      | one   | NULL | NULL        |      |
+      | {id_2} | NULL      | true      | two   | NULL | NULL        |      |
+      | {id_3} | NULL      | true      | three | NULL | NULL        |      |
+    When I run it with the following args:
+      """
+      update folder [id_2] --after [id_3] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | [id_1] | NULL      | true      | one   | NULL | NULL        |      |
+      | [id_3] | NULL      | true      | three | NULL | NULL        |      |
+      | [id_2] | NULL      | true      | two   | NULL | NULL        |      |
+
+  @cli @update_folder
+  Scenario: Can move folder to midddle of list
+    Given the DB already has the following entries:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | {id_1} | NULL      | true      | one   | NULL | NULL        |      |
+      | {id_2} | NULL      | true      | two   | NULL | NULL        |      |
+      | {id_3} | NULL      | true      | three | NULL | NULL        |      |
+    When I run it with the following args:
+      """
+      update folder [id_1] --after [id_2] --before [id_3] 
+      """
+    Then the following bookmarks/folders exist:
+      | id     | parent_id | is_folder | name  | url  | description | tags |
+      | [id_2] | NULL      | true      | two   | NULL | NULL        |      |
+      | [id_1] | NULL      | true      | one   | NULL | NULL        |      |
+      | [id_3] | NULL      | true      | three | NULL | NULL        |      |
+
+  @cli @update_folder
   Scenario: Name must be at most 2048 chars
     Given the DB already has the following entries:
    | id   | parent_id | is_folder | name  | url  | description | tags |

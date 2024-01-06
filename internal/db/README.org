@@ -1,0 +1,69 @@
+* Overview
+
+This is the data layer of Armaria. This document briefly covers some design decisions that were made about it.
+
+* ERD
+
+Here is the ERD for the Armaria database:
+
+#+begin_src mermaid :file "bookmarks-db.svg" :pupeteer-config-file "~/.emacs.d/pupeteer-config.json" :mermaid-config-file "~/.emacs.d/mermaid-config.json" :background-color "transparent"
+erDiagram
+  bookmarks ||--|{ bookmarks_tags: ""
+  tags ||--|{ bookmarks_tags: ""
+  bookmarks o|--o{ bookmarks: ""
+  
+  bookmarks {
+    text id
+    text parent_id
+    integer is_folder
+    text name
+    text url
+    text description
+    text modified
+    text order
+  }
+
+  tags {
+    text tag
+    text modified
+  }
+
+  bookmarks_tags {
+    text bookmark_id
+    text tag
+    text modified
+  }
+#+end_src
+
+#+RESULTS:
+[[file:bookmarks-db.svg]]
+
+* Hierarchical Data
+
+Armaria supports folders which is to say the bookmarks can be placed in a hierarchical layout (or even more simply a tree). I spent some time reading about the different ways you can implement this in SQL. The best references I found were these:
+
+ - [[https://vadimtropashko.wordpress.com/2008/08/09/one-more-nested-intervals-vs-adjacency-list-comparison/?utm_source=pocket_reader][One more Nested Intervals vs. Adjacency List comparison]]
+ - [[https://stackoverflow.com/questions/4048151/what-are-the-options-for-storing-hierarchical-data-in-a-relational-database][What are the options for storing hierarchical data in a relational database?]]
+
+I ended up going with the one that is the most widely used: *Adjacency List*.
+
+For those unfamiliar this approach just means you use a parent ID column to create the hierarchy.
+
+While there are more efficient approaches in some cases everything about adjacency lists is very easy to reason about, and reasonably efficient assuming your database supports recursive CTEs (which SQLite does).
+
+* Search
+
+Search was always a requirement for Armaria.
+
+In the past I've used the full text search offerings of many different databases. Unfortunately I've always found them very finicky. For small amounts of data (say less than a million) what is often most intuitive is a simple double wildcard: ~WHERE "col" LIKE %query%~. This is of course wildly non-performant by default. Thankfully SQLite supports something called [[https://en.wikipedia.org/wiki/Trigram_search][trigram search]].
+
+With trigram search that double wildcard filter above becomes performant. One upstream caveat to be aware of is that the minimum size of the query is 3 chars.
+
+* Pagination
+
+Anytime you are designing something that returns a list of things from the database you need to consider if you need pagination. In the case of Armaria I figured it would be a good idea to support it from the start so it can maintain performance for larger Armarias in more use cases.
+
+There are multiple approaches you can take with pagination, but these days it's mostly done with cursors. With the cursor approach you paginate by specifying the number of results you want, how you want those results ordered, and possibly the ID of a row to return results before or after. By making pagination relative like this you can maintain excellent performance even for larger amounts of data.
+
+A good reference on implementing cursor bases pagination can be found here:
+https://brunoscheufler.com/blog/2022-01-01-paginating-large-ordered-datasets-with-cursor-based-pagination

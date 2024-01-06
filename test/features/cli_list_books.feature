@@ -66,6 +66,38 @@ Feature: List Books with CLI
       | [id_2] | NULL      | false     | https://armaria.net | https://armaria.net | NULL        |      |
 
   @cli @list_books
+  Scenario: Can order bookmarks by manual ascending
+    Given the DB already has the following entries:
+      | id          | parent_id | is_folder | name                | url                 | description | tags |
+      | {parent_id} | NULL      | true      | blogs               | NULL                | NULL        |      |
+      | {id_1}      | NULL      | false     | https://jho.pe      | https://jho.pe      | NULL        |      |
+      | {id_2}      | NULL      | false     | https://armaria.net | https://armaria.net | NULL        |      |
+    When I run it with the following args:
+      """
+      list books --order manual --dir asc
+      """
+    Then the folllowing books are returned:
+      | id     | parent_id | is_folder | name                | url                 | description | tags |
+      | [id_1] | NULL      | false     | https://jho.pe      | https://jho.pe      | NULL        |      |
+      | [id_2] | NULL      | false     | https://armaria.net | https://armaria.net | NULL        |      |
+
+  @cli @list_books
+  Scenario: Can order bookmarks by manual descending
+    Given the DB already has the following entries:
+      | id          | parent_id | is_folder | name                | url                 | description | tags |
+      | {parent_id} | NULL      | true      | blogs               | NULL                | NULL        |      |
+      | {id_1}      | NULL      | false     | https://jho.pe      | https://jho.pe      | NULL        |      |
+      | {id_2}      | NULL      | false     | https://armaria.net | https://armaria.net | NULL        |      |
+    When I run it with the following args:
+      """
+      list books --order manual --dir desc
+      """
+    Then the folllowing books are returned:
+      | id     | parent_id | is_folder | name                | url                 | description | tags |
+      | [id_2] | NULL      | false     | https://armaria.net | https://armaria.net | NULL        |      |
+      | [id_1] | NULL      | false     | https://jho.pe      | https://jho.pe      | NULL        |      |
+
+  @cli @list_books
   Scenario: Can list bookmarks after bookmark
     Given the DB already has the following entries:
       | id          | parent_id | is_folder | name                | url                 | description | tags |

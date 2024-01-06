@@ -1,3 +1,4 @@
+// validate contains validation logic that should be run before DB calls are made.
 package validate
 
 import (
@@ -6,11 +7,10 @@ import (
 
 	"github.com/jonathanhope/armaria/internal/db"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/internal/order"
 	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/samber/lo"
 )
-
-// This file contains validators that should be run on user inputs before any DB calls are made.
 
 const MaxNameLength = 2048
 const MaxURLLength = 2048
@@ -122,7 +122,7 @@ func First(limit null.NullInt64) error {
 // Order validates an order value.
 // It must be modified or name.
 func Order(order armaria.Order) error {
-	if order != armaria.OrderModified && order != armaria.OrderName {
+	if order != armaria.OrderModified && order != armaria.OrderName && order != armaria.OrderManual {
 		return armaria.ErrInvalidOrder
 	}
 
@@ -186,4 +186,55 @@ func ParentID(tx db.Transaction, parentID null.NullString) error {
 	}
 
 	return nil
+}
+
+// Ordering validates the values used for manual ordering.
+// The previousBook value must be < the nextBook value.
+func Ordering(tx db.Transaction, previousID null.NullString, nextID null.NullString) (string, error) {
+	var previousOrder string
+	var nextOrder string
+
+	if previousID.Dirty {
+		books, err := db.GetBooks(tx, db.GetBooksArgs{
+			IDFilter:       previousID.String,
+			IncludeBooks:   true,
+			IncludeFolders: true,
+		})
+		if err != nil {
+			return "", fmt.Errorf("error checking if book exists while validating ordering")
+		}
+		if len(books) == 0 {
+			return "", armaria.ErrNotFound
+		}
+		previousOrder = books[0].Order
+	}
+
+	if nextID.Dirty {
+		books, err := db.GetBooks(tx, db.GetBooksArgs{
+			IDFilter:       nextID.String,
+			IncludeBooks:   true,
+			IncludeFolders: true,
+		})
+		if err != nil {
+			return "", fmt.Errorf("error checking if book exists while validating ordering")
+		}
+		if len(books) == 0 {
+			return "", armaria.ErrNotFound
+		}
+		nextOrder = books[0].Order
+	}
+
+	if previousOrder != "" && nextOrder != "" && previousOrder >= nextOrder {
+		return "", armaria.ErrInvalidOrdering
+	}
+
+	if previousOrder != "" && nextOrder != "" {
+		return order.Between(previousOrder, nextOrder)
+	} else if previousOrder != "" {
+		return order.End(previousOrder)
+	} else if nextOrder != "" {
+		return order.Start(nextOrder)
+	}
+
+	return "", nil
 }

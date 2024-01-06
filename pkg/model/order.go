@@ -6,4 +6,5 @@ type Order string
 const (
 	OrderModified Order = "modified"
 	OrderName     Order = "name"
+	OrderManual   Order = "manual"
 )

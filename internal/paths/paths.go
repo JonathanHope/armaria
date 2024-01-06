@@ -1,3 +1,8 @@
+// paths manages the paths to the various files Armaria cares about.
+// Armaria stores its bookmarks in a SQLite DB and its config in a TOML file.
+// Both of these files need to be stored somewhere.
+// This file contains the logic to figure out where to store those files.
+// It also keeps track of where manifest files need to be installed for browser extensions.
 package paths
 
 import (
@@ -8,10 +13,6 @@ import (
 
 	"github.com/jonathanhope/armaria/internal/null"
 )
-
-// Armaria stores its bookmarks in a SQLite DB and its config in a TOML file.
-// Both of these files need to be stored somewhere.
-// This file contains the logic to figure out where to store those files.
 
 // configFilename is the default name for the config file.
 const configFilename = "armaria.toml"

@@ -11,12 +11,12 @@ import (
 const Name = "header"
 
 func TestCanUpdateWidth(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := HeaderModel{
 		name: Name,
 	}
 	gotModel, gotCmd := gotModel.Update(msgs.SizeMsg{Name: Name, Width: 1})
 
-	wantModel := model{
+	wantModel := HeaderModel{
 		name:  Name,
 		width: 1,
 	}
@@ -25,18 +25,18 @@ func TestCanUpdateWidth(t *testing.T) {
 }
 
 func TestCanUpdateNav(t *testing.T) {
-	var gotModel tea.Model = model{}
+	gotModel := HeaderModel{}
 	gotModel, gotCmd := gotModel.Update(msgs.NavMsg("nav"))
 
-	wantModel := model{
+	wantModel := HeaderModel{
 		nav: "nav",
 	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
 
-func verifyUpdate(t *testing.T, gotModel tea.Model, wantModel tea.Model, gotCmd tea.Cmd, wantCmd tea.Cmd) {
-	unexported := cmp.AllowUnexported(model{})
+func verifyUpdate(t *testing.T, gotModel HeaderModel, wantModel HeaderModel, gotCmd tea.Cmd, wantCmd tea.Cmd) {
+	unexported := cmp.AllowUnexported(HeaderModel{})
 	modelDiff := cmp.Diff(gotModel, wantModel, unexported)
 	if modelDiff != "" {
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)

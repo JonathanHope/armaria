@@ -8,7 +8,6 @@ type FocusMsg struct {
 // InputChangedMsg is published when the value in a textinput changes.
 type InputChangedMsg struct {
 	Name string // name of the target textinput
-	Text string // the current text in the textinput
 }
 
 // BlinkMsg is a message that causes the cursor to blink.

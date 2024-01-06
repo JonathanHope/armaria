@@ -1,0 +1,11 @@
+* Overview
+
+These are the BDD tests for Armaria. They are written in [[https://cucumber.io/docs/gherkin/][Gherkin]].
+
+* BDD
+
+Armaria was written outside in. This means I started with writing user scenarios. In order to write the scenarios I had to have a client a user could interact with. To that end I started with a CLI as the genesis client. CLIs are very easy to stand up, and very easy to write Gherkin against. Also having a CLI for your bookmarks is neat.
+
+As new features are added to the core of Armaria (the stuff under ~pkg~) scenarios should be added as well. Ideally the scenario will be added first. The goal here is to keep Armaria focused on what it needs to do, and not how it might do it.
+
+The scenarios here are true integration tests. Since we are in SQLite it's cheap to create a database and throw it away when we're done with it. The integration tests are doing a lot of the test coverage work, and unit tests are generally added only where it makes sense. 

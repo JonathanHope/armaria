@@ -11,9 +11,6 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// This file contains the logic to connect to the database.
-// This is more involved than you might think.
-
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
@@ -22,6 +19,7 @@ type connectDBFn func(inputPath null.NullString, configPath string) (*sql.DB, er
 
 // connectDB returns a connection to the bookmarks database.
 // The DB will be created if it doesn't already exist.
+// The DB will also be migrated up to the latest version, and have its PRAGMAS properly set.
 func connectDB(inputPath null.NullString, configPath string) (*sql.DB, error) {
 	dbLocation, err := paths.Database(inputPath, configPath)
 	if err != nil {

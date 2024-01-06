@@ -15,6 +15,7 @@ type bookDTO struct {
 	Description null.NullString `db:"description"`
 	ParentID    null.NullString `db:"parent_id"`
 	IsFolder    bool            `db:"is_folder"`
+	Order       string          `db:"order"`
 	ParentName  null.NullString `db:"parent_name"`
 	Tags        string          `db:"tags"`
 }
@@ -28,6 +29,7 @@ func (book bookDTO) toBook() armaria.Book {
 		Description: null.PtrFromNullString(book.Description),
 		ParentID:    null.PtrFromNullString(book.ParentID),
 		IsFolder:    book.IsFolder,
+		Order:       book.Order,
 		ParentName:  null.PtrFromNullString(book.ParentName),
 		Tags:        parseTags(book.Tags),
 	}

@@ -16,7 +16,7 @@ const width = 4
 func TestTextScrollsAsInputAdded(t *testing.T) {
 	// enter 1
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -26,7 +26,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -35,7 +35,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 		focus:  true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "1"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -43,7 +43,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -52,7 +52,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 		focus:  true,
 	}
 
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "12"} }
+	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -60,7 +60,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'3'}})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -70,7 +70,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 		focus:      true,
 	}
 
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "123"} }
+	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -78,7 +78,7 @@ func TestTextScrollsAsInputAdded(t *testing.T) {
 func TestTextScrollsAsInputRemoved(t *testing.T) {
 	// delete 3
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -90,7 +90,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -99,7 +99,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 		focus:  true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "12"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -107,7 +107,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -116,7 +116,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 		focus:  true,
 	}
 
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "1"} }
+	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -124,7 +124,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:   name,
 		prompt: prompt,
 		width:  width,
@@ -132,7 +132,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 		focus:  true,
 	}
 
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: ""} }
+	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -146,7 +146,7 @@ func TestTextScrollsAsInputRemoved(t *testing.T) {
 func TestCanScrollToStartOfText(t *testing.T) {
 	// move to 3
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -158,7 +158,7 @@ func TestCanScrollToStartOfText(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -174,7 +174,7 @@ func TestCanScrollToStartOfText(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -190,7 +190,7 @@ func TestCanScrollToStartOfText(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -212,7 +212,7 @@ func TestCanScrollToStartOfText(t *testing.T) {
 func TestCanScrollToEndOfText(t *testing.T) {
 	// move to 2
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -224,7 +224,7 @@ func TestCanScrollToEndOfText(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -240,7 +240,7 @@ func TestCanScrollToEndOfText(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -256,7 +256,7 @@ func TestCanScrollToEndOfText(t *testing.T) {
 
 	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
 
-	wantModel = model{
+	wantModel = TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -276,7 +276,7 @@ func TestCanScrollToEndOfText(t *testing.T) {
 }
 
 func TestCanInsertAtStart(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -288,7 +288,7 @@ func TestCanInsertAtStart(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -298,13 +298,13 @@ func TestCanInsertAtStart(t *testing.T) {
 		focus:      true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "0123"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
 func TestCanDeleteAtStart(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -316,7 +316,7 @@ func TestCanDeleteAtStart(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -326,13 +326,13 @@ func TestCanDeleteAtStart(t *testing.T) {
 		focus:      true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "123"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
 func TestCanInsertInMiddle(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -344,7 +344,7 @@ func TestCanInsertInMiddle(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -354,13 +354,13 @@ func TestCanInsertInMiddle(t *testing.T) {
 		focus:      true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "123"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
 func TestCanDeleteInMiddle(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -372,7 +372,7 @@ func TestCanDeleteInMiddle(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:       name,
 		prompt:     prompt,
 		width:      width,
@@ -382,19 +382,19 @@ func TestCanDeleteInMiddle(t *testing.T) {
 		focus:      true,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name, Text: "13"} }
+	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
 func TestCanChangePrompt(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name: name,
 	}
 
 	gotModel, gotCmd := gotModel.Update(msgs.PromptMsg{Name: name, Prompt: prompt})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:   name,
 		prompt: prompt,
 	}
@@ -405,14 +405,14 @@ func TestCanChangePrompt(t *testing.T) {
 func TestCanChangeText(t *testing.T) {
 	const text = "123"
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:  name,
 		width: 4,
 	}
 
 	gotModel, gotCmd := gotModel.Update(msgs.TextMsg{Name: name, Text: text})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:   name,
 		text:   text,
 		width:  4,
@@ -425,13 +425,13 @@ func TestCanChangeText(t *testing.T) {
 func TestCanChangeSize(t *testing.T) {
 	const width = 3
 
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name: name,
 	}
 
 	gotModel, gotCmd := gotModel.Update(msgs.SizeMsg{Name: name, Width: width})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:  name,
 		width: width - Padding*2,
 	}
@@ -440,7 +440,7 @@ func TestCanChangeSize(t *testing.T) {
 }
 
 func TestCanFocus(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:    name,
 		focus:   false,
 		blink:   false,
@@ -450,7 +450,7 @@ func TestCanFocus(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(msgs.FocusMsg{Name: name})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:    name,
 		focus:   true,
 		blink:   true,
@@ -464,7 +464,7 @@ func TestCanFocus(t *testing.T) {
 }
 
 func TestCanBlur(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:    name,
 		focus:   true,
 		blink:   true,
@@ -473,7 +473,7 @@ func TestCanBlur(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(msgs.BlurMsg{Name: name})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:    name,
 		focus:   false,
 		blink:   false,
@@ -484,7 +484,7 @@ func TestCanBlur(t *testing.T) {
 }
 
 func TestCanBlink(t *testing.T) {
-	var gotModel tea.Model = model{
+	gotModel := TextInputModel{
 		name:    name,
 		focus:   true,
 		blink:   true,
@@ -493,7 +493,7 @@ func TestCanBlink(t *testing.T) {
 
 	gotModel, gotCmd := gotModel.Update(msgs.BlinkMsg{Name: name})
 
-	wantModel := model{
+	wantModel := TextInputModel{
 		name:    name,
 		focus:   true,
 		blink:   false,
@@ -505,8 +505,19 @@ func TestCanBlink(t *testing.T) {
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
-func verifyUpdate(t *testing.T, gotModel tea.Model, wantModel tea.Model, gotCmd tea.Cmd, wantCmd tea.Cmd) {
-	unexported := cmp.AllowUnexported(model{})
+func TestText(t *testing.T) {
+	gotModel := TextInputModel{
+		text: "123",
+	}
+
+	diff := cmp.Diff(gotModel.Text(), "123")
+	if diff != "" {
+		t.Errorf("Expected and actual text different:\n%s", diff)
+	}
+}
+
+func verifyUpdate(t *testing.T, gotModel TextInputModel, wantModel TextInputModel, gotCmd tea.Cmd, wantCmd tea.Cmd) {
+	unexported := cmp.AllowUnexported(TextInputModel{})
 	modelDiff := cmp.Diff(gotModel, wantModel, unexported)
 	if modelDiff != "" {
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)

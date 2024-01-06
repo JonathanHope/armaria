@@ -10,27 +10,25 @@ import (
 	"github.com/samber/lo"
 )
 
-// This file contains the low level logic to access the bookmarks DB.
-
 // create
 
 // AddBook inserts a book into the bookmarks database.
-func AddBook(tx Transaction, url string, name string, description null.NullString, parentID null.NullString) (string, error) {
+func AddBook(tx Transaction, url string, name string, description null.NullString, parentID null.NullString, order string) (string, error) {
 	id := uuid.New().String()
 
-	insert := bqb.New(`INSERT INTO "bookmarks"("id", "url", "is_folder", "name", "description", "parent_id")`)
-	insert.Space("VALUES(?, ?, ?, ?, ?, ?)", id, url, false, name, description, parentID)
+	insert := bqb.New(`INSERT INTO "bookmarks"("id", "url", "is_folder", "name", "description", "parent_id", "order")`)
+	insert.Space("VALUES(?, ?, ?, ?, ?, ?, ?)", id, url, false, name, description, parentID, order)
 
 	err := exec(tx, insert)
 	return id, err
 }
 
 // AddFolder inserts a folder into the bookmarks database.
-func AddFolder(tx Transaction, name string, parentID null.NullString) (string, error) {
+func AddFolder(tx Transaction, name string, parentID null.NullString, order string) (string, error) {
 	id := uuid.New().String()
 
-	insert := bqb.New(`INSERT INTO "bookmarks"("id", "is_folder", "name", "parent_id")`)
-	insert.Space("VALUES(?, ?, ?, ?)", id, true, name, parentID)
+	insert := bqb.New(`INSERT INTO "bookmarks"("id", "is_folder", "name", "parent_id", "order")`)
+	insert.Space("VALUES(?, ?, ?, ?, ?)", id, true, name, parentID, order)
 
 	err := exec(tx, insert)
 	return id, err
@@ -96,6 +94,7 @@ func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
 	books.Comma(`"child"."description"`)
 	books.Comma(`"child"."parent_id"`)
 	books.Comma(`"child"."is_folder"`)
+	books.Comma(`"child"."order"`)
 	books.Comma(`"parent"."name" AS "parent_name"`)
 	books.Comma(`IFNULL((?), '') AS "tags"`, tags)
 	books.Space(`FROM "bookmarks" AS "child"`)
@@ -148,12 +147,18 @@ func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
 			where.And(`("child"."modified" > (SELECT "modified" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
 		} else if args.Order == armaria.OrderModified && args.Direction == armaria.DirectionDesc {
 			where.And(`("child"."modified" < (SELECT "modified" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
+		} else if args.Order == armaria.OrderManual && args.Direction == armaria.DirectionAsc {
+			where.And(`("child"."order" > (SELECT "order" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
+		} else if args.Order == armaria.OrderManual && args.Direction == armaria.DirectionDesc {
+			where.And(`("child"."order" < (SELECT "order" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
 		}
 
 		if args.Order == armaria.OrderName {
 			where.Or(`("child"."name" = (SELECT "name" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
 		} else if args.Order == armaria.OrderModified {
 			where.Or(`("child"."modified" = (SELECT "modified" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
+		} else if args.Order == armaria.OrderManual {
+			where.Or(`("child"."order" = (SELECT "order" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
 		}
 	}
 
@@ -167,6 +172,10 @@ func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
 		books.Space(`ORDER BY "child"."modified" ASC`)
 	} else if args.Direction == armaria.DirectionDesc && args.Order == armaria.OrderModified {
 		books.Space(`ORDER BY "child"."modified" DESC`)
+	} else if args.Direction == armaria.DirectionAsc && args.Order == armaria.OrderManual {
+		books.Space(`ORDER BY "child"."order" ASC`)
+	} else if args.Direction == armaria.DirectionDesc && args.Order == armaria.OrderManual {
+		books.Space(`ORDER BY "child"."order" DESC`)
 	}
 
 	if args.First.Dirty && args.First.Valid {
@@ -254,6 +263,7 @@ func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
 	first.Comma(`"child"."description"`)
 	first.Comma(`"child"."parent_id"`)
 	first.Comma(`"child"."is_folder"`)
+	first.Comma(`"child"."order"`)
 	first.Comma(`"parent"."name" AS "parent"`)
 	first.Comma(`IFNULL((?), '') AS "tags"`, tags)
 	first.Space(`FROM "bookmarks" AS "child"`)
@@ -266,6 +276,7 @@ func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
 	rest.Comma(`"child"."description"`)
 	rest.Comma(`"child"."parent_id"`)
 	rest.Comma(`"child"."is_folder"`)
+	rest.Comma(`"child"."order"`)
 	rest.Comma(`"parent"."name" AS "parent"`)
 	rest.Comma(`IFNULL((?), '') AS "tags"`, tags)
 	rest.Space(`FROM "bookmarks" AS "child"`)
@@ -279,6 +290,7 @@ func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
 	books.Comma(`"description"`)
 	books.Comma(`"parent_id"`)
 	books.Comma(`"is_folder"`)
+	books.Comma(`"order"`)
 	books.Comma(`"parent"`)
 	books.Comma(`"tags"`)
 	books.Space(`FROM BOOK`)
@@ -287,7 +299,20 @@ func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
 	return lo.Map(results, func(x bookDTO, index int) armaria.Book {
 		return x.toBook()
 	}), err
+}
 
+// MaxOrder returns the max order for a given parentID.
+func MaxOrder(tx Transaction, parentID null.NullString) (string, error) {
+	order := bqb.New(`SELECT IFNULL(MAX("bookmarks"."order"), '') AS "order"`)
+	order.Space(`FROM "bookmarks"`)
+	if parentID.Valid {
+		order.Space(`WHERE "bookmarks"."parent_id" = ?`, parentID)
+	} else {
+		order.Space(`WHERE "bookmarks"."parent_id" IS NULL`)
+	}
+
+	results, err := query[string](tx, order)
+	return results[0], err
 }
 
 // update
@@ -298,6 +323,7 @@ type UpdateBookArgs struct {
 	URL         null.NullString
 	Description null.NullString
 	ParentID    null.NullString
+	Order       string
 }
 
 // UpdateBook updates a book in the bookmarks database.
@@ -321,6 +347,10 @@ func UpdateBook(tx Transaction, ID string, args UpdateBookArgs) error {
 		set.Comma(`"parent_id" = ?`, args.ParentID)
 	}
 
+	if args.Order != "" {
+		set.Comma(`"order" = ?`, args.Order)
+	}
+
 	update.Space(`?`, set)
 	update.Space(`WHERE "id" = ?`, ID)
 	update.Space(`AND "is_folder" = ?`, false)
@@ -332,6 +362,7 @@ func UpdateBook(tx Transaction, ID string, args UpdateBookArgs) error {
 type UpdateFolderArgs struct {
 	Name     null.NullString
 	ParentID null.NullString
+	Order    string
 }
 
 // UpdateFolder updates a folder in the bookmarks database.
@@ -345,6 +376,10 @@ func UpdateFolder(tx Transaction, ID string, args UpdateFolderArgs) error {
 
 	if args.ParentID.Dirty {
 		set.Comma(`"parent_id" = ?`, args.ParentID)
+	}
+
+	if args.Order != "" {
+		set.Comma(`"order" = ?`, args.Order)
 	}
 
 	update.Space(`?`, set)

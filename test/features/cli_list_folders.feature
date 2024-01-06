@@ -66,6 +66,38 @@ Feature: List Folder with CLI
       | [parent_1_id] | NULL      | true      | blogs | NULL | NULL        |      |
 
   @cli @list_folders
+  Scenario: Can order folders by manual ascending
+    Given the DB already has the following entries:
+      | id            | parent_id | is_folder | name           | url            | description | tags |
+      | {parent_1_id} | NULL      | true      | blogs          | NULL           | NULL        |      |
+      | {parent_2_id} | NULL      | true      | tech           | NULL           | NULL        |      |
+      | {id}          | NULL      | false     | https://jho.pe | https://jho.pe | NULL        |      |
+    When I run it with the following args:
+      """
+      list folders --order manual --dir asc
+      """
+    Then the folllowing books are returned:
+      | id            | parent_id | is_folder | name  | url  | description | tags |
+      | [parent_1_id] | NULL      | true      | blogs | NULL | NULL        |      |
+      | [parent_2_id] | NULL      | true      | tech  | NULL | NULL        |      |
+
+  @cli @list_folders
+  Scenario: Can order folders by manual descending
+    Given the DB already has the following entries:
+      | id            | parent_id | is_folder | name           | url            | description | tags |
+      | {parent_1_id} | NULL      | true      | blogs          | NULL           | NULL        |      |
+      | {parent_2_id} | NULL      | true      | tech           | NULL           | NULL        |      |
+      | {id}          | NULL      | false     | https://jho.pe | https://jho.pe | NULL        |      |
+    When I run it with the following args:
+      """
+      list folders --order manual --dir desc
+      """
+    Then the folllowing books are returned:
+      | id            | parent_id | is_folder | name  | url  | description | tags |
+      | [parent_2_id] | NULL      | true      | tech  | NULL | NULL        |      |
+      | [parent_1_id] | NULL      | true      | blogs | NULL | NULL        |      |
+
+  @cli @list_folders
   Scenario: Can list folders after folder
     Given the DB already has the following entries:
       | id            | parent_id | is_folder | name           | url            | description | tags |

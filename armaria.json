@@ -1,7 +1,0 @@
-{
-  "name": "armaria",
-  "description": "Armaria is a fast local-first bookmarks manager.",
-  "path": "/home/jhope/Projects/armaria/armaria-host",
-  "type": "stdio",
-  "allowed_extensions": ["armaria@armaria.net"]
-}

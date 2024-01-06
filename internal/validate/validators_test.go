@@ -11,7 +11,7 @@ import (
 	"github.com/jonathanhope/armaria/pkg/model"
 )
 
-func TestValidateURL(t *testing.T) {
+func TestURL(t *testing.T) {
 	type test struct {
 		input null.NullString
 		want  error
@@ -33,7 +33,7 @@ func TestValidateURL(t *testing.T) {
 	}
 }
 
-func TestValidateName(t *testing.T) {
+func TestName(t *testing.T) {
 	type test struct {
 		input null.NullString
 		want  error
@@ -55,7 +55,7 @@ func TestValidateName(t *testing.T) {
 	}
 }
 
-func TestValidateDescription(t *testing.T) {
+func TestDescription(t *testing.T) {
 	type test struct {
 		input null.NullString
 		want  error
@@ -77,7 +77,7 @@ func TestValidateDescription(t *testing.T) {
 	}
 }
 
-func TestValidateTags(t *testing.T) {
+func TestTags(t *testing.T) {
 	type test struct {
 		input    []string
 		existing []string
@@ -114,7 +114,7 @@ func TestValidateTags(t *testing.T) {
 	}
 }
 
-func TestValidateFirst(t *testing.T) {
+func TestFirst(t *testing.T) {
 	type test struct {
 		input null.NullInt64
 		want  error
@@ -134,7 +134,7 @@ func TestValidateFirst(t *testing.T) {
 	}
 }
 
-func TestValidateOrder(t *testing.T) {
+func TestOrder(t *testing.T) {
 	type test struct {
 		input armaria.Order
 		want  error
@@ -143,6 +143,7 @@ func TestValidateOrder(t *testing.T) {
 	tests := []test{
 		{input: armaria.OrderName, want: nil},
 		{input: armaria.OrderModified, want: nil},
+		{input: armaria.OrderManual, want: nil},
 		{input: "", want: armaria.ErrInvalidOrder},
 		{input: "Description", want: armaria.ErrInvalidOrder},
 	}
@@ -155,7 +156,7 @@ func TestValidateOrder(t *testing.T) {
 	}
 }
 
-func TestValidateDirection(t *testing.T) {
+func TestDirection(t *testing.T) {
 	type test struct {
 		input armaria.Direction
 		want  error
@@ -176,7 +177,7 @@ func TestValidateDirection(t *testing.T) {
 	}
 }
 
-func TestValidateQuery(t *testing.T) {
+func TestQuery(t *testing.T) {
 	type test struct {
 		input null.NullString
 		want  error

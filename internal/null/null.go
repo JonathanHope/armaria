@@ -1,14 +1,16 @@
+// null makes it easier to deal with values that could be null or undefined.
+// Armaria deals with databases and JSON a fair bit.
+// Both of these things make use of NULL.
+// The abstractions in this file allow us to support NULL robustly for both of them.
+// The abstractions also keep track of whether a field was set at all which is useful for optional params.
+// This is largely based on the excellent ideas in this package:
+// https://github.com/guregu/null
 package null
 
 import (
 	"database/sql"
 	"encoding/json"
 )
-
-// Armaria deals with databases and JSON a fair bit.
-// Both of these things make use of NULL.
-// The abstractions in this file allow us to support NULL robustly for both of them.
-// The abstractions also keep track of whether a field was set at all which is useful for optional params.
 
 // NullString is a string that can be NULL.
 type NullString struct {

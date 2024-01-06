@@ -39,21 +39,18 @@ const (
 // model is the model for the book listing.
 // The book listing displays the bookmarks in the bookmarks DB.
 type model struct {
-	activeView msgs.View    // which view is currently being shown
-	helpMode   bool         // whether to show the help or not
-	inputMode  bool         // if true then the view is collecting input
-	inputType  inputType    // which type of input is being collected
-	width      int          // the current width of the screen
-	height     int          // the current height of the screen
-	folder     string       // the current folder
-	selection  armaria.Book // the currently selected book
-	empty      bool         //  whether the books table is empty; if true selection is invalid
-	query      string       // current search query
-	editing    string       // the text being edited
-	header     tea.Model    // header for app
-	table      tea.Model    // table of books
-	help       tea.Model    // help for the app
-	input      tea.Model    // allows text input
+	activeView msgs.View                                  // which view is currently being shown
+	helpMode   bool                                       // whether to show the help or not
+	inputMode  bool                                       // if true then the view is collecting input
+	inputType  inputType                                  // which type of input is being collected
+	width      int                                        // the current width of the screen
+	height     int                                        // the current height of the screen
+	folder     string                                     // the current folder
+	query      string                                     // current search query
+	header     header.HeaderModel                         // header for app
+	table      scrolltable.ScrolltableModel[armaria.Book] // table of books
+	help       help.HelpModel                             // help for the app
+	input      textinput.TextInputModel                   // allows text input
 }
 
 // InitialModel builds the model.
@@ -219,6 +216,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+		case msgs.ViewMsg:
+			m.activeView = msgs.View(msg)
+			return m, nil
+
 		case tea.WindowSizeMsg:
 			m.height = msg.Height
 			m.width = msg.Width
@@ -242,23 +243,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				m.inputMode = false
 				m.query = ""
-				m.editing = ""
 				m.inputType = inputNone
 				return m, m.inputEndCmd()
 
 			case "enter":
 				cmds := []tea.Cmd{m.inputEndCmd()}
 				if m.inputType == inputName {
-					cmds = append(cmds, m.updateNameCmd(m.editing))
+					cmds = append(cmds, m.updateNameCmd(m.input.Text()))
 				} else if m.inputType == inputURL {
-					cmds = append(cmds, m.updateURLCmd(m.editing))
+					cmds = append(cmds, m.updateURLCmd(m.input.Text()))
 				} else if m.inputType == inputFolder {
-					cmds = append(cmds, m.addFolderCmd(m.editing))
+					cmds = append(cmds, m.addFolderCmd(m.input.Text()))
 				}
 
 				m.inputMode = false
 				m.inputType = inputNone
-				m.editing = ""
 
 				return m, tea.Batch(cmds...)
 
@@ -275,17 +274,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case msgs.InputChangedMsg:
 			if m.inputType == inputSearch {
-				m.query = msg.Text
-			} else {
-				m.editing = msg.Text
+				m.query = m.input.Text()
+				return m, m.getBooksCmd(msgs.DirectionStart)
 			}
-
-			return m, m.getBooksCmd()
 
 		case msgs.DataMsg[armaria.Book]:
 			var tableCmd tea.Cmd
 			m.table, tableCmd = m.table.Update(msg)
 			return m, tableCmd
+
+		case msgs.ViewMsg:
+			m.activeView = msgs.View(msg)
+			return m, nil
 
 		default:
 			var inputCmd tea.Cmd
@@ -320,10 +320,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.helpMode = true
 
 		case "enter":
-			if !m.empty {
-				if m.selection.IsFolder {
-					m.folder = m.selection.ID
-					cmds = append(cmds, m.getBooksCmd())
+			if !m.table.Empty() {
+				if m.table.Selection().IsFolder {
+					m.folder = m.table.Selection().ID
+					cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
 				} else {
 					cmds = append(cmds, m.openURLCmd())
 				}
@@ -335,13 +335,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "right":
-			if !m.empty && m.selection.IsFolder {
-				m.folder = m.selection.ID
-				cmds = append(cmds, m.getBooksCmd())
+			if !m.table.Empty() && m.table.Selection().IsFolder {
+				m.folder = m.table.Selection().ID
+				cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
 			}
 
 		case "D":
-			if !m.empty {
+			if !m.table.Empty() {
 				cmds = append(cmds, m.deleteBookCmd())
 			}
 
@@ -349,13 +349,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.query = ""
 			cmds = append(
 				cmds,
-				m.getBooksCmd(),
+				m.getBooksCmd(msgs.DirectionStart),
 				m.updateFiltersCmd(),
 				m.recalculateSizeCmd(),
 			)
 
 		case "r":
-			cmds = append(cmds, m.getBooksCmd())
+			cmds = append(cmds, m.getBooksCmd(msgs.DirectionNone))
 
 		case "s":
 			m.inputMode = true
@@ -363,30 +363,51 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.inputStartCmd("Query: ", ""))
 
 		case "u":
-			if !m.empty && !m.selection.IsFolder {
+			if !m.table.Empty() && !m.table.Selection().IsFolder {
 				m.inputMode = true
 				m.inputType = inputURL
-				cmds = append(cmds, m.inputStartCmd("URL: ", *m.selection.URL))
+				cmds = append(cmds, m.inputStartCmd("URL: ", *m.table.Selection().URL))
 			}
 
 		case "n":
-			if !m.empty {
+			if !m.table.Empty() {
 				m.inputMode = true
 				m.inputType = inputName
-				cmds = append(cmds, m.inputStartCmd("Name: ", m.selection.Name))
+				cmds = append(cmds, m.inputStartCmd("Name: ", m.table.Selection().Name))
 			}
 
 		case "+":
 			m.inputMode = true
 			m.inputType = inputFolder
 			cmds = append(cmds, m.inputStartCmd("Folder: ", ""))
+
+		case "ctrl+up":
+			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 {
+				if m.table.Index() == 1 {
+					next := m.table.Data()[0].ID
+					cmds = append(cmds, m.moveToStartCmd(next, msgs.DirectionUp))
+				} else {
+					previous := m.table.Data()[m.table.Index()-2].ID
+					next := m.table.Data()[m.table.Index()-1].ID
+					cmds = append(cmds, m.moveBetweenCmd(previous, next, msgs.DirectionUp))
+				}
+			}
+
+		case "ctrl+down":
+			if m.query == "" && !m.table.Empty() && m.table.Index() < len(m.table.Data())-1 {
+				if m.table.Index() == len(m.table.Data())-2 {
+					previous := m.table.Data()[len(m.table.Data())-1].ID
+					cmds = append(cmds, m.moveToEndCmd(previous, msgs.DirectionDown))
+				} else {
+					previous := m.table.Data()[m.table.Index()+1].ID
+					next := m.table.Data()[m.table.Index()+2].ID
+					cmds = append(cmds, m.moveBetweenCmd(previous, next, msgs.DirectionDown))
+				}
+			}
 		}
 
 	case msgs.SelectionChangedMsg[armaria.Book]:
-		m.selection = msg.Selection
-		m.empty = msg.Empty
-
-		if !m.empty {
+		if !m.table.Empty() {
 			cmds = append(cmds, m.getBreadcrumbsCmd())
 		}
 
@@ -398,7 +419,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case msgs.FolderMsg:
 		m.folder = string(msg)
-		cmds = append(cmds, m.getBooksCmd())
+		cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
+
+	case msgs.ViewMsg:
+		m.activeView = msgs.View(msg)
+		return m, nil
 	}
 
 	return m, tea.Batch(cmds...)
@@ -460,11 +485,11 @@ func (m model) footerView() string {
 
 // Init initializes the model.
 func (m model) Init() tea.Cmd {
-	return m.getBooksCmd()
+	return m.getBooksCmd(msgs.DirectionStart)
 }
 
 // getBooksCmd is a command to get books from the bookmarks database.
-func (m model) getBooksCmd() tea.Cmd {
+func (m model) getBooksCmd(move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
 		options := armariaapi.
 			DefaultListBooksOptions().
@@ -484,7 +509,7 @@ func (m model) getBooksCmd() tea.Cmd {
 			return msgs.ErrorMsg{Err: err}
 		}
 
-		return msgs.DataMsg[armaria.Book]{Name: TableName, Data: books}
+		return msgs.DataMsg[armaria.Book]{Name: TableName, Data: books, Move: move}
 	}
 }
 
@@ -520,7 +545,7 @@ func (m model) openURLCmd() tea.Cmd {
 			cmd = "xdg-open"
 		}
 
-		args = append(args, *m.selection.URL)
+		args = append(args, *m.table.Selection().URL)
 		err := exec.Command(cmd, args...).Start()
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
@@ -533,7 +558,7 @@ func (m model) openURLCmd() tea.Cmd {
 // getBreadcrumbsCmd gets breadcrumbs for the currently selected book.
 func (m model) getBreadcrumbsCmd() tea.Cmd {
 	return func() tea.Msg {
-		parents, err := armariaapi.GetParentNames(m.selection.ID, armariaapi.DefaultGetParentNameOptions())
+		parents, err := armariaapi.GetParentNames(m.table.Selection().ID, armariaapi.DefaultGetParentNameOptions())
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -545,19 +570,19 @@ func (m model) getBreadcrumbsCmd() tea.Cmd {
 // deleteBookCmd deletes a bookmark or folder.
 func (m model) deleteBookCmd() tea.Cmd {
 	return func() tea.Msg {
-		if m.selection.IsFolder {
-			err := armariaapi.RemoveFolder(m.selection.ID, armariaapi.DefaultRemoveFolderOptions())
+		if m.table.Selection().IsFolder {
+			err := armariaapi.RemoveFolder(m.table.Selection().ID, armariaapi.DefaultRemoveFolderOptions())
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			err := armariaapi.RemoveBook(m.selection.ID, armariaapi.DefaultRemoveBookOptions())
+			err := armariaapi.RemoveBook(m.table.Selection().ID, armariaapi.DefaultRemoveBookOptions())
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		}
 
-		return m.getBooksCmd()()
+		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }
 
@@ -568,24 +593,24 @@ func (m model) updateURLCmd(URL string) tea.Cmd {
 			DefaultUpdateBookOptions().
 			WithURL(URL)
 
-		_, err := armariaapi.UpdateBook(m.selection.ID, options)
+		_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
 
-		return m.getBooksCmd()()
+		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }
 
 // updateNameCmd updates a name for a bookmark or folder.
 func (m model) updateNameCmd(name string) tea.Cmd {
 	return func() tea.Msg {
-		if m.selection.IsFolder {
+		if m.table.Selection().IsFolder {
 			options := armariaapi.
 				DefaultUpdateFolderOptions().
 				WithName(name)
 
-			_, err := armariaapi.UpdateFolder(m.selection.ID, options)
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -594,13 +619,13 @@ func (m model) updateNameCmd(name string) tea.Cmd {
 				DefaultUpdateBookOptions().
 				WithName(name)
 
-			_, err := armariaapi.UpdateBook(m.selection.ID, options)
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		}
 
-		return m.getBooksCmd()()
+		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }
 
@@ -617,7 +642,7 @@ func (m model) addFolderCmd(name string) tea.Cmd {
 			return msgs.ErrorMsg{Err: err}
 		}
 
-		return m.getBooksCmd()()
+		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }
 
@@ -645,7 +670,7 @@ func (m model) inputEndCmd() tea.Cmd {
 		func() tea.Msg { return msgs.BlurMsg{Name: TextInputName} },
 		func() tea.Msg { return msgs.PromptMsg{Name: TextInputName, Prompt: ""} },
 		func() tea.Msg { return msgs.TextMsg{Name: TextInputName, Text: ""} },
-		m.getBooksCmd(),
+		m.getBooksCmd(msgs.DirectionNone),
 		m.updateFiltersCmd(),
 		m.recalculateSizeCmd(),
 	}
@@ -683,4 +708,89 @@ func (m model) recalculateSizeCmd() tea.Cmd {
 		func() tea.Msg { return tableSizeMsg },
 		func() tea.Msg { return inputSizeMsg },
 	)
+}
+
+// moveToEndCmd moves a bookmark or folder to the end of the list.
+func (m model) moveToEndCmd(previous string, move msgs.Direction) tea.Cmd {
+	return func() tea.Msg {
+		if m.table.Selection().IsFolder {
+			options := armariaapi.
+				DefaultUpdateFolderOptions().
+				WithOrderAfter(previous)
+
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		} else {
+			options := armariaapi.
+				DefaultUpdateBookOptions().
+				WithOrderAfter(previous)
+
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		}
+
+		return m.getBooksCmd(move)()
+	}
+}
+
+// moveToEndCmd moves a bookmark or folder to the end of the list.
+func (m model) moveToStartCmd(next string, move msgs.Direction) tea.Cmd {
+	return func() tea.Msg {
+		if m.table.Selection().IsFolder {
+			options := armariaapi.
+				DefaultUpdateFolderOptions().
+				WithOrderBefore(next)
+
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		} else {
+			options := armariaapi.
+				DefaultUpdateBookOptions().
+				WithOrderBefore(next)
+
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		}
+
+		return m.getBooksCmd(move)()
+	}
+}
+
+// moveBetweenCmd moves a bookmark or folder between two items on the list.
+func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction) tea.Cmd {
+	return func() tea.Msg {
+		if m.table.Selection().IsFolder {
+			options := armariaapi.
+				DefaultUpdateFolderOptions().
+				WithOrderAfter(previous).
+				WithOrderBefore(next)
+
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			if err != nil {
+				fmt.Println(err)
+				return msgs.ErrorMsg{Err: err}
+			}
+		} else {
+			options := armariaapi.
+				DefaultUpdateBookOptions().
+				WithOrderAfter(previous).
+				WithOrderBefore(next)
+
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			if err != nil {
+				fmt.Println(err)
+				return msgs.ErrorMsg{Err: err}
+			}
+		}
+
+		return m.getBooksCmd(move)()
+	}
 }

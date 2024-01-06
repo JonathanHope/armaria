@@ -34,9 +34,9 @@ type ColumnDefinition[T any] struct {
 	RenderCell  RenderCellFn[T]  // function to get the string content for a given cell
 }
 
-// model is the model for a scrolltable.
+// ScrolltableModel is the ScrolltableModel for a scrolltable.
 // The scrolltable is a table that supports data larger than the screen itself.
-type model[T any] struct {
+type ScrolltableModel[T any] struct {
 	name              string                // name of the scrolltable
 	columnDefinitions []ColumnDefinition[T] // information about the columns needed to style/render them
 	data              []T                   //  the data to show in the scrolltable
@@ -47,30 +47,35 @@ type model[T any] struct {
 }
 
 // InitialModel builds a scrolltable model.
-func InitialModel[T any](name string, columnDefinitions []ColumnDefinition[T]) tea.Model {
-	return model[T]{
+func InitialModel[T any](name string, columnDefinitions []ColumnDefinition[T]) ScrolltableModel[T] {
+	return ScrolltableModel[T]{
 		name:              name,
 		columnDefinitions: columnDefinitions,
 	}
 }
 
-// empty returns true if the current frame is empty.
-func (m model[T]) empty() bool {
-	return len(m.frame()) == 0
+// Empty returns true if the current frame is Empty.
+func (m ScrolltableModel[T]) Empty() bool {
+	return len(m.Frame()) == 0
 }
 
-// selection returns the current selection.
-func (m model[T]) selection() T {
+// Selection returns the current Selection.
+func (m ScrolltableModel[T]) Selection() T {
 	var zero T
-	if m.empty() {
+	if m.Empty() {
 		return zero
 	}
 
-	return m.frame()[m.cursor]
+	return m.Frame()[m.cursor]
 }
 
-// frame returns the currently visible frame of data.
-func (m model[T]) frame() []T {
+// Index returns the absolute Index of the current selection.
+func (m ScrolltableModel[T]) Index() int {
+	return m.frameStart + m.cursor
+}
+
+// Frame returns the currently visible Frame of data.
+func (m ScrolltableModel[T]) Frame() []T {
 	if len(m.data) == 0 {
 		return nil
 	}
@@ -78,8 +83,13 @@ func (m model[T]) frame() []T {
 	return m.data[m.frameStart : m.frameStart+m.frameSize()]
 }
 
+// Data returns the entire data source.
+func (m ScrolltableModel[T]) Data() []T {
+	return m.data
+}
+
 // frameSize returns the current size of the visible frame of data.
-func (m model[T]) frameSize() int {
+func (m ScrolltableModel[T]) frameSize() int {
 	frameSize := m.height - Reserved
 	if len(m.data) < frameSize {
 		frameSize = len(m.data)
@@ -89,26 +99,87 @@ func (m model[T]) frameSize() int {
 }
 
 // resetFrame resets the frame after the size or data has changed.
-func (m *model[T]) resetFrame() {
-	m.cursor = 0
-	m.frameStart = 0
+func (m *ScrolltableModel[T]) resetFrame(move msgs.Direction) {
+	if move == msgs.DirectionUp {
+		m.moveUp()
+	} else if move == msgs.DirectionDown {
+		m.moveDown()
+	} else if move == msgs.DirectionStart {
+		m.cursor = 0
+		m.frameStart = 0
+	}
+
+	if m.frameStart+m.cursor >= len(m.data) {
+		m.cursor = 0
+		m.frameStart = 0
+	}
+}
+
+// moveDown moves the cursor down the table.
+func (m *ScrolltableModel[T]) moveDown() (ScrolltableModel[T], tea.Cmd) {
+	if m.Empty() {
+		return *m, nil
+	}
+
+	move := false
+	scroll := false
+	if m.cursor != m.frameSize()-1 {
+		// If the cursor isn't already at the end of the frame move it down.
+		m.cursor += 1
+		move = true
+	} else if len(m.data) != m.frameStart+m.frameSize() {
+		// If cursor is at the end of the frame and not at the end of data move the frame down.
+		scroll = true
+		m.frameStart += 1
+	}
+
+	if scroll || move {
+		return *m, m.selectionChangedCmd()
+	}
+
+	return *m, nil
+}
+
+// moveUp moves the cursor up the table.
+func (m *ScrolltableModel[T]) moveUp() (ScrolltableModel[T], tea.Cmd) {
+	if m.Empty() {
+		return *m, nil
+	}
+
+	move := false
+	scroll := false
+	if m.cursor != 0 {
+		// If the cursor isn't already at the start of the frame move it up.
+		m.cursor -= 1
+		move = true
+	} else if m.frameStart != 0 {
+		// If cursor is at the start of the frame and not at the start of the data move the frame up.
+		scroll = true
+		m.frameStart -= 1
+	}
+
+	if scroll || move {
+		return *m, m.selectionChangedCmd()
+	}
+
+	return *m, nil
 }
 
 // Update updates the scrolltable model from a message.
-func (m model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ScrolltableModel[T]) Update(msg tea.Msg) (ScrolltableModel[T], tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case msgs.SizeMsg:
 		if msg.Name == m.name {
 			m.width = msg.Width
 			m.height = msg.Height
-			m.resetFrame()
+			m.resetFrame(msgs.DirectionNone)
 		}
 
 	case msgs.DataMsg[T]:
 		if msg.Name == m.name {
 			m.data = msg.Data
-			m.resetFrame()
+			m.resetFrame(msg.Move)
 			return m, m.selectionChangedCmd()
 		}
 
@@ -116,46 +187,10 @@ func (m model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		case "down":
-			if m.empty() {
-				return m, nil
-			}
-
-			move := false
-			scroll := false
-			if m.cursor != m.frameSize()-1 {
-				// If the cursor isn't already at the end of the frame move it down.
-				m.cursor += 1
-				move = true
-			} else if len(m.data) != m.frameStart+m.frameSize() {
-				// If cursor is at the end of the frame and not at the end of data move the frame down.
-				scroll = true
-				m.frameStart += 1
-			}
-
-			if scroll || move {
-				return m, m.selectionChangedCmd()
-			}
+			return m.moveDown()
 
 		case "up":
-			if m.empty() {
-				return m, nil
-			}
-
-			move := false
-			scroll := false
-			if m.cursor != 0 {
-				// If the cursor isn't already at the start of the frame move it up.
-				m.cursor -= 1
-				move = true
-			} else if m.frameStart != 0 {
-				// If cursor is at the start of the frame and not at the start of the data move the frame up.
-				scroll = true
-				m.frameStart -= 1
-			}
-
-			if scroll || move {
-				return m, m.selectionChangedCmd()
-			}
+			return m.moveUp()
 		}
 	}
 
@@ -163,10 +198,10 @@ func (m model[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View renders the scrolltable model.
-func (m model[T]) View() string {
+func (m ScrolltableModel[T]) View() string {
 	const cellPadding = 1
 
-	if m.empty() {
+	if m.Empty() {
 		return ""
 	}
 
@@ -190,7 +225,7 @@ func (m model[T]) View() string {
 	dynamicColumnTextWidth := dynamicColumnWidth - cellPadding*2
 
 	rows := [][]string{}
-	lo.ForEach(m.frame(), func(datum T, _ int) {
+	lo.ForEach(m.Frame(), func(datum T, _ int) {
 		row := lo.Map(m.columnDefinitions, func(def ColumnDefinition[T], _ int) string {
 			cell := def.RenderCell(datum)
 			if def.Mode == DynamicColumn {
@@ -221,7 +256,7 @@ func (m model[T]) View() string {
 			def := m.columnDefinitions[col]
 			var datum T
 			if row > 0 {
-				datum = m.frame()[row-1]
+				datum = m.Frame()[row-1]
 			}
 
 			style := m.columnDefinitions[col].Style(datum, row == m.cursor+1, row == 0)
@@ -237,16 +272,16 @@ func (m model[T]) View() string {
 }
 
 // Init initializes the scrolltable model.
-func (m model[T]) Init() tea.Cmd {
+func (m ScrolltableModel[T]) Init() tea.Cmd {
 	return nil
 }
 
 // selectionChangedCmd publishes a message with the currently selected datum.
-func (m model[T]) selectionChangedCmd() tea.Cmd {
+func (m ScrolltableModel[T]) selectionChangedCmd() tea.Cmd {
 	return func() tea.Msg {
 		return msgs.SelectionChangedMsg[T]{
-			Empty:     m.empty(),
-			Selection: m.selection(),
+			Empty:     m.Empty(),
+			Selection: m.Selection(),
 		}
 	}
 }

@@ -29,7 +29,7 @@ func DefaultListBooksOptions() *listBookOptions {
 	return &listBookOptions{
 		IncludeBookmarks: true,
 		IncludeFolders:   true,
-		Order:            armaria.OrderModified,
+		Order:            armaria.OrderManual,
 		Direction:        armaria.DirectionAsc,
 	}
 }

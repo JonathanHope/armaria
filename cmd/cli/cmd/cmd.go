@@ -210,7 +210,7 @@ type ListAllCmd struct {
 	After    *string           `help:"ID of bookmark/folder to return results after."`
 	Query    *string           `help:"Query to search bookmarks/folders by."`
 	Tag      []string          `help:"Tag to filter bookmarks/folders by."`
-	Order    armaria.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Order    armaria.Order     `help:"Field results are ordered on: modified/name/manual." enum:"modified,name,manual" default:"manual"`
 	Dir      armaria.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
 	First    *int64            `help:"The max number of bookmarks/folders to return."`
 }
@@ -278,7 +278,7 @@ type ListBooksCmd struct {
 	After    *string           `help:"ID of bookmark to return results after."`
 	Query    *string           `help:"Query to search bookmarks by."`
 	Tag      []string          `help:"Tag to filter bookmarks by."`
-	Order    armaria.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Order    armaria.Order     `help:"Field results are ordered on: modified/name/manual." enum:"modified,name,manual" default:"manual"`
 	Dir      armaria.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
 	First    *int64            `help:"The max number of bookmarks to return."`
 }
@@ -346,7 +346,7 @@ type ListFoldersCmd struct {
 	After    *string           `help:"ID of folder to return results after."`
 	Query    *string           `help:"Query to search folders by."`
 	Tag      []string          `help:"Tag to filter folders by."`
-	Order    armaria.Order     `help:"Field results are ordered on: modified/name." enum:"modified,name" default:"modified"`
+	Order    armaria.Order     `help:"Field results are ordered on: modified/name/manual." enum:"modified,name,manual" default:"manual"`
 	Dir      armaria.Direction `help:"Direction results are ordered by: asc/desc." enum:"asc,desc" default:"asc"`
 	First    *int64            `help:"The max number of folders to return."`
 }
@@ -488,6 +488,8 @@ type UpdateBookCmd struct {
 	Description   *string `help:"New description for this bookmark."`
 	NoDescription bool    `help:"Remove the description."`
 	URL           *string `help:"New URL for this bookmark."`
+	Before        *string `help:"Book to order this bookmark before."`
+	After         *string `help:"Book to order this bookmark after."`
 
 	ID string `arg:"" name:"id" help:"ID of the bookmark to update."`
 }
@@ -530,6 +532,12 @@ func (r *UpdateBookCmd) Run(ctx *Context) error {
 	if r.URL != nil {
 		options.WithURL(*r.URL)
 	}
+	if r.Before != nil {
+		options.WithOrderBefore(*r.Before)
+	}
+	if r.After != nil {
+		options.WithOrderAfter(*r.After)
+	}
 
 	book, err := armariaapi.UpdateBook(r.ID, options)
 	if err != nil {
@@ -551,6 +559,8 @@ type UpdateFolderCmd struct {
 	Name     *string `help:"New name for this folder."`
 	Folder   *string `help:"Folder to move this folder to."`
 	NoFolder bool    `help:"Remove the parent folder."`
+	Before   *string `help:"Book to order this bookmark before."`
+	After    *string `help:"Book to order this bookmark after."`
 
 	ID string `arg:"" name:"id" help:"ID of the folder to update."`
 }
@@ -577,6 +587,12 @@ func (r *UpdateFolderCmd) Run(ctx *Context) error {
 	}
 	if r.Name != nil {
 		options.WithName(*r.Name)
+	}
+	if r.Before != nil {
+		options.WithOrderBefore(*r.Before)
+	}
+	if r.After != nil {
+		options.WithOrderAfter(*r.After)
 	}
 
 	book, err := armariaapi.UpdateFolder(r.ID, options)
