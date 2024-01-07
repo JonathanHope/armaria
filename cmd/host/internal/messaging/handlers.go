@@ -304,6 +304,12 @@ func updateBookHandler(in NativeMessage) (NativeMessage, error) {
 	if payload.URL.Valid {
 		options.WithURL(payload.URL.String)
 	}
+	if payload.NextBook.Valid {
+		options.WithOrderBefore(payload.NextBook.String)
+	}
+	if payload.PreviousBook.Valid {
+		options.WithOrderAfter(payload.PreviousBook.String)
+	}
 
 	book, err := armariaapi.UpdateBook(payload.ID, options)
 	if err != nil {
@@ -339,6 +345,12 @@ func updateFolderHandler(in NativeMessage) (NativeMessage, error) {
 	}
 	if payload.Name.Valid {
 		options.WithName(payload.Name.String)
+	}
+	if payload.NextBook.Valid {
+		options.WithOrderBefore(payload.NextBook.String)
+	}
+	if payload.PreviousBook.Valid {
+		options.WithOrderAfter(payload.PreviousBook.String)
 	}
 
 	book, err := armariaapi.UpdateFolder(payload.ID, options)

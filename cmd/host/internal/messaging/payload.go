@@ -92,6 +92,8 @@ type UpdateBookPayload struct {
 	ParentID          null.NullString `json:"parentId"`
 	RemoveDescription bool            `json:"removeDescription"`
 	RemoveParentID    bool            `json:"removeParentID"`
+	PreviousBook      null.NullString `json:"previousBook"`
+	NextBook          null.NullString `json:"nextBook"`
 }
 
 // UpdateBookPayload is a payload for a request to update a folder.
@@ -101,6 +103,8 @@ type UpdateFolderPayload struct {
 	Name           null.NullString `json:"name"`
 	ParentID       null.NullString `json:"parentId"`
 	RemoveParentID bool            `json:"removeParentID"`
+	PreviousBook   null.NullString `json:"previousBook"`
+	NextBook       null.NullString `json:"nextBook"`
 }
 
 // ErrorPayload is a payload for a response with an error in it.

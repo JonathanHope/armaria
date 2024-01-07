@@ -1,4 +1,3 @@
 This is a running list of things that need to taken care of at some point:
 
- - [ ] Ordering in the native messaging host
  - [ ] Long subtract function too complex
