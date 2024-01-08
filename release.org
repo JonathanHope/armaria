@@ -1,0 +1,39 @@
+* Release Documentation
+
+Armaria is native software so releasing it is relatively involved.
+
+** Triggering the Release
+
+The release is triggered by pushing a tag on main up to GitHub. This will trigger a workflow that begins the release process. This process is extremely costly in terms of GiHub minutes so do it judiciously.
+
+** Linux
+
+The workflow will automatically build and push a Snap to Snapcraft. The store page for it is here: https://snapcraft.io/armaria. The developer page for it is here: https://snapcraft.io/snaps.
+
+** MacOS
+
+The workflow will automatically add a commit to a Homebrew repo here: https://github.com/JonathanHope/homebrew-armaria.
+
+** Windows
+
+The workflow will automatically add a commit to a fork of the WinGet repo here: https://github.com/JonathanHope/winget-pkgs. From there you need to manually open a pull request against the real WinGet packages repo. This cannot be automated on the free GoReleaser.
+
+It ends up here in the real WinGet packages repo: https://github.com/microsoft/winget-pkgs/tree/master/manifests/a/Armaria/Armaria.
+
+** Snapcraft Docker Image
+
+Armaria is built on MacOS so it can legally be linked against some SDKs there. However Snapcraft is needed to build the Snap. To get around this a Snapcraft Docker image is used. The official Snapcraft Docker image is ancient so we have to roll our own. They are published here: https://hub.docker.com/repository/docker/jhope/snapcraft/general.
+
+There is a Dockerfile in this repo (Dockerfile.snapcraft) that can be used to build this image:
+
+#+begin_src shell
+docker build -f Dockerfile.snapcraft -t jhope/snapcraft:latest
+#+end_src
+
+Then it can be pushed up to Dockerhub with the following command:
+
+#+begin_src shell
+docker push jhope/snapcraft:latest
+#+end_src
+
+The results can be verified here: https://hub.docker.com/repository/docker/jhope/snapcraft/general.
