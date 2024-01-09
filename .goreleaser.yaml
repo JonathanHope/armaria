@@ -319,4 +319,4 @@ nix:
       owner: JonathanHope
       name: nur-armaria
       branch: main
-      token: "{{ .Env.NUR_ACCESS_TOKEN }}"
+      token: "{{ .Env.NUR_AUTH_TOKEN }}"
