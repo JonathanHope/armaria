@@ -302,3 +302,21 @@ brews:
       name: homebrew-armaria
       branch: main
       token: "{{ .Env.TAP_AUTH_TOKEN }}"
+
+nix:
+  - name: armaria
+    ids:
+      - armaria-linux-archive
+    url_template: "https://github.com/JonathanHope/armaria/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:  
+      name: Jonathan Hope
+      email: jhope@fastmail.com
+    commit_msg_template: "{{ .ProjectName }}: {{ .Tag }}"
+    homepage: https://github.com/JonathanHope/armaria
+    description: Armaria is a fast, open, and local first bookmarks manager.
+    license: "mit"
+    repository:
+      owner: JonathanHope
+      name: nur-armaria
+      branch: main
+      token: "{{ .Env.NUR_ACCESS_TOKEN }}"
