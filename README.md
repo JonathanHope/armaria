@@ -8,7 +8,7 @@ Armaria is a new way to manage your bookmarks.
 
 As it stands bookmarks are stored either in the cloud, in browser specific formats, or both. It doesn't have to be this way. Armaria stores bookmarks in a SQLite database. This means your bookmarks are local and stored in a single file. They can then be accessed with a myriad of clients including browsers.
 
-You can sync this file across your devices however you would sync any other file. This allows you to share your bookmarks across many different devices and browsers without having to rely on a web service for something as simple as your bookmarks.
+You can sync this file across your devices how you would sync any other file. This allows you to share your bookmarks across many different devices and browsers without having to rely on a web service for something as simple as your bookmarks.
 
 > [!CAUTION]
 > This software is still in progress and should be considered pre-alpha
@@ -35,8 +35,8 @@ The features for Armaria are similar to other bookmark implementations:
 
 This repository contains the core Armaria library as well as the following clients:
 
-- **CLI:** A CLI that can be used to manage your bookmarks database from the command line.
-- **TUI:** A TUI that can be used to manage your bookmarks (hosted in the CLI at `armaria tui`).
+- **CLI:** A CLI that is used to manage your bookmarks database from the command line.
+- **TUI:** A TUI that is used to manage your bookmarks (hosted in the CLI at `armaria tui`).
 - **Native Messaging Host:** A native messaging host to enable browsers to interact with your bookmarks database.
 
 # Getting Started
@@ -73,7 +73,7 @@ Armaria has a browser extension. You can read about it [here](https://github.com
 
 # Roadmap
 
-This software is still in it's early days. This roadmap lays out where it currently is, and where it is going. If there is something that you think should be on it that is not please open an issue.
+This software is still in its early days. This roadmap lays out where it currently is, and where it's going. If there is something that you think should be on it that is not please open an issue.
 
 **Platform Support:**
 

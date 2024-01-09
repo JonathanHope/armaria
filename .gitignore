@@ -10,3 +10,5 @@ armaria-host
 armaria-seeder
 dist
 .vscode
+.vale.ini
+styles
