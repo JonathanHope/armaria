@@ -92,6 +92,8 @@ func InitialModel() tea.Model {
 			[]help.Binding{
 				{Context: "Listing", Key: "up", Help: "Previous book"},
 				{Context: "Listing", Key: "down", Help: "Next book"},
+				{Context: "Listing", Key: "ctrl+up", Help: "Move book up"},
+				{Context: "Listing", Key: "ctrl+down", Help: "Move book down"},
 				{Context: "Listing", Key: "left", Help: "Move to parent folder"},
 				{Context: "Listing", Key: "right", Help: "Move to folder children"},
 				{Context: "Listing", Key: "enter", Help: "Open bookmark or folder"},
