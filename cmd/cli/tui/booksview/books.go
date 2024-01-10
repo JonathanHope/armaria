@@ -47,6 +47,7 @@ type model struct {
 	height     int                                        // the current height of the screen
 	folder     string                                     // the current folder
 	query      string                                     // current search query
+	busy       bool                                       // used to limit writers
 	header     header.HeaderModel                         // header for app
 	table      scrolltable.ScrolltableModel[armaria.Book] // table of books
 	help       help.HelpModel                             // help for the app
@@ -244,15 +245,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputMode = false
 				m.query = ""
 				m.inputType = inputNone
-				return m, m.inputEndCmd()
+				return m, tea.Batch(m.inputEndCmd(), m.updateFiltersCmd())
 
 			case "enter":
 				cmds := []tea.Cmd{m.inputEndCmd()}
 				if m.inputType == inputName {
+					m.busy = true
 					cmds = append(cmds, m.updateNameCmd(m.input.Text()))
 				} else if m.inputType == inputURL {
+					m.busy = true
 					cmds = append(cmds, m.updateURLCmd(m.input.Text()))
 				} else if m.inputType == inputFolder {
+					m.busy = true
 					cmds = append(cmds, m.addFolderCmd(m.input.Text()))
 				}
 
@@ -342,6 +346,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "D":
 			if !m.table.Empty() {
+				m.busy = true
 				cmds = append(cmds, m.deleteBookCmd())
 			}
 
@@ -382,7 +387,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.inputStartCmd("Folder: ", ""))
 
 		case "ctrl+up":
-			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 {
+			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 && !m.busy {
+				m.busy = true
+
 				if m.table.Index() == 1 {
 					next := m.table.Data()[0].ID
 					cmds = append(cmds, m.moveToStartCmd(next, msgs.DirectionUp))
@@ -394,7 +401,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+down":
-			if m.query == "" && !m.table.Empty() && m.table.Index() < len(m.table.Data())-1 {
+			if m.query == "" && !m.table.Empty() && m.table.Index() < len(m.table.Data())-1 && !m.busy {
+				m.busy = true
+
 				if m.table.Index() == len(m.table.Data())-2 {
 					previous := m.table.Data()[len(m.table.Data())-1].ID
 					cmds = append(cmds, m.moveToEndCmd(previous, msgs.DirectionDown))
@@ -424,6 +433,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.ViewMsg:
 		m.activeView = msgs.View(msg)
 		return m, nil
+
+	case msgs.FreeMsg:
+		m.busy = false
 	}
 
 	return m, tea.Batch(cmds...)
@@ -737,7 +749,7 @@ func (m model) moveToEndCmd(previous string, move msgs.Direction) tea.Cmd {
 	}
 }
 
-// moveToEndCmd moves a bookmark or folder to the end of the list.
+// moveToStartCmd moves a bookmark or folder to the end of the list.
 func (m model) moveToStartCmd(next string, move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {

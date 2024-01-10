@@ -9,6 +9,8 @@ import (
 
 // Used to seed data for testing.
 
+const numTags = 3
+
 type Context struct {
 }
 
@@ -36,7 +38,7 @@ func (r *SmallCmd) Run(_ *Context) error {
 			DefaultAddBookOptions().
 			WithDescription(gofakeit.ProductDescription()).
 			WithName(gofakeit.ProductName()).
-			WithTags(tagsFactory(3))
+			WithTags(tagsFactory())
 		_, err := armariaapi.AddBook(gofakeit.URL(), bo)
 		if err != nil {
 			return err
@@ -51,7 +53,7 @@ func (r *SmallCmd) Run(_ *Context) error {
 				DefaultAddBookOptions().
 				WithDescription(gofakeit.ProductDescription()).
 				WithName(gofakeit.ProductName()).
-				WithTags(tagsFactory(3)).
+				WithTags(tagsFactory()).
 				WithParentID(f)
 			_, err := armariaapi.AddBook(gofakeit.URL(), bo)
 			if err != nil {
@@ -63,10 +65,61 @@ func (r *SmallCmd) Run(_ *Context) error {
 	return nil
 }
 
-func tagsFactory(num int) []string {
+type MediumCmd struct {
+}
+
+func (r *MediumCmd) Run(_ *Context) error {
+	// Add 50 folders.
+
+	folders := make([]string, 0)
+	for i := 0; i < 50; i++ {
+		fo := armariaapi.DefaultAddFolderOptions()
+		fr, err := armariaapi.AddFolder(gofakeit.ProductName(), fo)
+		if err != nil {
+			return err
+		}
+
+		folders = append(folders, fr.ID)
+	}
+
+	// Add 1000 top level bookmarks.
+
+	for i := 0; i < 1000; i++ {
+		bo := armariaapi.
+			DefaultAddBookOptions().
+			WithDescription(gofakeit.ProductDescription()).
+			WithName(gofakeit.ProductName()).
+			WithTags(tagsFactory())
+		_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Add 1000 bookmarks to each folder.
+
+	for _, f := range folders {
+		for i := 0; i < 1000; i++ {
+			bo := armariaapi.
+				DefaultAddBookOptions().
+				WithDescription(gofakeit.ProductDescription()).
+				WithName(gofakeit.ProductName()).
+				WithTags(tagsFactory()).
+				WithParentID(f)
+			_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func tagsFactory() []string {
 	tags := []string{}
 
-	for len(tags) < num {
+	for len(tags) < numTags {
 		tag := gofakeit.NounCommon()
 		count := lo.Count(tags, tag)
 		if tag != "" && count == 0 {
@@ -78,7 +131,8 @@ func tagsFactory(num int) []string {
 }
 
 type cli struct {
-	Small SmallCmd `cmd:"" help:"Seed a small amount of data."`
+	Small  SmallCmd  `cmd:"" help:"Seed a small amount of data."`
+	Medium MediumCmd `cmd:"" help:"Seed a medium amount of data."`
 }
 
 func main() {
