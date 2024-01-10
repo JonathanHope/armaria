@@ -180,7 +180,7 @@ func (m ScrolltableModel[T]) Update(msg tea.Msg) (ScrolltableModel[T], tea.Cmd) 
 		if msg.Name == m.name {
 			m.data = msg.Data
 			m.resetFrame(msg.Move)
-			return m, m.selectionChangedCmd()
+			return m, tea.Batch(m.selectionChangedCmd(), func() tea.Msg { return msgs.FreeMsg{} })
 		}
 
 	case tea.KeyMsg:
