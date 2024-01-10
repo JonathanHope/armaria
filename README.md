@@ -43,13 +43,21 @@ This repository contains the core Armaria library as well as the following clien
 
 You can find the installation instructions for your platform here.
 
-## Linux
+## Linux - Snap
 
 You can install Armaria with Snap on Linux:
 
 ``` shell
 snap install armaria
 ```
+
+## Linux - Nix
+
+You can also install Armaria with Nix on Linux.
+
+The package can be found on NUR [here](https://nur.nix-community.org/repos/armaria/).
+
+Directions for adding NUR to your Nix setup can be found [here](https://github.com/nix-community/NUR).
 
 ## MacOS
 
@@ -87,7 +95,7 @@ This software is still in its early days. This roadmap lays out where it current
 - [x] Snap
 - [x] Homebrew
 - [x] Winget
-- [ ] Nix
+- [x] Nix
 
 **Library:**
 

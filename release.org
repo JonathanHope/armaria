@@ -8,7 +8,13 @@ The release is triggered by pushing a tag on main up to GitHub. This will trigge
 
 ** Linux
 
+*** Snap
+
 The workflow will automatically build and push a Snap to Snapcraft. The store page for it is here: https://snapcraft.io/armaria. The developer page for it is here: https://snapcraft.io/snaps.
+
+*** Nix
+
+The workflow will add a branch to the Armaria NUR [[https://github.com/JonathanHope/nur-armaria][here]]. I then need to create a PR and merge it in. Within 24 hours the main [[https://github.com/nix-community/NUR][NUR repo]] will pick it up. The package will then apppear [[https://nur.nix-community.org/repos/armaria/][here]].
 
 ** MacOS
 
