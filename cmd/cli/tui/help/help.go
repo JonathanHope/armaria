@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/samber/lo"
 )
 
@@ -17,13 +18,21 @@ type Binding struct {
 // HelpModel is the HelpModel for help.
 // The help screen shows keybindings.
 type HelpModel struct {
+	name     string    // name of the help screen
 	contexts []string  // the different context to show keybindings for
 	bindings []Binding // the different keybindings
+	helpMode bool      // if true the help screen is active
+}
+
+// HelpMode returns true if the hlep mode is active.
+func (m HelpModel) HelpMode() bool {
+	return m.helpMode
 }
 
 // InitialModel builds the model.
-func InitialModel(contexts []string, bindings []Binding) HelpModel {
+func InitialModel(name string, contexts []string, bindings []Binding) HelpModel {
 	return HelpModel{
+		name:     name,
 		contexts: contexts,
 		bindings: bindings,
 	}
@@ -31,6 +40,21 @@ func InitialModel(contexts []string, bindings []Binding) HelpModel {
 
 // Update handles a message.
 func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
+	switch msg := msg.(type) {
+	case msgs.ShowHelpMsg:
+		m.helpMode = true
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			return m, tea.Quit
+
+		case "q", "esc":
+			m.helpMode = false
+			return m, nil
+		}
+	}
+
 	return m, nil
 }
 

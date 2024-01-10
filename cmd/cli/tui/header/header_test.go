@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
 const Name = "header"
@@ -42,16 +43,5 @@ func verifyUpdate(t *testing.T, gotModel HeaderModel, wantModel HeaderModel, got
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)
 	}
 
-	if gotCmd == nil || wantCmd == nil {
-		if gotCmd != nil || wantCmd != nil {
-			t.Errorf("Expected and actual cmds different: one is nil and one is non-nil")
-		}
-
-		return
-	}
-
-	cmdDiff := cmp.Diff(gotCmd(), wantCmd())
-	if modelDiff != "" {
-		t.Errorf("Expected and actual cmds different:\n%s", cmdDiff)
-	}
+	utils.CompareCommands(t, gotCmd, wantCmd)
 }
