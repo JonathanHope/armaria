@@ -36,6 +36,41 @@ func TestCanUpdateNav(t *testing.T) {
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
 
+func TestCanMarkBusy(t *testing.T) {
+	gotModel := HeaderModel{}
+	gotModel, gotCmd := gotModel.Update(msgs.BusyMsg{})
+
+	wantModel := HeaderModel{
+		busy: true,
+	}
+
+	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+}
+
+func TestCanMarkFree(t *testing.T) {
+	gotModel := HeaderModel{
+		busy: true,
+	}
+	gotModel, gotCmd := gotModel.Update(msgs.FreeMsg{})
+
+	wantModel := HeaderModel{
+		busy: false,
+	}
+
+	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+}
+
+func TestBusy(t *testing.T) {
+	gotModel := HeaderModel{
+		busy: true,
+	}
+
+	modelDiff := cmp.Diff(gotModel.Busy(), true)
+	if modelDiff != "" {
+		t.Errorf("Expected and actual busy different:\n%s", modelDiff)
+	}
+}
+
 func verifyUpdate(t *testing.T, gotModel HeaderModel, wantModel HeaderModel, gotCmd tea.Cmd, wantCmd tea.Cmd) {
 	unexported := cmp.AllowUnexported(HeaderModel{})
 	modelDiff := cmp.Diff(gotModel, wantModel, unexported)
