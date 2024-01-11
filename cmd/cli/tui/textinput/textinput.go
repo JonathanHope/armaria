@@ -23,6 +23,7 @@ type TextInputModel struct {
 	focus      bool    // whether the text input is focused or not
 	blink      bool    // flag that alternates in order to make the cursor blink
 	frameStart int     // where the viewable frame of text starts
+	maxChars   int     // maximum number of chars to allow
 	sleeper    sleeper // used to sleep
 }
 
@@ -60,6 +61,7 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 			m.blink = true
 			m.cursor = 0
 			m.frameStart = 0
+			m.maxChars = msg.MaxChars
 			m.toEnd()
 			return m, m.blinkCmd()
 		}
@@ -69,6 +71,7 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 		m.blink = false
 		m.cursor = 0
 		m.frameStart = 0
+		m.maxChars = 0
 
 	case msgs.BlinkMsg:
 		if m.focus && msg.Name == m.name {
@@ -144,6 +147,13 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 				}
 
 			default:
+				textLength := len(strings.Split(m.text, ""))
+				runesLength := len(strings.Split(string(msg.Runes), ""))
+
+				if m.maxChars > 0 && textLength+runesLength > m.maxChars {
+					return m, nil
+				}
+
 				if m.cursor == 0 {
 					// Insert the char at start of the text.
 					m.text = string(msg.Runes) + m.text
@@ -182,6 +192,10 @@ func (m TextInputModel) available() int {
 
 // View renders the model.
 func (m TextInputModel) View() string {
+	if m.width-len(m.prompt) <= 0 {
+		return ""
+	}
+
 	promptStyle := lipgloss.
 		NewStyle().
 		Bold(true).

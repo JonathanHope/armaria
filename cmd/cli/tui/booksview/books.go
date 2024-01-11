@@ -8,22 +8,22 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/footer"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/header"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/help"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/scrolltable"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/textinput"
 	"github.com/jonathanhope/armaria/pkg/api"
 	"github.com/jonathanhope/armaria/pkg/model"
 )
 
-const HeaderHeight = 3             // height of the header
-const HeaderSpacerHeight = 1       // height of the spacer between the header and table
-const FooterHeight = 3             // height of the footer
-const HelpInfoWidth = 7            // width of the help info in the footer
-const HeaderName = "BooksHeader"   // name of the header
-const TextInputName = "BooksInput" // name of the textinput
-const TableName = "BooksTable"     // name of the table
+const HeaderHeight = 3           // height of the header
+const HeaderSpacerHeight = 1     // height of the spacer between the header and table
+const FooterHeight = 4           // height of the footer
+const HeaderName = "BooksHeader" // name of the header
+const FooterName = "BooksFooter" // name of the footer
+const TableName = "BooksTable"   // name of the table
+const HelpName = "BooksHelp"     // name of the help screen
 
 // InputType is which type of input is being collected.
 type inputType int
@@ -40,8 +40,6 @@ const (
 // The book listing displays the bookmarks in the bookmarks DB.
 type model struct {
 	activeView msgs.View                                  // which view is currently being shown
-	helpMode   bool                                       // whether to show the help or not
-	inputMode  bool                                       // if true then the view is collecting input
 	inputType  inputType                                  // which type of input is being collected
 	width      int                                        // the current width of the screen
 	height     int                                        // the current height of the screen
@@ -49,9 +47,10 @@ type model struct {
 	query      string                                     // current search query
 	busy       bool                                       // used to limit writers
 	header     header.HeaderModel                         // header for app
+	footer     footer.FooterModel                         // footer for app
 	table      scrolltable.ScrolltableModel[armaria.Book] // table of books
 	help       help.HelpModel                             // help for the app
-	input      textinput.TextInputModel                   // allows text input
+
 }
 
 // InitialModel builds the model.
@@ -59,6 +58,7 @@ func InitialModel() tea.Model {
 	return model{
 		activeView: msgs.ViewBooks,
 		header:     header.InitialModel(HeaderName, "📜 Armaria"),
+		footer:     footer.InitialModel(FooterName),
 		table: scrolltable.InitialModel[armaria.Book](
 			TableName,
 			[]scrolltable.ColumnDefinition[armaria.Book]{
@@ -88,6 +88,7 @@ func InitialModel() tea.Model {
 				},
 			}),
 		help: help.InitialModel(
+			HelpName,
 			[]string{"Listing", "Input"},
 			[]help.Binding{
 				{Context: "Listing", Key: "up", Help: "Previous book"},
@@ -110,7 +111,6 @@ func InitialModel() tea.Model {
 				{Context: "Input", Key: "esc", Help: "Cancel input"},
 			},
 		),
-		input: textinput.InitialModel(TextInputName, ""),
 	}
 }
 
@@ -170,141 +170,29 @@ func formatTags(book armaria.Book) string {
 	return strings.Join(book.Tags, ", ")
 }
 
-// filtersDisplayHeight returns the height of the filters display in the header.
-func (m model) filtersDisplayHeight() int {
-	if len(m.query) > 0 {
-		return 1
-	}
-
-	return 0
-}
-
 // Update handles a message.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// There are some cases where this view is in a substate that handles events differently.
-
-	// Substate: a different view is active.
-	if m.activeView != msgs.ViewBooks {
-		switch msg := msg.(type) {
-
-		case msgs.ViewMsg:
-			m.activeView = msgs.View(msg)
-			return m, nil
-
-		case tea.WindowSizeMsg:
-			m.height = msg.Height
-			m.width = msg.Width
-			return m, m.recalculateSizeCmd()
-
-		default:
-			return m, nil
-		}
+	// If another view is active ignore all keypresses.
+	if _, ok := msg.(tea.KeyMsg); ok && m.activeView != msgs.ViewBooks {
+		return m, nil
 	}
 
-	// Substate: the help screen is active.
-	if m.helpMode {
-		switch msg := msg.(type) {
-
-		case tea.KeyMsg:
-			switch msg.String() {
-
-			case "ctrl+c":
-				return m, tea.Quit
-
-			case "q", "esc":
-				m.helpMode = false
-				return m, nil
-
-			default:
-				return m, nil
-			}
-
-		case msgs.ViewMsg:
-			m.activeView = msgs.View(msg)
-			return m, nil
-
-		case tea.WindowSizeMsg:
-			m.height = msg.Height
-			m.width = msg.Width
-			return m, m.recalculateSizeCmd()
-
-		default:
-			return m, nil
-		}
+	// If the help screen is active direct all keypresses to it.
+	if _, ok := msg.(tea.KeyMsg); ok && m.help.HelpMode() {
+		var helpCmd tea.Cmd
+		m.help, helpCmd = m.help.Update(msg)
+		return m, helpCmd
 	}
 
-	// Substate: the input is active.
-	if m.inputMode {
-		switch msg := msg.(type) {
-
-		case tea.KeyMsg:
-			switch msg.String() {
-
-			case "ctrl+c":
-				return m, tea.Quit
-
-			case "esc":
-				m.inputMode = false
-				m.query = ""
-				m.inputType = inputNone
-				return m, tea.Batch(m.inputEndCmd(), m.updateFiltersCmd())
-
-			case "enter":
-				cmds := []tea.Cmd{m.inputEndCmd()}
-				if m.inputType == inputName {
-					m.busy = true
-					cmds = append(cmds, m.updateNameCmd(m.input.Text()))
-				} else if m.inputType == inputURL {
-					m.busy = true
-					cmds = append(cmds, m.updateURLCmd(m.input.Text()))
-				} else if m.inputType == inputFolder {
-					m.busy = true
-					cmds = append(cmds, m.addFolderCmd(m.input.Text()))
-				}
-
-				m.inputMode = false
-				m.inputType = inputNone
-
-				return m, tea.Batch(cmds...)
-
-			default:
-				var inputCmd tea.Cmd
-				m.input, inputCmd = m.input.Update(msg)
-				return m, inputCmd
-			}
-
-		case tea.WindowSizeMsg:
-			m.height = msg.Height
-			m.width = msg.Width
-			return m, m.recalculateSizeCmd()
-
-		case msgs.InputChangedMsg:
-			if m.inputType == inputSearch {
-				m.query = m.input.Text()
-				return m, m.getBooksCmd(msgs.DirectionStart)
-			}
-
-		case msgs.DataMsg[armaria.Book]:
-			var tableCmd tea.Cmd
-			m.table, tableCmd = m.table.Update(msg)
-			return m, tableCmd
-
-		case msgs.ViewMsg:
-			m.activeView = msgs.View(msg)
-			return m, nil
-
-		default:
-			var inputCmd tea.Cmd
-			m.input, inputCmd = m.input.Update(msg)
-			return m, inputCmd
-		}
+	// If the footer is in input mode direct all keypresses to it.
+	if _, ok := msg.(tea.KeyMsg); ok && m.footer.InputMode() {
+		var footerCmd tea.Cmd
+		m.footer, footerCmd = m.footer.Update(msg)
+		return m, footerCmd
 	}
 
-	//  Otherwise we fall into the main event loop.
-	// The first step is forward the message to the underlying components.
-
-	var inputCmd tea.Cmd
-	m.input, inputCmd = m.input.Update(msg)
+	var footerCmd tea.Cmd
+	m.footer, footerCmd = m.footer.Update(msg)
 
 	var tableCmd tea.Cmd
 	m.table, tableCmd = m.table.Update(msg)
@@ -312,7 +200,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var headerCmd tea.Cmd
 	m.header, headerCmd = m.header.Update(msg)
 
-	cmds := []tea.Cmd{tableCmd, headerCmd, inputCmd}
+	var helpCmd tea.Cmd
+	m.help, helpCmd = m.help.Update(msg)
+
+	cmds := []tea.Cmd{tableCmd, headerCmd, footerCmd, helpCmd}
 
 	switch msg := msg.(type) {
 
@@ -323,7 +214,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "?":
-			m.helpMode = true
+			cmds = append(cmds, func() tea.Msg { return msgs.ShowHelpMsg{Name: HelpName} })
 
 		case "enter":
 			if !m.table.Empty() {
@@ -365,28 +256,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.getBooksCmd(msgs.DirectionNone))
 
 		case "s":
-			m.inputMode = true
 			m.inputType = inputSearch
-			cmds = append(cmds, m.inputStartCmd("Query: ", ""))
+			cmds = append(cmds, m.inputStartCmd("Query: ", "", 0))
 
 		case "u":
 			if !m.table.Empty() && !m.table.Selection().IsFolder {
-				m.inputMode = true
 				m.inputType = inputURL
-				cmds = append(cmds, m.inputStartCmd("URL: ", *m.table.Selection().URL))
+				cmds = append(cmds, m.inputStartCmd("URL: ", *m.table.Selection().URL, 2048))
 			}
 
 		case "n":
 			if !m.table.Empty() {
-				m.inputMode = true
 				m.inputType = inputName
-				cmds = append(cmds, m.inputStartCmd("Name: ", m.table.Selection().Name))
+				cmds = append(cmds, m.inputStartCmd("Name: ", m.table.Selection().Name, 2048))
 			}
 
 		case "+":
-			m.inputMode = true
 			m.inputType = inputFolder
-			cmds = append(cmds, m.inputStartCmd("Folder: ", ""))
+			cmds = append(cmds, m.inputStartCmd("Folder: ", "", 2048))
 
 		case "ctrl+up":
 			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 && !m.busy {
@@ -438,6 +325,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case msgs.FreeMsg:
 		m.busy = false
+
+	case msgs.InputCancelledMsg:
+		m.query = ""
+		m.inputType = inputNone
+		cmds = append(cmds, m.inputEndCmd(), m.updateFiltersCmd())
+
+	case msgs.InputConfirmedMsg:
+		cmds = append(cmds, m.inputEndCmd())
+		if m.inputType == inputName {
+			m.busy = true
+			cmds = append(cmds, m.updateNameCmd(m.footer.Text()))
+		} else if m.inputType == inputURL {
+			m.busy = true
+			cmds = append(cmds, m.updateURLCmd(m.footer.Text()))
+		} else if m.inputType == inputFolder {
+			m.busy = true
+			cmds = append(cmds, m.addFolderCmd(m.footer.Text()))
+		}
+
+		m.inputType = inputNone
+
+	case msgs.InputChangedMsg:
+		if m.inputType == inputSearch {
+			m.query = m.footer.Text()
+			cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
+		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -449,7 +362,7 @@ func (m model) View() string {
 		return ""
 	}
 
-	if m.helpMode {
+	if m.help.HelpMode() {
 		return m.header.View() + "\n\n" + m.help.View()
 	}
 
@@ -474,27 +387,7 @@ func (m model) View() string {
 		"\n\n" +
 		table +
 		spacer +
-		m.footerView()
-}
-
-// footerView renders the footer view.
-func (m model) footerView() string {
-	help := lipgloss.
-		NewStyle().
-		Foreground(lipgloss.Color("3")).
-		SetString("Help: ?")
-
-	footerStyle := lipgloss.
-		NewStyle().
-		Border(lipgloss.ThickBorder()).
-		BorderTop(true).
-		BorderBottom(false).
-		BorderLeft(false).
-		BorderRight(false).
-		Width(m.width).
-		BorderForeground(lipgloss.Color("5"))
-
-	return footerStyle.Render(m.input.View() + help.Render())
+		m.footer.View()
 }
 
 // Init initializes the model.
@@ -663,27 +556,40 @@ func (m model) addFolderCmd(name string) tea.Cmd {
 // updateFiltersCmd will upate the filters display in the header based on the current filters.
 func (m model) updateFiltersCmd() tea.Cmd {
 	if len(m.query) > 0 {
-		return func() tea.Msg { return msgs.FiltersMsg([]string{fmt.Sprintf("Query: %s", m.query)}) }
+		return func() tea.Msg {
+			return msgs.FiltersMsg{Name: FooterName, Filters: []string{fmt.Sprintf("Query: %s", m.query)}}
+		}
 	}
 
-	return func() tea.Msg { return msgs.FiltersMsg([]string{}) }
+	return func() tea.Msg {
+		return msgs.FiltersMsg{Name: FooterName, Filters: []string{}}
+	}
 }
 
 // inputStartCmd makes the necessary state updates when the input mode starts.
-func (m model) inputStartCmd(prompt string, text string) tea.Cmd {
+func (m model) inputStartCmd(prompt string, text string, maxChars int) tea.Cmd {
 	return tea.Batch(
-		func() tea.Msg { return msgs.PromptMsg{Name: TextInputName, Prompt: prompt} },
-		func() tea.Msg { return msgs.TextMsg{Name: TextInputName, Text: text} },
-		func() tea.Msg { return msgs.FocusMsg{Name: TextInputName} },
+		func() tea.Msg {
+			return msgs.InputModeMsg{
+				Name:      FooterName,
+				InputMode: true,
+				Prompt:    prompt,
+				Text:      text,
+				MaxChars:  maxChars,
+			}
+		},
 	)
 }
 
 // inputEndCmd makes the necessary state updates when the input mode ends.
 func (m model) inputEndCmd() tea.Cmd {
 	cmds := []tea.Cmd{
-		func() tea.Msg { return msgs.BlurMsg{Name: TextInputName} },
-		func() tea.Msg { return msgs.PromptMsg{Name: TextInputName, Prompt: ""} },
-		func() tea.Msg { return msgs.TextMsg{Name: TextInputName, Text: ""} },
+		func() tea.Msg {
+			return msgs.InputModeMsg{
+				Name:      FooterName,
+				InputMode: false,
+			}
+		},
 		m.getBooksCmd(msgs.DirectionNone),
 		m.updateFiltersCmd(),
 		m.recalculateSizeCmd(),
@@ -697,12 +603,16 @@ func (m model) inputEndCmd() tea.Cmd {
 func (m model) recalculateSizeCmd() tea.Cmd {
 	height := m.height -
 		HeaderHeight -
-		m.filtersDisplayHeight() -
 		HeaderSpacerHeight -
 		FooterHeight
 
 	headerSizeMsg := msgs.SizeMsg{
 		Name:  HeaderName,
+		Width: m.width,
+	}
+
+	footerSizeMsg := msgs.SizeMsg{
+		Name:  FooterName,
 		Width: m.width,
 	}
 
@@ -712,15 +622,10 @@ func (m model) recalculateSizeCmd() tea.Cmd {
 		Height: height,
 	}
 
-	inputSizeMsg := msgs.SizeMsg{
-		Name:  TextInputName,
-		Width: m.width - HelpInfoWidth,
-	}
-
 	return tea.Batch(
 		func() tea.Msg { return headerSizeMsg },
+		func() tea.Msg { return footerSizeMsg },
 		func() tea.Msg { return tableSizeMsg },
-		func() tea.Msg { return inputSizeMsg },
 	)
 }
 

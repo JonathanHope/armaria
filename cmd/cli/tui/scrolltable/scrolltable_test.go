@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
 func TestCanUpdateData(t *testing.T) {
@@ -28,7 +29,16 @@ func TestCanUpdateData(t *testing.T) {
 		frameStart: 0,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return tea.BatchMsg{
+			func() tea.Msg {
+				return msgs.SelectionChangedMsg[TestDatum]{
+					Selection: TestDatum{ID: "1"},
+				}
+			},
+			func() tea.Msg { return msgs.FreeMsg{} },
+		}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -54,7 +64,16 @@ func TestCanUpdateDataMoveUp(t *testing.T) {
 		frameStart: 0,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return tea.BatchMsg{
+			func() tea.Msg {
+				return msgs.SelectionChangedMsg[TestDatum]{
+					Selection: TestDatum{ID: "1"},
+				}
+			},
+			func() tea.Msg { return msgs.FreeMsg{} },
+		}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -79,7 +98,16 @@ func TestCanUpdateDataMoveDown(t *testing.T) {
 		frameStart: 1,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return tea.BatchMsg{
+			func() tea.Msg {
+				return msgs.SelectionChangedMsg[TestDatum]{
+					Selection: TestDatum{ID: "2"},
+				}
+			},
+			func() tea.Msg { return msgs.FreeMsg{} },
+		}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -105,7 +133,16 @@ func TestCanUpdateDataMoveStart(t *testing.T) {
 		frameStart: 0,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return tea.BatchMsg{
+			func() tea.Msg {
+				return msgs.SelectionChangedMsg[TestDatum]{
+					Selection: TestDatum{ID: "1"},
+				}
+			},
+			func() tea.Msg { return msgs.FreeMsg{} },
+		}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -132,7 +169,9 @@ func TestCanScrollDown(t *testing.T) {
 		frameStart: 1,
 	}
 
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return msgs.SelectionChangedMsg[TestDatum]{Selection: TestDatum{ID: "2"}}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -162,7 +201,9 @@ func TestCanScrollUp(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return msgs.SelectionChangedMsg[TestDatum]{Selection: TestDatum{ID: "1"}}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -192,7 +233,9 @@ func TestCanMoveDown(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return msgs.SelectionChangedMsg[TestDatum]{Selection: TestDatum{ID: "2"}}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -222,7 +265,9 @@ func TestCanMoveUp(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return msgs.SelectionChangedMsg[TestDatum]{Selection: TestDatum{ID: "1"}}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
@@ -299,7 +344,16 @@ func TestFrameCannotBeLargerThanData(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	wantCmd := func() tea.Msg { return msgs.SelectionChangedMsg[TestDatum]{} }
+	wantCmd := func() tea.Msg {
+		return tea.BatchMsg{
+			func() tea.Msg {
+				return msgs.SelectionChangedMsg[TestDatum]{
+					Selection: TestDatum{ID: "1"},
+				}
+			},
+			func() tea.Msg { return msgs.FreeMsg{} },
+		}
+	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
@@ -401,16 +455,5 @@ func verifyUpdate(t *testing.T, gotModel ScrolltableModel[TestDatum], wantModel 
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)
 	}
 
-	if gotCmd == nil || wantCmd == nil {
-		if gotCmd != nil || wantCmd != nil {
-			t.Errorf("Expected and actual cmds different: one is nil and one is non-nil")
-		}
-
-		return
-	}
-
-	cmdDiff := cmp.Diff(gotCmd(), wantCmd())
-	if modelDiff != "" {
-		t.Errorf("Expected and actual cmds different:\n%s", cmdDiff)
-	}
+	utils.CompareCommands(t, gotCmd, wantCmd)
 }

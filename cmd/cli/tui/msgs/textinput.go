@@ -2,7 +2,8 @@ package msgs
 
 // FocusMsg is used to focus a textinput.
 type FocusMsg struct {
-	Name string // name of the target textinput
+	Name     string // name of the target textinput
+	MaxChars int    // maximum number of chars to allow
 }
 
 // InputChangedMsg is published when the value in a textinput changes.

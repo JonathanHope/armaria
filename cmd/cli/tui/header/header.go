@@ -6,17 +6,15 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
-	"github.com/samber/lo"
 )
 
-// HeaderModel is the HeaderModel for a header.
+// HeaderModel is the model for a header.
 // The header displays state information such as breadcrumbs for the selected book.
 type HeaderModel struct {
-	name    string   // name of the header
-	title   string   // title of the app
-	nav     string   // breadcrumbs for the currently selected book
-	width   int      // max width of the header
-	filters []string // currently active filters
+	name  string // name of the header
+	title string // title of the app
+	nav   string // breadcrumbs for the currently selected book
+	width int    // max width of the header
 }
 
 // InitialModel builds the model.
@@ -38,10 +36,6 @@ func (m HeaderModel) Update(msg tea.Msg) (HeaderModel, tea.Cmd) {
 
 	case msgs.NavMsg:
 		m.nav = string(msg)
-
-	case msgs.FiltersMsg:
-		m.filters = msg
-
 	}
 
 	return m, nil
@@ -58,30 +52,11 @@ func (m HeaderModel) View() string {
 		{m.title, utils.Substr(m.nav, 0, cellTextWidth)},
 	}
 
-	for _, filtersChunk := range lo.Chunk(m.filters, 2) {
-		row := make([]string, 2)
-
-		if len(filtersChunk) > 0 {
-			row[0] = utils.Substr(m.filters[0], 0, cellTextWidth)
-		}
-
-		if len(filtersChunk) > 1 {
-			row[1] = utils.Substr(m.filters[1], 0, cellTextWidth)
-		}
-
-		rows = append(rows, row)
-	}
-
 	titleNavStyle := lipgloss.
 		NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("3")).
 		Width(cellWidth).
-		Padding(0, cellPadding)
-
-	filterStyle := lipgloss.
-		NewStyle().
-		Foreground(lipgloss.Color("2")).
 		Padding(0, cellPadding)
 
 	headingTable := table.
@@ -101,10 +76,6 @@ func (m HeaderModel) View() string {
 				return titleNavStyle.Align(lipgloss.Left)
 			case row == 1 && col == 1:
 				return titleNavStyle.Align(lipgloss.Right)
-			case col == 0:
-				return filterStyle.Align(lipgloss.Left)
-			case col == 1:
-				return filterStyle.Align(lipgloss.Right)
 			}
 
 			return lipgloss.NewStyle()

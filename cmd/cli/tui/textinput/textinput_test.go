@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
 const name = "TestInput"
@@ -505,6 +506,31 @@ func TestCanBlink(t *testing.T) {
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 }
 
+func TestCanLimitMaxChars(t *testing.T) {
+	gotModel := TextInputModel{
+		name:    name,
+		sleeper: noopSleeper{},
+		width:   2,
+	}
+
+	gotModel, _ = gotModel.Update(msgs.FocusMsg{Name: name, MaxChars: 1})
+	gotModel, _ = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+	gotModel, _ = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+
+	wantModel := TextInputModel{
+		name:     name,
+		sleeper:  noopSleeper{},
+		width:    2,
+		maxChars: 1,
+		text:     "1",
+		cursor:   1,
+		focus:    true,
+		blink:    true,
+	}
+
+	verifyUpdate(t, gotModel, wantModel, nil, nil)
+}
+
 func TestText(t *testing.T) {
 	gotModel := TextInputModel{
 		text: "123",
@@ -523,18 +549,7 @@ func verifyUpdate(t *testing.T, gotModel TextInputModel, wantModel TextInputMode
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)
 	}
 
-	if gotCmd == nil || wantCmd == nil {
-		if gotCmd != nil || wantCmd != nil {
-			t.Errorf("Expected and actual cmds different: one is nil and one is non-nil")
-		}
-
-		return
-	}
-
-	cmdDiff := cmp.Diff(gotCmd(), wantCmd())
-	if modelDiff != "" {
-		t.Errorf("Expected and actual cmds different:\n%s", cmdDiff)
-	}
+	utils.CompareCommands(t, gotCmd, wantCmd)
 }
 
 type noopSleeper struct{}
