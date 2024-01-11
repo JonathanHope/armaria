@@ -10,8 +10,7 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
-const HelpInfoWidth = 7            // width of the help info in the footer
-const TextInputName = "BooksInput" // name of the textinput
+const HelpInfoWidth = 7 // width of the help info in the footer
 
 // FooterModel is the model for a header.
 // The footer can collect input, and displays informationa about the apps state.
@@ -20,6 +19,7 @@ type FooterModel struct {
 	width     int                      // max width of the footer
 	inputMode bool                     // if true footer is accepting input
 	filters   []string                 // currently applied filters
+	inputName string                   // the name of the input in the footer
 	input     textinput.TextInputModel // allows text input
 }
 
@@ -35,9 +35,12 @@ func (m FooterModel) InputMode() bool {
 
 // InitialModel builds the model.
 func InitialModel(name string) FooterModel {
+	inputName := name + "Input"
+
 	return FooterModel{
-		name:  name,
-		input: textinput.InitialModel(TextInputName, ""),
+		name:      name,
+		inputName: inputName,
+		input:     textinput.InitialModel(inputName, ""),
 	}
 }
 
@@ -53,7 +56,7 @@ func (m FooterModel) Update(msg tea.Msg) (FooterModel, tea.Cmd) {
 		} else {
 			var inputCmd tea.Cmd
 			m.input, inputCmd = m.input.Update(msgs.SizeMsg{
-				Name:  TextInputName,
+				Name:  m.inputName,
 				Width: m.width - HelpInfoWidth,
 			})
 			cmds = append(cmds, inputCmd)
@@ -65,19 +68,19 @@ func (m FooterModel) Update(msg tea.Msg) (FooterModel, tea.Cmd) {
 
 			if m.inputMode {
 				cmds = append(cmds, func() tea.Msg {
-					return msgs.PromptMsg{Name: TextInputName, Prompt: msg.Prompt}
+					return msgs.PromptMsg{Name: m.inputName, Prompt: msg.Prompt}
 				}, func() tea.Msg {
-					return msgs.TextMsg{Name: TextInputName, Text: msg.Text}
+					return msgs.TextMsg{Name: m.inputName, Text: msg.Text}
 				}, func() tea.Msg {
-					return msgs.FocusMsg{Name: TextInputName, MaxChars: msg.MaxChars}
+					return msgs.FocusMsg{Name: m.inputName, MaxChars: msg.MaxChars}
 				})
 			} else {
 				cmds = append(cmds, func() tea.Msg {
-					return msgs.BlurMsg{Name: TextInputName}
+					return msgs.BlurMsg{Name: m.inputName}
 				}, func() tea.Msg {
-					return msgs.PromptMsg{Name: TextInputName, Prompt: ""}
+					return msgs.PromptMsg{Name: m.inputName, Prompt: ""}
 				}, func() tea.Msg {
-					return msgs.TextMsg{Name: TextInputName, Text: ""}
+					return msgs.TextMsg{Name: m.inputName, Text: ""}
 				})
 			}
 		}
