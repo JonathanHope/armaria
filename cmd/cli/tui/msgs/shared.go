@@ -23,3 +23,9 @@ type SizeMsg struct {
 	Width  int    // the max width the component can occupy
 	Height int    // the max height the component can occupy
 }
+
+// BusyMsg is a message that denotes the writer is busy.
+type BusyMsg struct{}
+
+// FreeMsg is a message that denotes the writer is free again.
+type FreeMsg struct{}

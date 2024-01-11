@@ -46,7 +46,6 @@ type model struct {
 	height     int                                        // the current height of the screen
 	folder     string                                     // the current folder
 	query      string                                     // current search query
-	busy       bool                                       // used to limit writers
 	header     header.HeaderModel                         // header for app
 	footer     footer.FooterModel                         // footer for app
 	table      scrolltable.ScrolltableModel[armaria.Book] // table of books
@@ -219,7 +218,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, func() tea.Msg { return msgs.ShowHelpMsg{Name: HelpName} })
 
 		case "enter":
-			if !m.table.Empty() && !m.busy {
+			if !m.table.Empty() && !m.header.Busy() {
 				if m.table.Selection().IsFolder {
 					m.folder = m.table.Selection().ID
 					cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
@@ -229,24 +228,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "left":
-			if m.folder != "" && !m.busy {
+			if m.folder != "" && !m.header.Busy() {
 				cmds = append(cmds, m.getParentCmd())
 			}
 
 		case "right":
-			if !m.table.Empty() && m.table.Selection().IsFolder && !m.busy {
+			if !m.table.Empty() && m.table.Selection().IsFolder && !m.header.Busy() {
 				m.folder = m.table.Selection().ID
 				cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
 			}
 
 		case "D":
-			if !m.table.Empty() && !m.busy {
-				m.busy = true
-				cmds = append(cmds, m.deleteBookCmd())
+			if !m.table.Empty() && !m.header.Busy() {
+				cmds = append(cmds, m.deleteBookCmd(), func() tea.Msg { return msgs.BusyMsg{} })
 			}
 
 		case "c":
-			if m.query != "" && !m.busy {
+			if m.query != "" && !m.header.Busy() {
 				m.query = ""
 				cmds = append(
 					cmds,
@@ -257,69 +255,80 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "r":
-			if !m.busy {
+			if !m.header.Busy() {
 				cmds = append(cmds, m.getBooksCmd(msgs.DirectionNone))
 			}
 
 		case "s":
-			if !m.busy {
+			if !m.header.Busy() {
 				m.inputType = inputSearch
 				cmds = append(cmds, m.inputStartCmd("Query: ", "", 0))
 			}
 
 		case "u":
-			if !m.table.Empty() && !m.table.Selection().IsFolder && !m.busy {
-				m.busy = true
+			if !m.table.Empty() && !m.table.Selection().IsFolder && !m.header.Busy() {
 				m.inputType = inputURL
-				cmds = append(cmds, m.inputStartCmd("URL: ", *m.table.Selection().URL, 2048))
+				cmds = append(cmds,
+					m.inputStartCmd("URL: ", *m.table.Selection().URL, 2048),
+					func() tea.Msg { return msgs.BusyMsg{} })
 			}
 
 		case "n":
-			if !m.table.Empty() && !m.busy {
-				m.busy = true
+			if !m.table.Empty() && !m.header.Busy() {
 				m.inputType = inputName
-				cmds = append(cmds, m.inputStartCmd("Name: ", m.table.Selection().Name, 2048))
+				cmds = append(cmds,
+					m.inputStartCmd("Name: ", m.table.Selection().Name, 2048),
+					func() tea.Msg { return msgs.BusyMsg{} })
 			}
 
 		case "+":
-			if !m.busy {
-				m.busy = true
+			if !m.header.Busy() {
 				m.inputType = inputFolder
-				cmds = append(cmds, m.inputStartCmd("Folder: ", "", 2048))
+				cmds = append(cmds,
+					m.inputStartCmd("Folder: ", "", 2048),
+					func() tea.Msg { return msgs.BusyMsg{} })
 			}
 
 		case "b":
-			if !m.busy {
-				m.busy = true
+			if !m.header.Busy() {
 				m.inputType = inputBookmark
-				cmds = append(cmds, m.inputStartCmd("Bookmark: ", "", 2048))
+				cmds = append(cmds,
+					m.inputStartCmd("Bookmark: ", "", 2048),
+					func() tea.Msg { return msgs.BusyMsg{} })
 			}
 
 		case "ctrl+up":
-			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 && !m.busy {
-				m.busy = true
-
+			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 && !m.header.Busy() {
 				if m.table.Index() == 1 {
 					next := m.table.Data()[0].ID
-					cmds = append(cmds, m.moveToStartCmd(next, msgs.DirectionUp))
+					cmds = append(cmds,
+						m.moveToStartCmd(next, msgs.DirectionUp),
+						func() tea.Msg { return msgs.BusyMsg{} })
 				} else {
 					previous := m.table.Data()[m.table.Index()-2].ID
 					next := m.table.Data()[m.table.Index()-1].ID
-					cmds = append(cmds, m.moveBetweenCmd(previous, next, msgs.DirectionUp))
+					cmds = append(cmds,
+						m.moveBetweenCmd(previous, next, msgs.DirectionUp),
+						func() tea.Msg { return msgs.BusyMsg{} })
 				}
 			}
 
 		case "ctrl+down":
-			if m.query == "" && !m.table.Empty() && m.table.Index() < len(m.table.Data())-1 && !m.busy {
-				m.busy = true
-
+			if m.query == "" &&
+				!m.table.Empty() &&
+				m.table.Index() < len(m.table.Data())-1 &&
+				!m.header.Busy() {
 				if m.table.Index() == len(m.table.Data())-2 {
 					previous := m.table.Data()[len(m.table.Data())-1].ID
-					cmds = append(cmds, m.moveToEndCmd(previous, msgs.DirectionDown))
+					cmds = append(cmds,
+						m.moveToEndCmd(previous, msgs.DirectionDown),
+						func() tea.Msg { return msgs.BusyMsg{} })
 				} else {
 					previous := m.table.Data()[m.table.Index()+1].ID
 					next := m.table.Data()[m.table.Index()+2].ID
-					cmds = append(cmds, m.moveBetweenCmd(previous, next, msgs.DirectionDown))
+					cmds = append(cmds,
+						m.moveBetweenCmd(previous, next, msgs.DirectionDown),
+						func() tea.Msg { return msgs.BusyMsg{} })
 				}
 			}
 		}
@@ -343,9 +352,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.activeView = msgs.View(msg)
 		return m, nil
 
-	case msgs.FreeMsg:
-		m.busy = false
-
 	case msgs.InputCancelledMsg:
 		m.query = ""
 		m.inputType = inputNone
@@ -354,17 +360,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case msgs.InputConfirmedMsg:
 		cmds = append(cmds, m.inputEndCmd())
 		if m.inputType == inputName {
-			m.busy = true
-			cmds = append(cmds, m.updateNameCmd(m.footer.Text()))
+			cmds = append(cmds, m.
+				updateNameCmd(m.footer.Text()),
+				func() tea.Msg { return msgs.BusyMsg{} })
 		} else if m.inputType == inputURL {
-			m.busy = true
-			cmds = append(cmds, m.updateURLCmd(m.footer.Text()))
+			cmds = append(cmds,
+				m.updateURLCmd(m.footer.Text()),
+				func() tea.Msg { return msgs.BusyMsg{} })
 		} else if m.inputType == inputFolder {
-			m.busy = true
-			cmds = append(cmds, m.addFolderCmd(m.footer.Text()))
+			cmds = append(cmds,
+				m.addFolderCmd(m.footer.Text()),
+				func() tea.Msg { return msgs.BusyMsg{} })
 		} else if m.inputType == inputBookmark {
-			m.busy = true
-			cmds = append(cmds, m.addBookmarkCmd(m.footer.Text()))
+			cmds = append(cmds,
+				m.addBookmarkCmd(m.footer.Text()),
+				func() tea.Msg { return msgs.BusyMsg{} })
 		}
 
 		m.inputType = inputNone
@@ -488,7 +498,8 @@ func (m model) openURLCmd() tea.Cmd {
 // getBreadcrumbsCmd gets breadcrumbs for the currently selected book.
 func (m model) getBreadcrumbsCmd() tea.Cmd {
 	return func() tea.Msg {
-		parents, err := armariaapi.GetParentNames(m.table.Selection().ID, armariaapi.DefaultGetParentNameOptions())
+		options := armariaapi.DefaultGetParentNameOptions()
+		parents, err := armariaapi.GetParentNames(m.table.Selection().ID, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}

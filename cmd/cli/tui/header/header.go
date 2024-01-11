@@ -14,7 +14,13 @@ type HeaderModel struct {
 	name  string // name of the header
 	title string // title of the app
 	nav   string // breadcrumbs for the currently selected book
+	busy  bool   // if true the writer is busy
 	width int    // max width of the header
+}
+
+// Busy returns whether the writer is busy or not.
+func (m HeaderModel) Busy() bool {
+	return m.busy
 }
 
 // InitialModel builds the model.
@@ -36,6 +42,12 @@ func (m HeaderModel) Update(msg tea.Msg) (HeaderModel, tea.Cmd) {
 
 	case msgs.NavMsg:
 		m.nav = string(msg)
+
+	case msgs.BusyMsg:
+		m.busy = true
+
+	case msgs.FreeMsg:
+		m.busy = false
 	}
 
 	return m, nil
@@ -48,8 +60,13 @@ func (m HeaderModel) View() string {
 	cellWidth := m.width / 2
 	cellTextWidth := cellWidth - cellPadding*2
 
+	title := m.title
+	if m.busy {
+		title += " - ⌛"
+	}
+
 	rows := [][]string{
-		{m.title, utils.Substr(m.nav, 0, cellTextWidth)},
+		{title, utils.Substr(m.nav, 0, cellTextWidth)},
 	}
 
 	titleNavStyle := lipgloss.
