@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
 func TestHandlesViewMessage(t *testing.T) {
@@ -47,16 +48,5 @@ func verifyUpdate(t *testing.T, gotModel tea.Model, wantModel tea.Model, gotCmd 
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)
 	}
 
-	if gotCmd == nil || wantCmd == nil {
-		if gotCmd != nil || wantCmd != nil {
-			t.Errorf("Expected and actual cmds different: one is nil and one is non-nil")
-		}
-
-		return
-	}
-
-	cmdDiff := cmp.Diff(gotCmd(), wantCmd())
-	if modelDiff != "" {
-		t.Errorf("Expected and actual cmds different:\n%s", cmdDiff)
-	}
+	utils.CompareCommands(t, gotCmd, wantCmd)
 }
