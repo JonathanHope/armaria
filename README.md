@@ -126,7 +126,7 @@ This software is still in its early days. This roadmap lays out where it current
 
 **TUI:**
 
-- [ ] Add bookmark
+- [X] Add bookmark
 - [x] Add folder
 - [x] Delete bookmark
 - [x] Delete folder
@@ -135,3 +135,4 @@ This software is still in its early days. This roadmap lays out where it current
 - [ ] Add tag
 - [ ] Remove tag
 - [x] List bookmarks/folders
+- [ ] View bookmark
