@@ -29,11 +29,12 @@ const HelpName = "BooksHelp"     // name of the help screen
 type inputType int
 
 const (
-	inputNone   inputType = iota // not currently collecting input
-	inputSearch                  // collecting input for a search
-	inputURL                     // collecting input for an URL
-	inputName                    // collecting input for a name
-	inputFolder                  // collecting input to add a folder
+	inputNone     inputType = iota // not currently collecting input
+	inputSearch                    // collecting input for a search
+	inputURL                       // collecting input for an URL
+	inputName                      // collecting input for a name
+	inputFolder                    // collecting input to add a folder
+	inputBookmark                  // collecting input to add a bookmark
 )
 
 // model is the model for the book listing.
@@ -104,6 +105,7 @@ func InitialModel() tea.Model {
 				{Context: "Listing", Key: "u", Help: "Edit URL"},
 				{Context: "Listing", Key: "n", Help: "Edit name"},
 				{Context: "Listing", Key: "+", Help: "Add folder"},
+				{Context: "Listing", Key: "b", Help: "Add bookmark"},
 				{Context: "Listing", Key: "q", Help: "Quit"},
 				{Context: "Input", Key: "left", Help: "Move to previous char"},
 				{Context: "Input", Key: "right", Help: "Move to next char"},
@@ -217,7 +219,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, func() tea.Msg { return msgs.ShowHelpMsg{Name: HelpName} })
 
 		case "enter":
-			if !m.table.Empty() {
+			if !m.table.Empty() && !m.busy {
 				if m.table.Selection().IsFolder {
 					m.folder = m.table.Selection().ID
 					cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
@@ -227,53 +229,71 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "left":
-			if m.folder != "" {
+			if m.folder != "" && !m.busy {
 				cmds = append(cmds, m.getParentCmd())
 			}
 
 		case "right":
-			if !m.table.Empty() && m.table.Selection().IsFolder {
+			if !m.table.Empty() && m.table.Selection().IsFolder && !m.busy {
 				m.folder = m.table.Selection().ID
 				cmds = append(cmds, m.getBooksCmd(msgs.DirectionStart))
 			}
 
 		case "D":
-			if !m.table.Empty() {
+			if !m.table.Empty() && !m.busy {
 				m.busy = true
 				cmds = append(cmds, m.deleteBookCmd())
 			}
 
 		case "c":
-			m.query = ""
-			cmds = append(
-				cmds,
-				m.getBooksCmd(msgs.DirectionStart),
-				m.updateFiltersCmd(),
-				m.recalculateSizeCmd(),
-			)
+			if m.query != "" && !m.busy {
+				m.query = ""
+				cmds = append(
+					cmds,
+					m.getBooksCmd(msgs.DirectionStart),
+					m.updateFiltersCmd(),
+					m.recalculateSizeCmd(),
+				)
+			}
 
 		case "r":
-			cmds = append(cmds, m.getBooksCmd(msgs.DirectionNone))
+			if !m.busy {
+				cmds = append(cmds, m.getBooksCmd(msgs.DirectionNone))
+			}
 
 		case "s":
-			m.inputType = inputSearch
-			cmds = append(cmds, m.inputStartCmd("Query: ", "", 0))
+			if !m.busy {
+				m.inputType = inputSearch
+				cmds = append(cmds, m.inputStartCmd("Query: ", "", 0))
+			}
 
 		case "u":
-			if !m.table.Empty() && !m.table.Selection().IsFolder {
+			if !m.table.Empty() && !m.table.Selection().IsFolder && !m.busy {
+				m.busy = true
 				m.inputType = inputURL
 				cmds = append(cmds, m.inputStartCmd("URL: ", *m.table.Selection().URL, 2048))
 			}
 
 		case "n":
-			if !m.table.Empty() {
+			if !m.table.Empty() && !m.busy {
+				m.busy = true
 				m.inputType = inputName
 				cmds = append(cmds, m.inputStartCmd("Name: ", m.table.Selection().Name, 2048))
 			}
 
 		case "+":
-			m.inputType = inputFolder
-			cmds = append(cmds, m.inputStartCmd("Folder: ", "", 2048))
+			if !m.busy {
+				m.busy = true
+				m.inputType = inputFolder
+				cmds = append(cmds, m.inputStartCmd("Folder: ", "", 2048))
+			}
+
+		case "b":
+			if !m.busy {
+				m.busy = true
+				m.inputType = inputBookmark
+				cmds = append(cmds, m.inputStartCmd("Bookmark: ", "", 2048))
+			}
 
 		case "ctrl+up":
 			if m.query == "" && !m.table.Empty() && m.table.Index() > 0 && !m.busy {
@@ -342,6 +362,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if m.inputType == inputFolder {
 			m.busy = true
 			cmds = append(cmds, m.addFolderCmd(m.footer.Text()))
+		} else if m.inputType == inputBookmark {
+			m.busy = true
+			cmds = append(cmds, m.addBookmarkCmd(m.footer.Text()))
 		}
 
 		m.inputType = inputNone
@@ -545,6 +568,23 @@ func (m model) addFolderCmd(name string) tea.Cmd {
 		}
 
 		_, err := armariaapi.AddFolder(name, options)
+		if err != nil {
+			return msgs.ErrorMsg{Err: err}
+		}
+
+		return m.getBooksCmd(msgs.DirectionNone)()
+	}
+}
+
+// addBookmarkCmd adds a bookmark to the bookmarks database.
+func (m model) addBookmarkCmd(url string) tea.Cmd {
+	return func() tea.Msg {
+		options := armariaapi.DefaultAddBookOptions()
+		if m.folder != "" {
+			options.WithParentID(m.folder)
+		}
+
+		_, err := armariaapi.AddBook(url, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
