@@ -178,6 +178,11 @@ func (m ScrolltableModel[T]) Update(msg tea.Msg) (ScrolltableModel[T], tea.Cmd) 
 
 	case msgs.DataMsg[T]:
 		if msg.Name == m.name {
+			// This allows the cursor to stick in the right place when an item is removed.
+			if len(m.data)-1 == len(msg.Data) && m.frameStart > 0 {
+				m.frameStart -= 1
+			}
+
 			m.data = msg.Data
 			m.resetFrame(msg.Move)
 			return m, tea.Batch(m.selectionChangedCmd(), func() tea.Msg { return msgs.FreeMsg{} })
