@@ -22,7 +22,7 @@ func TestCanUpdateWidth(t *testing.T) {
 		width: 1,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, gotCmd)
 }
 
 func TestCanUpdateNav(t *testing.T) {
@@ -33,7 +33,7 @@ func TestCanUpdateNav(t *testing.T) {
 		nav: "nav",
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, gotCmd)
 }
 
 func TestCanMarkBusy(t *testing.T) {
@@ -44,7 +44,7 @@ func TestCanMarkBusy(t *testing.T) {
 		busy: true,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, gotCmd)
 }
 
 func TestCanMarkFree(t *testing.T) {
@@ -57,7 +57,7 @@ func TestCanMarkFree(t *testing.T) {
 		busy: false,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, gotCmd)
 }
 
 func TestBusy(t *testing.T) {
@@ -71,12 +71,12 @@ func TestBusy(t *testing.T) {
 	}
 }
 
-func verifyUpdate(t *testing.T, gotModel HeaderModel, wantModel HeaderModel, gotCmd tea.Cmd, wantCmd tea.Cmd) {
+func verifyUpdate(t *testing.T, gotModel HeaderModel, wantModel HeaderModel, gotCmd tea.Cmd) {
 	unexported := cmp.AllowUnexported(HeaderModel{})
 	modelDiff := cmp.Diff(gotModel, wantModel, unexported)
 	if modelDiff != "" {
 		t.Errorf("Expected and actual models different:\n%s", modelDiff)
 	}
 
-	utils.CompareCommands(t, gotCmd, wantCmd)
+	utils.CompareCommands(t, gotCmd, nil)
 }
