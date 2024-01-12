@@ -14,13 +14,15 @@ const Name = "footer"
 
 func TestCanUpdateWidth(t *testing.T) {
 	gotModel := FooterModel{
-		name: Name,
+		name:      Name,
+		inputName: Name + "Input",
 	}
 	gotModel, gotCmd := gotModel.Update(msgs.SizeMsg{Name: Name, Width: 1})
 
 	wantModel := FooterModel{
-		name:  Name,
-		width: 1,
+		name:      Name,
+		inputName: Name + "Input",
+		width:     1,
 	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
@@ -28,7 +30,8 @@ func TestCanUpdateWidth(t *testing.T) {
 
 func TestCanStartInputMode(t *testing.T) {
 	gotModel := FooterModel{
-		name: Name,
+		name:      Name,
+		inputName: Name + "Input",
 	}
 	gotModel, gotCmd := gotModel.Update(msgs.InputModeMsg{
 		Name:      Name,
@@ -40,14 +43,15 @@ func TestCanStartInputMode(t *testing.T) {
 
 	wantModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 
 	wantCmd := func() tea.Msg {
 		return tea.BatchMsg{
-			func() tea.Msg { return msgs.PromptMsg{Name: TextInputName, Prompt: "prompt"} },
-			func() tea.Msg { return msgs.TextMsg{Name: TextInputName, Text: "text"} },
-			func() tea.Msg { return msgs.FocusMsg{Name: TextInputName, MaxChars: 5} },
+			func() tea.Msg { return msgs.PromptMsg{Name: Name + "Input", Prompt: "prompt"} },
+			func() tea.Msg { return msgs.TextMsg{Name: Name + "Input", Text: "text"} },
+			func() tea.Msg { return msgs.FocusMsg{Name: Name + "Input", MaxChars: 5} },
 		}
 	}
 
@@ -57,20 +61,22 @@ func TestCanStartInputMode(t *testing.T) {
 func TestCanEndInputMode(t *testing.T) {
 	gotModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 	gotModel, gotCmd := gotModel.Update(msgs.InputModeMsg{Name: Name, InputMode: false})
 
 	wantModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: false,
 	}
 
 	wantCmd := func() tea.Msg {
 		return tea.BatchMsg{
-			func() tea.Msg { return msgs.BlurMsg{Name: TextInputName} },
-			func() tea.Msg { return msgs.PromptMsg{Name: TextInputName} },
-			func() tea.Msg { return msgs.TextMsg{Name: TextInputName} },
+			func() tea.Msg { return msgs.BlurMsg{Name: Name + "Input"} },
+			func() tea.Msg { return msgs.PromptMsg{Name: Name + "Input"} },
+			func() tea.Msg { return msgs.TextMsg{Name: Name + "Input"} },
 		}
 	}
 
@@ -79,13 +85,15 @@ func TestCanEndInputMode(t *testing.T) {
 
 func TestCanSetFilters(t *testing.T) {
 	gotModel := FooterModel{
-		name: Name,
+		name:      Name,
+		inputName: Name + "Input",
 	}
 	gotModel, gotCmd := gotModel.Update(msgs.FiltersMsg{Name: Name, Filters: []string{"one"}})
 
 	wantModel := FooterModel{
-		name:    Name,
-		filters: []string{"one"},
+		name:      Name,
+		inputName: Name + "Input",
+		filters:   []string{"one"},
 	}
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
@@ -94,12 +102,14 @@ func TestCanSetFilters(t *testing.T) {
 func TestCanCancelInput(t *testing.T) {
 	gotModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyEsc})
 
 	wantModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 
@@ -115,12 +125,14 @@ func TestCanCancelInput(t *testing.T) {
 func TestCanConfirmInput(t *testing.T) {
 	gotModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
 	wantModel := FooterModel{
 		name:      Name,
+		inputName: Name + "Input",
 		inputMode: true,
 	}
 
