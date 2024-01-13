@@ -14,7 +14,7 @@ The workflow will automatically build and push a Snap to Snapcraft. The store pa
 
 *** Nix
 
-The workflow will add a branch to the Armaria NUR [[https://github.com/JonathanHope/nur-armaria][here]]. I then need to create a PR and merge it in. Within 24 hours the main [[https://github.com/nix-community/NUR][NUR repo]] will pick it up. The package will then apppear [[https://nur.nix-community.org/repos/armaria/][here]].
+The workflow will automatically add a commit to the Armaria NUR [[https://github.com/JonathanHope/nur-armaria][here]]. Within 24 hours the main [[https://github.com/nix-community/NUR][NUR repo]] will pick it up. The package will then apppear [[https://nur.nix-community.org/repos/armaria/][here]].
 
 ** MacOS
 
