@@ -318,5 +318,5 @@ nix:
     repository:
       owner: JonathanHope
       name: nur-armaria
-      branch: main
+      branch: master
       token: "{{ .Env.NUR_AUTH_TOKEN }}"
