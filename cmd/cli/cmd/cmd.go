@@ -20,6 +20,7 @@ type RootCmd struct {
 	Update UpdateCmd `cmd:"" help:"Update a folder or bookmark."`
 	List   ListCmd   `cmd:"" help:"List folders, bookmarks, or tags."`
 	Get    GetCmd    `cmd:"" help:"Get a folder or bookmark."`
+	Query  QueryCmd  `cmd:"" help:"Query folders and bookmarks."`
 
 	Config   ConfigCmd   `cmd:"" help:"Manage the configuration."`
 	Manifest ManifestCmd `cmd:"" help:"Manage the app manifest."`
@@ -853,6 +854,41 @@ type VersionCmd struct {
 // Run print the current version.
 func (r *VersionCmd) Run(ctx *Context) error {
 	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf(ctx.Version))
+
+	return nil
+}
+
+// QueryCmd is a CLI command to query bookmarks.
+type QueryCmd struct {
+	First int64 `help:"The max number of bookmarks/folders to return." default:"5"`
+
+	Query string `arg:"" name:"query" help:"Query to search by."`
+}
+
+// Run query bookmarks.
+func (r *QueryCmd) Run(ctx *Context) error {
+	start := time.Now()
+
+	options := armariaapi.DefaultListBooksOptions()
+	options.WithFolders(true)
+	options.WithBooks(true)
+	if ctx.DB != nil {
+		options.WithDB(*ctx.DB)
+	}
+	options.WithFirst(r.First)
+	options.WithQuery(r.Query)
+
+	books, err := armariaapi.ListBooks(options)
+	if err != nil {
+		formatError(ctx.Writer, ctx.Formatter, err)
+		ctx.ReturnCode(1)
+		return nil
+	}
+
+	elapsed := time.Since(start)
+
+	formatBookResults(ctx.Writer, ctx.Formatter, books)
+	formatSuccess(ctx.Writer, ctx.Formatter, fmt.Sprintf("Listed in %s", elapsed))
 
 	return nil
 }
