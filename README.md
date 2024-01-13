@@ -18,6 +18,7 @@ You can sync this file across your devices how you would sync any other file. Th
 |           | Linux x64 | Windows x64 | MacOS x64/arm64 |
 |-----------|-----------|-------------|-----------------|
 | Snapcraft | Yes       | No          | No              |
+| Nix       | Yes       | No          | No              |
 | Winget    | No        | Yes         | No              |
 | Homebrew  | No        | No          | Yes             |
 
