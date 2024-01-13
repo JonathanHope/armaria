@@ -18,7 +18,7 @@ func InstallManifestFirefox() error {
 		return fmt.Errorf("error getting firefox manfiest path while installing manifest: %w", err)
 	}
 
-	return installManifest(path)
+	return installManifest(path, false)
 }
 
 // InstallManifestChrome installs the app manifest for Firefox.
@@ -28,7 +28,7 @@ func InstallManifestChrome() error {
 		return fmt.Errorf("error getting chrome manfiest path while installing manifest: %w", err)
 	}
 
-	return installManifest(path)
+	return installManifest(path, true)
 }
 
 // InstallManifestChromium installs the app manifest for Firefox.
@@ -38,31 +38,46 @@ func InstallManifestChromium() error {
 		return fmt.Errorf("error getting chromium manfiest path while installing manifest: %w", err)
 	}
 
-	return installManifest(path)
+	return installManifest(path, true)
 }
 
 // installManifest installs the app manifest.
-func installManifest(path string) error {
+func installManifest(path string, isChrome bool) error {
 	hostPath, err := paths.Host()
 	if err != nil {
 		return fmt.Errorf("error getting host path while installing manifest: %w", err)
 	}
 
-	manifest := armaria.Manifest{
-		Name:              "armaria",
-		Description:       "Armaria is a fast local-first bookmarks manager.",
-		Path:              hostPath,
-		HostType:          "stdio",
-		AllowedExtensions: []string{"armaria@armaria.net"},
-		AllowedOrigins: []string{
-			"chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/",
-			"chrome-extension://fbnilfpngakppdkddndcnckolmlpghdf/",
-		},
-	}
+	var buffer []byte
+	if isChrome {
+		manifest := armaria.ChromeManifest{
+			Name:        "armaria",
+			Description: "Armaria is a fast local-first bookmarks manager.",
+			Path:        hostPath,
+			HostType:    "stdio",
+			AllowedOrigins: []string{
+				"chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/",
+				"chrome-extension://fbnilfpngakppdkddndcnckolmlpghdf/",
+			},
+		}
 
-	buffer, err := json.Marshal(manifest)
-	if err != nil {
-		return fmt.Errorf("error marshalling manifest while installing manifest: %w", err)
+		buffer, err = json.Marshal(manifest)
+		if err != nil {
+			return fmt.Errorf("error marshalling manifest while installing manifest: %w", err)
+		}
+	} else {
+		manifest := armaria.FirefoxManifest{
+			Name:              "armaria",
+			Description:       "Armaria is a fast local-first bookmarks manager.",
+			Path:              hostPath,
+			HostType:          "stdio",
+			AllowedExtensions: []string{"armaria@armaria.net"},
+		}
+
+		buffer, err = json.Marshal(manifest)
+		if err != nil {
+			return fmt.Errorf("error marshalling manifest while installing manifest: %w", err)
+		}
 	}
 
 	handle, err := os.Create(path)
