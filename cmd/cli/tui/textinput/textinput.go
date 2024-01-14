@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/muesli/reflow/ansi"
 )
 
 const BlinkSpeed = 600 // how quickly to blink the cursor
@@ -15,16 +16,18 @@ const Padding = 1      // how much left and right padding to add
 // TextInputModel is the TextInputModel for a textinput.
 // The textinput allows users to enter and modify text.
 type TextInputModel struct {
-	name       string  // name of the text input
-	prompt     string  // prompt for the input
-	text       string  // the current text being inputted
-	width      int     // the width of the text input
-	cursor     int     // location of the cursor in the text input
-	focus      bool    // whether the text input is focused or not
-	blink      bool    // flag that alternates in order to make the cursor blink
-	frameStart int     // where the viewable frame of text starts
-	maxChars   int     // maximum number of chars to allow
-	sleeper    sleeper // used to sleep
+	name        string  // name of the text input
+	prompt      string  // prompt for the input
+	text        string  // the current text being inputted
+	width       int     // the width of the text input
+	cursor      int     // location of the cursor in the window
+	index       int     // which character is selected in the text
+	focus       bool    // whether the text input is focused or not
+	maxChars    int     // maximum number of chars to allow
+	blink       bool    // flag that alternates in order to make the cursor blink
+	windowStart int     // index the window starts at
+	windowEnd   int     // index the window ends at
+	sleeper     sleeper // used to sleep
 }
 
 // InitialModel builds the model.
@@ -36,18 +39,209 @@ func InitialModel(name string, prompt string) TextInputModel {
 	}
 }
 
-// Text returns the curent text in the input.
+// Text returns the current text in the input.
 func (m *TextInputModel) Text() string {
 	return m.text
 }
 
-// toEnd moves the cursor to the end of the textinput.
-func (m *TextInputModel) toEnd() {
-	m.cursor = len(m.text)
-	if m.cursor > m.available()-1 {
-		diff := m.cursor - (m.available() - 1)
-		m.frameStart += diff
-		m.cursor = m.available() - 1
+// textWithSpace returns the current text with a space at the end.
+// This input uses a block cursor so the extra space is needed.
+func (m *TextInputModel) textWithSpace() string {
+	return m.text + " "
+}
+
+// windowWidth returns the available width for text.
+// The avaialble width is the overall width less the measured prompt width.
+func (m TextInputModel) windowWidth() int {
+	width := m.width - ansi.PrintableRuneWidth(m.prompt) - Padding*2
+	if width < 0 {
+		width = 0
+	}
+
+	return width
+}
+
+// window returns the currently visible part of the text.
+func (m *TextInputModel) window() string {
+	if m.textWithSpace() == " " || m.width == 0 {
+		return " "
+	}
+
+	textRunes := strings.Split(m.textWithSpace(), "")
+	start := m.windowStart
+	end := m.windowEnd
+	if end > len(textRunes) {
+		end = len(textRunes)
+	}
+
+	windowRunes := textRunes[start:end]
+	return strings.Join(windowRunes, "")
+}
+
+// initWindow intializes the window after the text changes.
+func (m *TextInputModel) initWindow() {
+	m.windowStart = 0
+	m.windowEnd = m.windowWidth()
+	m.cursor = 0
+	m.index = 0
+	m.moveEnd()
+	m.chopLeft()
+}
+
+// cursorAtStart returns true if the cursor is at the start of the window.
+func (m *TextInputModel) cursorAtStart() bool {
+	return m.cursor == 0
+}
+
+// cursorAtEnd returns true if the cursor is at the end of the window.
+func (m *TextInputModel) cursorAtEnd() bool {
+	windowRunes := strings.Split(m.window(), "")
+	return m.cursor == len(windowRunes)-1
+}
+
+// indexAtStart returns true if the cursor is at the start of the text.
+func (m *TextInputModel) indexAtStart() bool {
+	return m.index == 0
+}
+
+// indexAtEnd returns true if the cursor is at the end of the text.
+func (m *TextInputModel) indexAtEnd() bool {
+	textRunes := strings.Split(m.textWithSpace(), "")
+	return m.index == len(textRunes)-1
+}
+
+// chopRight chops runes off the right of the window to make it fit.
+func (m *TextInputModel) chopRight() {
+	textRunes := strings.Split(m.textWithSpace(), "")
+	for ansi.PrintableRuneWidth(m.window()) < m.windowWidth() && m.windowEnd < len(textRunes) {
+		m.windowEnd += 1
+	}
+
+	for ansi.PrintableRuneWidth(m.window()) > m.windowWidth() {
+		m.windowEnd -= 1
+	}
+}
+
+// chopLeft chops runes off the left of the window to make it fit.
+func (m *TextInputModel) chopLeft() {
+	for ansi.PrintableRuneWidth(m.window()) < m.windowWidth() && m.windowStart > 0 {
+		m.windowStart -= 1
+	}
+
+	for ansi.PrintableRuneWidth(m.window()) > m.windowWidth() {
+		m.windowStart += 1
+	}
+}
+
+// moveRight moves the cursor to right once space.
+func (m *TextInputModel) moveRight() {
+	shift := !m.indexAtEnd() && m.cursorAtEnd()
+	previousLength := m.windowEnd - m.windowStart
+
+	if !m.indexAtEnd() {
+		m.index += 1
+	}
+
+	if !m.cursorAtEnd() {
+		m.cursor += 1
+	}
+
+	if shift {
+		m.windowEnd += 1
+	}
+
+	m.chopLeft()
+
+	newLength := m.windowEnd - m.windowStart
+	m.cursor += newLength - previousLength
+}
+
+// moveLeft moves the cursor the left once space.
+func (m *TextInputModel) moveLeft() {
+	shift := !m.indexAtStart() && m.cursorAtStart()
+
+	if !m.indexAtStart() {
+		m.index -= 1
+	}
+
+	if !m.cursorAtStart() {
+		m.cursor -= 1
+	}
+
+	if shift {
+		m.windowStart -= 1
+	}
+
+	m.chopRight()
+}
+
+// moveEnd moves to the end of the text.
+func (m *TextInputModel) moveEnd() {
+	for !m.cursorAtEnd() || !m.indexAtEnd() {
+		m.moveRight()
+	}
+}
+
+// moveEnd moves to the start of the text.
+func (m *TextInputModel) moveStart() {
+	for !m.cursorAtStart() || !m.indexAtStart() {
+		m.moveLeft()
+	}
+}
+
+// delete deletes the rune in front of the cursor.
+func (m *TextInputModel) delete() {
+	if m.text == "" || m.index == 0 {
+		return
+	}
+
+	textRunes := strings.Split(m.text, "")
+
+	if m.index == 1 { // Delete a char at the start of the text.
+		m.text = strings.Join(textRunes[1:], "")
+	} else if m.indexAtEnd() { // Delete a char at the end of the text.
+		m.text = strings.Join(textRunes[:len(textRunes)-1], "")
+	} else { // Delete a char in the middle of the text.
+		first := strings.Join(textRunes[:m.index-1], "")
+		rest := strings.Join(textRunes[m.index:], "")
+		m.text = first + rest
+	}
+
+	m.index -= 1
+
+	if m.windowStart > 0 {
+		m.windowStart -= 1
+		m.chopRight()
+	} else {
+		m.cursor -= 1
+	}
+}
+
+// insert inserts runes in front of the cursor.
+func (m *TextInputModel) insert(runes []rune) {
+	textRunes := strings.Split(m.text, "")
+	cursorAtEnd := m.cursorAtEnd()
+
+	if m.maxChars > 0 && len(textRunes)+len(runes) > m.maxChars {
+		return
+	}
+
+	if m.indexAtStart() { // Insert the char at start of the text.
+		m.text = string(runes) + m.text
+	} else if m.indexAtEnd() { // Insert the char at the end of the text.
+		m.text += string(runes)
+	} else { // Insert the char in the middle of the text.
+		first := strings.Join(textRunes[:m.index], "")
+		rest := strings.Join(textRunes[m.index:], "")
+		m.text = first + string(runes) + rest
+	}
+
+	if cursorAtEnd {
+		m.moveEnd()
+	} else {
+		m.cursor += len(runes)
+		m.index += len(runes)
+		m.chopRight()
 	}
 }
 
@@ -59,19 +253,16 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 		if m.name == msg.Name {
 			m.focus = true
 			m.blink = true
-			m.cursor = 0
-			m.frameStart = 0
 			m.maxChars = msg.MaxChars
-			m.toEnd()
+			m.initWindow()
 			return m, m.blinkCmd()
 		}
 
 	case msgs.BlurMsg:
 		m.focus = false
 		m.blink = false
-		m.cursor = 0
-		m.frameStart = 0
 		m.maxChars = 0
+		m.initWindow()
 
 	case msgs.BlinkMsg:
 		if m.focus && msg.Name == m.name {
@@ -82,17 +273,19 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 	case msgs.TextMsg:
 		if m.name == msg.Name {
 			m.text = msg.Text
-			m.toEnd()
+			m.initWindow()
 		}
 
 	case msgs.PromptMsg:
 		if m.name == msg.Name {
 			m.prompt = msg.Prompt
+			m.initWindow()
 		}
 
 	case msgs.SizeMsg:
 		if m.name == msg.Name {
 			m.width = msg.Width - Padding*2
+			m.initWindow()
 		}
 
 	case tea.KeyMsg:
@@ -100,83 +293,17 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 			switch msg.String() {
 
 			case "backspace":
-				// No need to delete a char if the text is empty or the cursor isn't behind a char.
-				if m.text != "" && m.cursor != 0 {
-					text := strings.Split(m.text, "")
-
-					if m.cursor == 1 {
-						// Delete a char at the start of the text.
-						m.text = strings.Join(text[1:], "")
-					} else if m.cursor+m.frameStart == len(m.text) {
-						// Delete a char at the end of the text.
-						m.text = strings.Join(text[:len(text)-1], "")
-					} else {
-						// Delete a char in the middle of the text.
-						first := strings.Join(text[:m.cursor+m.frameStart-1], "")
-						rest := strings.Join(text[m.cursor+m.frameStart:], "")
-						m.text = first + rest
-					}
-
-					// Move the frame if needed to keep it full.
-					// Otherwise move the cursor back a position.
-					if m.cursor+m.frameStart > m.available()-1 && m.frameStart > 0 {
-						m.frameStart -= 1
-					} else {
-						m.cursor -= 1
-					}
-
-					return m, m.inputChangedCmd()
-				}
+				m.delete()
+				return m, m.inputChangedCmd()
 
 			case "left":
-				if m.cursor > 0 {
-					// Move the cursor back if it's not at the start of the frame.
-					m.cursor -= 1
-				} else if m.cursor == 0 && m.frameStart > 0 {
-					// Move the frame back if the cursor is at the start of the frame and it's possible.
-					m.frameStart -= 1
-				}
+				m.moveLeft()
 
 			case "right":
-				if m.cursor < m.available()-1 && m.cursor < len(m.text) {
-					// Move cursor forward if it's not at the end of the frame.
-					m.cursor += 1
-				} else if m.cursor == m.available()-1 && m.frameStart+m.cursor < len(m.text) {
-					// Move the frame forward if the cursor is at the end of the frame and it's possible.
-					m.frameStart += 1
-				}
+				m.moveRight()
 
 			default:
-				textLength := len(strings.Split(m.text, ""))
-				runesLength := len(strings.Split(string(msg.Runes), ""))
-
-				if m.maxChars > 0 && textLength+runesLength > m.maxChars {
-					return m, nil
-				}
-
-				if m.cursor == 0 {
-					// Insert the char at start of the text.
-					m.text = string(msg.Runes) + m.text
-				} else if m.cursor+m.frameStart == len(m.text) {
-					// Insert the char at the end of the text.
-					m.text += string(msg.Runes)
-				} else {
-					// Insert the char in the middle of the text.
-					text := strings.Split(m.text, "")
-					first := strings.Join(text[:m.cursor+m.frameStart], "")
-					rest := strings.Join(text[m.cursor+m.frameStart:], "")
-					m.text = first + string(msg.Runes) + rest
-				}
-
-				// Move the cursor forward.
-				// If the cursor would move past the end of the frame move the frame forward instead.
-				m.cursor += len(msg.Runes)
-				if m.cursor > m.available()-1 {
-					diff := m.cursor - (m.available() - 1)
-					m.frameStart += diff
-					m.cursor = m.available() - 1
-				}
-
+				m.insert(msg.Runes)
 				return m, m.inputChangedCmd()
 			}
 		}
@@ -185,27 +312,19 @@ func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
 	return m, nil
 }
 
-// available returns the available space for text.
-func (m TextInputModel) available() int {
-	return m.width - len(m.prompt)
-}
-
 // View renders the model.
 func (m TextInputModel) View() string {
-	if m.width-len(m.prompt) <= 0 {
-		return ""
-	}
-
 	promptStyle := lipgloss.
 		NewStyle().
 		Bold(true).
+		Inline(true).
 		Foreground(lipgloss.Color("1"))
 
-	cursor := lipgloss.
+	cursorStyle := lipgloss.
 		NewStyle().
 		Inline(true)
 	if m.blink {
-		cursor = cursor.Reverse(true)
+		cursorStyle = cursorStyle.Reverse(true)
 	}
 
 	s := lipgloss.
@@ -213,35 +332,30 @@ func (m TextInputModel) View() string {
 		Width(m.width).
 		Padding(0, Padding)
 
-	if m.width == 0 {
+	window := m.window()
+	windowRunes := strings.Split(window, "")
+	if window == "" {
 		return s.Render(promptStyle.Render(m.prompt))
 	}
 
-	available := m.width - len(m.prompt)
-	text := strings.Split(m.text+" ", "")
-	if len(text) > available {
-		text = text[m.frameStart : m.frameStart+available]
+	if m.cursorAtStart() { // Render the view with the cursor at the start.
+		under := strings.Join(windowRunes[0:1], "")
+		rest := strings.Join(windowRunes[1:], "")
+		return s.Render(promptStyle.Render(m.prompt) + cursorStyle.Render(under) + rest)
 	}
 
-	if m.cursor == 0 {
-		// Render the view with the cursor at the start.
-		under := strings.Join(text[0:1], "")
-		rest := strings.Join(text[1:], "")
-		return s.Render(promptStyle.Render(m.prompt) + cursor.Render(under) + rest)
-	}
-
-	if m.cursor+m.frameStart == len(m.text) {
-		// Render the view with the cursor at the end.
-		rest := strings.Join(text[0:len(text)-1], "")
-		under := strings.Join(text[len(text)-1:], "")
-		return s.Render(promptStyle.Render(m.prompt) + rest + cursor.Render(under))
+	if m.cursorAtEnd() { // Render the view with the cursor at the end.
+		rest := strings.Join(windowRunes[0:len(windowRunes)-1], "")
+		under := strings.Join(windowRunes[len(windowRunes)-1:], "")
+		return s.Render(promptStyle.Render(m.prompt) + rest + cursorStyle.Render(under))
 	}
 
 	// Render the view with the cursor in the middle.
-	first := strings.Join(text[0:m.cursor], "")
-	under := strings.Join(text[m.cursor:m.cursor+1], "")
-	rest := strings.Join(text[m.cursor+1:], "")
-	return s.Render(promptStyle.Render(m.prompt) + first + cursor.Render(under) + rest)
+	first := strings.Join(windowRunes[0:m.cursor], "")
+	under := strings.Join(windowRunes[m.cursor:m.cursor+1], "")
+	rest := strings.Join(windowRunes[m.cursor+1:], "")
+	return s.Render(promptStyle.Render(m.prompt) + first + cursorStyle.Render(under) + rest)
+
 }
 
 // Init initializes the model.
@@ -273,6 +387,7 @@ type sleeper interface {
 // timeSleeper implements sleeper with the time package.
 type timeSleeper struct{}
 
+// sleep pauses execution of the calling thread for the requested duration.
 func (s timeSleeper) sleep(d time.Duration) {
 	time.Sleep(d)
 }

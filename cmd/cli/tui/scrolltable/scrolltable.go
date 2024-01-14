@@ -44,13 +44,15 @@ type ScrolltableModel[T any] struct {
 	height            int                   // max height the scrolltable can occupy
 	cursor            int                   // index of selected datum in the visible frame
 	frameStart        int                   // start of the visible frame
+	hideHeader        bool                  // if true hide the header
 }
 
 // InitialModel builds a scrolltable model.
-func InitialModel[T any](name string, columnDefinitions []ColumnDefinition[T]) ScrolltableModel[T] {
+func InitialModel[T any](name string, hideHeader bool, columnDefinitions []ColumnDefinition[T]) ScrolltableModel[T] {
 	return ScrolltableModel[T]{
 		name:              name,
 		columnDefinitions: columnDefinitions,
+		hideHeader:        hideHeader,
 	}
 }
 
@@ -185,7 +187,10 @@ func (m ScrolltableModel[T]) Update(msg tea.Msg) (ScrolltableModel[T], tea.Cmd) 
 
 			m.data = msg.Data
 			m.resetFrame(msg.Move)
-			return m, tea.Batch(m.selectionChangedCmd(), func() tea.Msg { return msgs.FreeMsg{} })
+			return m, tea.Batch(
+				m.selectionChangedCmd(),
+				func() tea.Msg { return msgs.FreeMsg{} },
+			)
 		}
 
 	case tea.KeyMsg:
@@ -235,7 +240,7 @@ func (m ScrolltableModel[T]) View() string {
 			cell := def.RenderCell(datum)
 			if def.Mode == DynamicColumn {
 				// Dynamic columns need to have their string truncated if it's too long.
-				cell = utils.Substr(cell, 0, dynamicColumnTextWidth)
+				cell = utils.Substr(cell, dynamicColumnTextWidth)
 			}
 			return cell
 		})
@@ -243,9 +248,12 @@ func (m ScrolltableModel[T]) View() string {
 		rows = append(rows, row)
 	})
 
-	headers := lo.Map(m.columnDefinitions, func(def ColumnDefinition[T], _ int) string {
-		return def.Header
-	})
+	var headers []string
+	if !m.hideHeader {
+		headers = lo.Map(m.columnDefinitions, func(def ColumnDefinition[T], _ int) string {
+			return def.Header
+		})
+	}
 
 	booksTable := table.New().
 		Border(lipgloss.NormalBorder()).
