@@ -2,3 +2,4 @@ This is a running list of things that need to taken care of at some point:
 
  - [ ] Long subtract function too complex
  - [ ] Manifest requires registry key on Windows
+ - [ ] Investigate double width chars and substr (think emojis)

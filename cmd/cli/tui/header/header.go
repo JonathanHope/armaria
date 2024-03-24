@@ -40,7 +40,7 @@ func (m HeaderModel) Update(msg tea.Msg) (HeaderModel, tea.Cmd) {
 			m.width = msg.Width
 		}
 
-	case msgs.NavMsg:
+	case msgs.BreadcrumbsMsg:
 		m.nav = string(msg)
 
 	case msgs.BusyMsg:
@@ -66,7 +66,7 @@ func (m HeaderModel) View() string {
 	}
 
 	rows := [][]string{
-		{title, utils.Substr(m.nav, 0, cellTextWidth)},
+		{title, utils.Substr(m.nav, cellTextWidth)},
 	}
 
 	titleNavStyle := lipgloss.

@@ -27,7 +27,7 @@ func TestCanUpdateWidth(t *testing.T) {
 
 func TestCanUpdateNav(t *testing.T) {
 	gotModel := HeaderModel{}
-	gotModel, gotCmd := gotModel.Update(msgs.NavMsg("nav"))
+	gotModel, gotCmd := gotModel.Update(msgs.BreadcrumbsMsg("nav"))
 
 	wantModel := HeaderModel{
 		nav: "nav",

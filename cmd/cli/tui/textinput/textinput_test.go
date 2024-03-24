@@ -1,558 +1,429 @@
 package textinput
 
 import (
-	"testing"
-	"time"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
+	"testing"
 )
 
 const name = "TestInput"
 const prompt = ">"
-const width = 4
-
-func TestTextScrollsAsInputAdded(t *testing.T) {
-	// enter 1
-
-	gotModel := TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		cursor: 0,
-		focus:  true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
-
-	wantModel := TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		text:   "1",
-		cursor: 1,
-		focus:  true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-
-	// enter 2
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
-
-	wantModel = TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		text:   "12",
-		cursor: 2,
-		focus:  true,
-	}
-
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-
-	// enter 3
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'3'}})
-
-	wantModel = TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestTextScrollsAsInputRemoved(t *testing.T) {
-	// delete 3
-
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	wantModel := TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		text:   "12",
-		cursor: 2,
-		focus:  true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-
-	// delete 2
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	wantModel = TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		text:   "1",
-		cursor: 1,
-		focus:  true,
-	}
-
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-
-	// delete 1
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	wantModel = TextInputModel{
-		name:   name,
-		prompt: prompt,
-		width:  width,
-		cursor: 0,
-		focus:  true,
-	}
-
-	wantCmd = func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-
-	// noop
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanScrollToStartOfText(t *testing.T) {
-	// move to 3
-
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     1,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// move to 2
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
-
-	wantModel = TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     0,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// move to 1
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
-
-	wantModel = TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     0,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// noop
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyLeft})
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanScrollToEndOfText(t *testing.T) {
-	// move to 2
-
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     0,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     1,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// move to 3
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
-
-	wantModel = TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// move to end
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
-
-	wantModel = TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 1,
-		focus:      true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	// noop
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyRight})
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanInsertAtStart(t *testing.T) {
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     0,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "0123",
-		cursor:     1,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanDeleteAtStart(t *testing.T) {
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "0123",
-		cursor:     1,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     0,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanInsertInMiddle(t *testing.T) {
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "13",
-		cursor:     1,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanDeleteInMiddle(t *testing.T) {
-	gotModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "123",
-		cursor:     2,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-
-	wantModel := TextInputModel{
-		name:       name,
-		prompt:     prompt,
-		width:      width,
-		text:       "13",
-		cursor:     1,
-		frameStart: 0,
-		focus:      true,
-	}
-
-	wantCmd := func() tea.Msg { return msgs.InputChangedMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanChangePrompt(t *testing.T) {
-	gotModel := TextInputModel{
-		name: name,
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.PromptMsg{Name: name, Prompt: prompt})
-
-	wantModel := TextInputModel{
-		name:   name,
-		prompt: prompt,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanChangeText(t *testing.T) {
-	const text = "123"
-
-	gotModel := TextInputModel{
-		name:  name,
-		width: 4,
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.TextMsg{Name: name, Text: text})
-
-	wantModel := TextInputModel{
-		name:   name,
-		text:   text,
-		width:  4,
-		cursor: 3,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanChangeSize(t *testing.T) {
-	const width = 3
-
-	gotModel := TextInputModel{
-		name: name,
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.SizeMsg{Name: name, Width: width})
-
-	wantModel := TextInputModel{
-		name:  name,
-		width: width - Padding*2,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanFocus(t *testing.T) {
-	gotModel := TextInputModel{
-		name:    name,
-		focus:   false,
-		blink:   false,
-		width:   1,
-		sleeper: noopSleeper{},
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.FocusMsg{Name: name})
-
-	wantModel := TextInputModel{
-		name:    name,
-		focus:   true,
-		blink:   true,
-		width:   1,
-		sleeper: noopSleeper{},
-	}
-
-	wantCmd := func() tea.Msg { return msgs.BlinkMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanBlur(t *testing.T) {
-	gotModel := TextInputModel{
-		name:    name,
-		focus:   true,
-		blink:   true,
-		sleeper: noopSleeper{},
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.BlurMsg{Name: name})
-
-	wantModel := TextInputModel{
-		name:    name,
-		focus:   false,
-		blink:   false,
-		sleeper: noopSleeper{},
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
-func TestCanBlink(t *testing.T) {
-	gotModel := TextInputModel{
-		name:    name,
-		focus:   true,
-		blink:   true,
-		sleeper: noopSleeper{},
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.BlinkMsg{Name: name})
-
-	wantModel := TextInputModel{
-		name:    name,
-		focus:   true,
-		blink:   false,
-		sleeper: noopSleeper{},
-	}
-
-	wantCmd := func() tea.Msg { return msgs.BlinkMsg{Name: name} }
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
-}
-
-func TestCanLimitMaxChars(t *testing.T) {
-	gotModel := TextInputModel{
-		name:    name,
-		sleeper: noopSleeper{},
-		width:   2,
-	}
-
-	gotModel, _ = gotModel.Update(msgs.FocusMsg{Name: name, MaxChars: 1})
-	gotModel, _ = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
-	gotModel, _ = gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
-
-	wantModel := TextInputModel{
-		name:     name,
-		sleeper:  noopSleeper{},
-		width:    2,
-		maxChars: 1,
-		text:     "1",
-		cursor:   1,
-		focus:    true,
-		blink:    true,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, nil, nil)
-}
 
 func TestText(t *testing.T) {
-	gotModel := TextInputModel{
-		text: "123",
+	model := TextInputModel{
+		text: "test",
 	}
 
-	diff := cmp.Diff(gotModel.Text(), "123")
+	diff := cmp.Diff(model.Text(), "test")
 	if diff != "" {
-		t.Errorf("Expected and actual text different:\n%s", diff)
+		t.Errorf("Expected and actual texts different")
 	}
 }
 
-func verifyUpdate(t *testing.T, gotModel TextInputModel, wantModel TextInputModel, gotCmd tea.Cmd, wantCmd tea.Cmd) {
-	unexported := cmp.AllowUnexported(TextInputModel{})
-	modelDiff := cmp.Diff(gotModel, wantModel, unexported)
-	if modelDiff != "" {
-		t.Errorf("Expected and actual models different:\n%s", modelDiff)
+func TestInsert(t *testing.T) {
+	validate := func(model TextInputModel, window string) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
 	}
 
-	utils.CompareCommands(t, gotCmd, wantCmd)
+	// start
+
+	model := TextInputModel{
+		name:  name,
+		text:  "🐂🐜",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🦊'}})
+
+	validate(model, "🦊🐂🐜 ")
+
+	// end
+
+	model = TextInputModel{
+		name:  name,
+		text:  "🦊🐂",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🐜'}})
+
+	validate(model, "🦊🐂🐜 ")
+
+	// middle
+
+	model = TextInputModel{
+		name:  name,
+		text:  "🦊🐜",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🐂'}})
+
+	validate(model, "🦊🐂🐜 ")
 }
 
-type noopSleeper struct{}
+func TestInsertMovesWindow(t *testing.T) {
+	validate := func(model TextInputModel, index int, window string) {
+		atEndDiff := cmp.Diff(model.cursorAtEnd(), true)
+		if atEndDiff != "" {
+			t.Errorf("Expected and actual cursor at ends different:\n%s", atEndDiff)
+		}
 
-func (s noopSleeper) sleep(d time.Duration) {
+		cursorDiff := cmp.Diff(model.cursor, 1)
+		if cursorDiff != "" {
+			t.Errorf("Expected and actual cursors different:\n%s", cursorDiff)
+		}
+
+		indexDiff := cmp.Diff(model.index, index)
+		if indexDiff != "" {
+			t.Errorf("Expected and actual indexes different:\n%s", indexDiff)
+		}
+
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:   name,
+		width:  6,
+		prompt: prompt,
+		text:   "🦊",
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	validate(model, 1, "🦊 ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	validate(model, 2, "c ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🦊'}})
+	validate(model, 3, "🦊 ")
+}
+
+func TestDelete(t *testing.T) {
+	validate := func(model TextInputModel, window string) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+	}
+
+	// start
+
+	model := TextInputModel{
+		name:  name,
+		text:  "🦊🐂🐜",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+
+	validate(model, "🐂🐜 ")
+
+	// end
+
+	model = TextInputModel{
+		name:  name,
+		text:  "🦊🐂🐜",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+
+	validate(model, "🦊🐂 ")
+
+	// middle
+
+	model = TextInputModel{
+		name:  name,
+		text:  "🦊🐂🐜",
+		width: 12,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+
+	validate(model, "🦊🐜 ")
+}
+
+func TestDeleteMovesWindow(t *testing.T) {
+	validate := func(model TextInputModel, window string) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:  name,
+		text:  "🦊c🦊c🦊c",
+		width: 6,
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	validate(model, "🦊c ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, "c🦊 ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, "🦊c ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, "c🦊 ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, "🦊c ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, "🦊 ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, " ")
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	validate(model, " ")
+}
+
+func TestMoveRight(t *testing.T) {
+	validate := func(model TextInputModel, window string, cursor int, index int) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+
+		cursorDiff := cmp.Diff(model.cursor, cursor)
+		if cursorDiff != "" {
+			t.Errorf("Expected and actual cursors different:\n%s", cursorDiff)
+		}
+
+		indexDiff := cmp.Diff(model.index, index)
+		if indexDiff != "" {
+			t.Errorf("Expected and actual indexes different:\n%s", indexDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:   name,
+		width:  6,
+		prompt: prompt,
+		text:   "a🦊b🐂c🐜",
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "a🦊", 0, 0)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "a🦊", 1, 1)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🦊b", 1, 2)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "b🐂", 1, 3)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐂c", 1, 4)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "c🐜", 1, 5)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐜 ", 1, 6)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐜 ", 1, 6)
+}
+
+func TestMoveRightVariation2(t *testing.T) {
+	validate := func(model TextInputModel, window string, cursor int, index int) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual at windows different:\n%s", windowDiff)
+		}
+
+		cursorDiff := cmp.Diff(model.cursor, cursor)
+		if cursorDiff != "" {
+			t.Errorf("Expected and actual at cursors different:\n%s", cursorDiff)
+		}
+
+		indexDiff := cmp.Diff(model.index, index)
+		if indexDiff != "" {
+			t.Errorf("Expected and actual at indexes different:\n%s", indexDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:   name,
+		width:  7,
+		prompt: prompt,
+		text:   "🦊🐂abcd🐜🐕",
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🦊🐂", 0, 0)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🦊🐂", 1, 1)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐂a", 1, 2)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐂ab", 2, 3)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "abc", 2, 4)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "abcd", 3, 5)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "cd🐜", 2, 6)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐜🐕", 1, 7)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐕 ", 1, 8)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	validate(model, "🐕 ", 1, 8)
+}
+
+func TestMoveLeft(t *testing.T) {
+	validate := func(model TextInputModel, window string, cursor int, index int) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+
+		cursorDiff := cmp.Diff(model.cursor, cursor)
+		if cursorDiff != "" {
+			t.Errorf("Expected and actual cursors different:\n%s", cursorDiff)
+		}
+
+		indexDiff := cmp.Diff(model.index, index)
+		if indexDiff != "" {
+			t.Errorf("Expected and actual indexes different:\n%s", indexDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:   name,
+		width:  6,
+		prompt: prompt,
+		text:   "a🦊b🐂c🐜",
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	validate(model, "🐜 ", 1, 6)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🐜 ", 0, 5)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "c🐜", 0, 4)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🐂c", 0, 3)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "b🐂", 0, 2)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🦊b", 0, 1)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "a🦊", 0, 0)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "a🦊", 0, 0)
+}
+
+func TestMoveLeftVariation2(t *testing.T) {
+	validate := func(model TextInputModel, window string, cursor int, index int) {
+		windowDiff := cmp.Diff(model.window(), window)
+		if windowDiff != "" {
+			t.Errorf("Expected and actual windows different:\n%s", windowDiff)
+		}
+
+		cursorDiff := cmp.Diff(model.cursor, cursor)
+		if cursorDiff != "" {
+			t.Errorf("Expected and actual cursors different:\n%s", cursorDiff)
+		}
+
+		indexDiff := cmp.Diff(model.index, index)
+		if indexDiff != "" {
+			t.Errorf("Expected and actual indexes different:\n%s", indexDiff)
+		}
+	}
+
+	model := TextInputModel{
+		name:   name,
+		width:  7,
+		prompt: prompt,
+		text:   "🦊🐂abcd🐜🐕",
+	}
+
+	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	validate(model, "🐕 ", 1, 8)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🐕 ", 0, 7)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🐜🐕", 0, 6)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "d🐜", 0, 5)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "cd🐜", 0, 4)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "bcd", 0, 3)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "abcd", 0, 2)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🐂ab", 0, 1)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🦊🐂", 0, 0)
+
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	validate(model, "🦊🐂", 0, 0)
 }

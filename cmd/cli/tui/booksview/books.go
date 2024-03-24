@@ -13,17 +13,22 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/tui/help"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/scrolltable"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/typeahead"
 	"github.com/jonathanhope/armaria/pkg/api"
 	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/samber/lo"
 )
 
-const HeaderHeight = 3           // height of the header
-const HeaderSpacerHeight = 1     // height of the spacer between the header and table
-const FooterHeight = 4           // height of the footer
-const HeaderName = "BooksHeader" // name of the header
-const FooterName = "BooksFooter" // name of the footer
-const TableName = "BooksTable"   // name of the table
-const HelpName = "BooksHelp"     // name of the help screen
+const HeaderHeight = 3                 // height of the header
+const HeaderSpacerHeight = 1           // height of the spacer between the header and table
+const FooterHeight = 4                 // height of the footer
+const HeaderName = "BooksHeader"       // name of the header
+const FooterName = "BooksFooter"       // name of the footer
+const TableName = "BooksTable"         // name of the table
+const HelpName = "BooksHelp"           // name of the help screen
+const TypeaheadName = "BooksTypeahead" // name of the typeahead
+const AddTagOperation = "AddTag"       // operation to add a tag
+const RemoveTagOperation = "RemoveTag" // operation to remove tag
 
 // InputType is which type of input is being collected.
 type inputType int
@@ -50,7 +55,7 @@ type model struct {
 	footer     footer.FooterModel                         // footer for app
 	table      scrolltable.ScrolltableModel[armaria.Book] // table of books
 	help       help.HelpModel                             // help for the app
-
+	typeahead  typeahead.TypeaheadModel                   // typeahead for the app
 }
 
 // InitialModel builds the model.
@@ -61,6 +66,7 @@ func InitialModel() tea.Model {
 		footer:     footer.InitialModel(FooterName),
 		table: scrolltable.InitialModel[armaria.Book](
 			TableName,
+			false,
 			[]scrolltable.ColumnDefinition[armaria.Book]{
 				{
 					Mode:        scrolltable.StaticColumn,
@@ -105,6 +111,8 @@ func InitialModel() tea.Model {
 				{Context: "Listing", Key: "n", Help: "Edit name"},
 				{Context: "Listing", Key: "+", Help: "Add folder"},
 				{Context: "Listing", Key: "b", Help: "Add bookmark"},
+				{Context: "Listing", Key: "t", Help: "Add tag"},
+				{Context: "Listing", Key: "T", Help: "Remove tag"},
 				{Context: "Listing", Key: "q", Help: "Quit"},
 				{Context: "Input", Key: "left", Help: "Move to previous char"},
 				{Context: "Input", Key: "right", Help: "Move to next char"},
@@ -112,6 +120,7 @@ func InitialModel() tea.Model {
 				{Context: "Input", Key: "esc", Help: "Cancel input"},
 			},
 		),
+		typeahead: typeahead.InitialModel(TypeaheadName),
 	}
 }
 
@@ -192,6 +201,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, footerCmd
 	}
 
+	// If the typeahead is in input mode direct all keypresses to it.
+	if _, ok := msg.(tea.KeyMsg); ok && m.typeahead.TypeaheadMode() {
+		var typeaheadCmd tea.Cmd
+		m.typeahead, typeaheadCmd = m.typeahead.Update(msg)
+		return m, typeaheadCmd
+	}
+
 	var footerCmd tea.Cmd
 	m.footer, footerCmd = m.footer.Update(msg)
 
@@ -204,7 +220,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var helpCmd tea.Cmd
 	m.help, helpCmd = m.help.Update(msg)
 
-	cmds := []tea.Cmd{tableCmd, headerCmd, footerCmd, helpCmd}
+	var typeaheadCmd tea.Cmd
+	m.typeahead, typeaheadCmd = m.typeahead.Update(msg)
+
+	cmds := []tea.Cmd{tableCmd, headerCmd, footerCmd, helpCmd, typeaheadCmd}
 
 	switch msg := msg.(type) {
 
@@ -331,6 +350,44 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						func() tea.Msg { return msgs.BusyMsg{} })
 				}
 			}
+
+		case "t":
+			if !m.header.Busy() && !m.table.Empty() && !m.table.Selection().IsFolder {
+				cmds = append(cmds, m.typeaheadStartCmd(
+					"Add Tag: ",
+					"",
+					128,
+					AddTagOperation,
+					true,
+					func() ([]string, error) {
+						options := armariaapi.DefaultListTagsOptions()
+						return armariaapi.ListTags(options)
+					},
+					func(query string) ([]string, error) {
+						options := armariaapi.DefaultListTagsOptions().WithQuery(query)
+						return armariaapi.ListTags(options)
+					},
+				))
+			}
+
+		case "T":
+			cmds = append(cmds, m.typeaheadStartCmd(
+				"Remove Tag: ",
+				"",
+				128,
+				RemoveTagOperation,
+				false,
+				func() ([]string, error) {
+					return m.table.Selection().Tags, nil
+				},
+				func(query string) ([]string, error) {
+					tags := lo.Filter(m.table.Selection().Tags, func(tag string, index int) bool {
+						return strings.Contains(tag, query)
+					})
+
+					return tags, nil
+				},
+			))
 		}
 
 	case msgs.SelectionChangedMsg[armaria.Book]:
@@ -353,31 +410,47 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case msgs.InputCancelledMsg:
-		m.query = ""
-		m.inputType = inputNone
-		cmds = append(cmds, m.inputEndCmd(), m.updateFiltersCmd())
-
-	case msgs.InputConfirmedMsg:
-		cmds = append(cmds, m.inputEndCmd())
-		if m.inputType == inputName {
-			cmds = append(cmds, m.
-				updateNameCmd(m.footer.Text()),
-				func() tea.Msg { return msgs.BusyMsg{} })
-		} else if m.inputType == inputURL {
-			cmds = append(cmds,
-				m.updateURLCmd(m.footer.Text()),
-				func() tea.Msg { return msgs.BusyMsg{} })
-		} else if m.inputType == inputFolder {
-			cmds = append(cmds,
-				m.addFolderCmd(m.footer.Text()),
-				func() tea.Msg { return msgs.BusyMsg{} })
-		} else if m.inputType == inputBookmark {
-			cmds = append(cmds,
-				m.addBookmarkCmd(m.footer.Text()),
-				func() tea.Msg { return msgs.BusyMsg{} })
+		if msg.Name == FooterName {
+			m.query = ""
+			m.inputType = inputNone
+			cmds = append(cmds, m.inputEndCmd())
 		}
 
-		m.inputType = inputNone
+	case msgs.InputConfirmedMsg:
+		if msg.Name == FooterName {
+			cmds = append(cmds, m.inputEndCmd())
+			if m.inputType == inputName {
+				cmds = append(cmds, m.
+					updateNameCmd(m.footer.Text()),
+					func() tea.Msg { return msgs.BusyMsg{} })
+			} else if m.inputType == inputURL {
+				cmds = append(cmds,
+					m.updateURLCmd(m.footer.Text()),
+					func() tea.Msg { return msgs.BusyMsg{} })
+			} else if m.inputType == inputFolder {
+				cmds = append(cmds,
+					m.addFolderCmd(m.footer.Text()),
+					func() tea.Msg { return msgs.BusyMsg{} })
+			} else if m.inputType == inputBookmark {
+				cmds = append(cmds,
+					m.addBookmarkCmd(m.footer.Text()),
+					func() tea.Msg { return msgs.BusyMsg{} })
+			}
+
+			m.inputType = inputNone
+		}
+
+	case msgs.TypeaheadCancelledMsg:
+		if msg.Name == TypeaheadName {
+			cmds = append(cmds, m.typeaheadEndCmd())
+		}
+
+	case msgs.TypeaheadConfirmedMsg:
+		if msg.Name == TypeaheadName && msg.Operation == AddTagOperation {
+			cmds = append(cmds, m.typeaheadEndCmd(), m.addTag(msg.Value))
+		} else if msg.Name == TypeaheadName && msg.Operation == RemoveTagOperation {
+			cmds = append(cmds, m.typeaheadEndCmd(), m.removeTag(msg.Value))
+		}
 
 	case msgs.InputChangedMsg:
 		if m.inputType == inputSearch {
@@ -397,6 +470,10 @@ func (m model) View() string {
 
 	if m.help.HelpMode() {
 		return m.header.View() + "\n\n" + m.help.View()
+	}
+
+	if m.typeahead.TypeaheadMode() {
+		return m.header.View() + "\n\n" + m.typeahead.View()
 	}
 
 	header := m.header.View()
@@ -504,7 +581,7 @@ func (m model) getBreadcrumbsCmd() tea.Cmd {
 			return msgs.ErrorMsg{Err: err}
 		}
 
-		return msgs.NavMsg(strings.Join(parents, " > "))
+		return msgs.BreadcrumbsMsg(strings.Join(parents, " > "))
 	}
 }
 
@@ -619,17 +696,15 @@ func (m model) updateFiltersCmd() tea.Cmd {
 
 // inputStartCmd makes the necessary state updates when the input mode starts.
 func (m model) inputStartCmd(prompt string, text string, maxChars int) tea.Cmd {
-	return tea.Batch(
-		func() tea.Msg {
-			return msgs.InputModeMsg{
-				Name:      FooterName,
-				InputMode: true,
-				Prompt:    prompt,
-				Text:      text,
-				MaxChars:  maxChars,
-			}
-		},
-	)
+	return func() tea.Msg {
+		return msgs.InputModeMsg{
+			Name:      FooterName,
+			InputMode: true,
+			Prompt:    prompt,
+			Text:      text,
+			MaxChars:  maxChars,
+		}
+	}
 }
 
 // inputEndCmd makes the necessary state updates when the input mode ends.
@@ -649,13 +724,51 @@ func (m model) inputEndCmd() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// typeaheadStartCmd makes the necessary state updates when the typeahead mode starts.
+func (m model) typeaheadStartCmd(prompt string, text string, maxChars int, operation string, includeInput bool, unfilteredQuery func() ([]string, error), filteredQuery func(query string) ([]string, error)) tea.Cmd {
+	return func() tea.Msg {
+		return msgs.TypeaheadModeMsg{
+			Name:            TypeaheadName,
+			InputMode:       true,
+			Prompt:          prompt,
+			Text:            text,
+			MaxChars:        maxChars,
+			MinFilterChars:  3,
+			Operation:       operation,
+			IncludeInput:    includeInput,
+			UnfilteredQuery: unfilteredQuery,
+			FilteredQuery:   filteredQuery,
+		}
+	}
+}
+
+// typeaheadEndCmd makes the necessary state updates when the typeahead mode ends.
+func (m model) typeaheadEndCmd() tea.Cmd {
+	cmds := []tea.Cmd{
+		func() tea.Msg {
+			return msgs.TypeaheadModeMsg{
+				Name:      TypeaheadName,
+				InputMode: false,
+			}
+		},
+		m.getBooksCmd(msgs.DirectionNone),
+		m.recalculateSizeCmd(),
+	}
+
+	return tea.Batch(cmds...)
+}
+
 // recalculateSizeCmd recalculates the size of the components.
 // This needs to happen when the filters or the window size changes.
 func (m model) recalculateSizeCmd() tea.Cmd {
-	height := m.height -
+	tableHeight := m.height -
 		HeaderHeight -
 		HeaderSpacerHeight -
 		FooterHeight
+
+	typeaheadHeight := m.height -
+		HeaderHeight -
+		HeaderSpacerHeight
 
 	headerSizeMsg := msgs.SizeMsg{
 		Name:  HeaderName,
@@ -670,13 +783,20 @@ func (m model) recalculateSizeCmd() tea.Cmd {
 	tableSizeMsg := msgs.SizeMsg{
 		Name:   TableName,
 		Width:  m.width,
-		Height: height,
+		Height: tableHeight,
+	}
+
+	typeaheadSizeMsg := msgs.SizeMsg{
+		Name:   TypeaheadName,
+		Width:  m.width,
+		Height: typeaheadHeight,
 	}
 
 	return tea.Batch(
 		func() tea.Msg { return headerSizeMsg },
 		func() tea.Msg { return footerSizeMsg },
 		func() tea.Msg { return tableSizeMsg },
+		func() tea.Msg { return typeaheadSizeMsg },
 	)
 }
 
@@ -745,7 +865,6 @@ func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction)
 
 			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
-				fmt.Println(err)
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
@@ -756,11 +875,34 @@ func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction)
 
 			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
-				fmt.Println(err)
 				return msgs.ErrorMsg{Err: err}
 			}
 		}
 
 		return m.getBooksCmd(move)()
+	}
+}
+
+// addTag adds a tag to a bookmark.
+func (m model) addTag(tag string) tea.Cmd {
+	return func() tea.Msg {
+		options := armariaapi.DefaultAddTagsOptions()
+		_, err := armariaapi.AddTags(m.table.Selection().ID, []string{tag}, options)
+		if err != nil {
+			return msgs.ErrorMsg{Err: err}
+		}
+		return m.getBooksCmd(msgs.DirectionNone)()
+	}
+}
+
+// removeTag removes a tag from a bookmark.
+func (m model) removeTag(tag string) tea.Cmd {
+	return func() tea.Msg {
+		options := armariaapi.DefaultRemoveTagsOptions()
+		_, err := armariaapi.RemoveTags(m.table.Selection().ID, []string{tag}, options)
+		if err != nil {
+			return msgs.ErrorMsg{Err: err}
+		}
+		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }

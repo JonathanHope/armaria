@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/textinput"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
@@ -115,7 +116,7 @@ func TestCanCancelInput(t *testing.T) {
 
 	wantCmd := func() tea.Msg {
 		return tea.BatchMsg{
-			func() tea.Msg { return msgs.InputCancelledMsg{} },
+			func() tea.Msg { return msgs.InputCancelledMsg{Name: Name} },
 		}
 	}
 
@@ -127,7 +128,19 @@ func TestCanConfirmInput(t *testing.T) {
 		name:      Name,
 		inputName: Name + "Input",
 		inputMode: true,
+		input:     textinput.InitialModel(Name+"Input", "> "),
 	}
+
+	gotModel.input, _ = gotModel.input.Update(msgs.SizeMsg{
+		Name:  Name + "Input",
+		Width: 12,
+	})
+
+	gotModel.input, _ = gotModel.input.Update(msgs.TextMsg{
+		Name: Name + "Input",
+		Text: "text",
+	})
+
 	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
 	wantModel := FooterModel{
@@ -138,7 +151,7 @@ func TestCanConfirmInput(t *testing.T) {
 
 	wantCmd := func() tea.Msg {
 		return tea.BatchMsg{
-			func() tea.Msg { return msgs.InputConfirmedMsg{} },
+			func() tea.Msg { return msgs.InputConfirmedMsg{Name: Name} },
 		}
 	}
 
