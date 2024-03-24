@@ -41,15 +41,14 @@ func TestCanSwitchToTypeaheadMode(t *testing.T) {
 		InputMode:      true,
 		MinFilterChars: 3,
 		Operation:      operation,
-		IncludeInput:   true,
 		Prompt:         prompt,
 		Text:           "text",
 		MaxChars:       5,
-		UnfilteredQuery: func() ([]string, error) {
-			return []string{}, nil
+		UnfilteredQuery: func() ([]msgs.TypeaheadItem, error) {
+			return []msgs.TypeaheadItem{}, nil
 		},
-		FilteredQuery: func(query string) ([]string, error) {
-			return []string{}, nil
+		FilteredQuery: func(query string) ([]msgs.TypeaheadItem, error) {
+			return []msgs.TypeaheadItem{}, nil
 		},
 	})
 
@@ -60,7 +59,6 @@ func TestCanSwitchToTypeaheadMode(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	wantCmd := func() tea.Msg {
@@ -69,9 +67,9 @@ func TestCanSwitchToTypeaheadMode(t *testing.T) {
 			func() tea.Msg { return msgs.TextMsg{Name: inputName, Text: text} },
 			func() tea.Msg { return msgs.FocusMsg{Name: inputName, MaxChars: maxChars} },
 			func() tea.Msg {
-				return msgs.DataMsg[string]{
+				return msgs.DataMsg[msgs.TypeaheadItem]{
 					Name: tableName,
-					Data: []string{},
+					Data: []msgs.TypeaheadItem{},
 					Move: msgs.DirectionStart,
 				}
 			},
@@ -89,7 +87,6 @@ func TestCanSwitchFromTypeaheadMode(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	gotModel, cmd := gotModel.Update(msgs.TypeaheadModeMsg{
@@ -123,7 +120,6 @@ func TestCanCancelTypeahead(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	gotModel, cmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEsc}))
@@ -135,7 +131,6 @@ func TestCanCancelTypeahead(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	wantCmd := func() tea.Msg {
@@ -155,7 +150,6 @@ func TestCanConfirmTypeahead(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	gotModel, cmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
@@ -167,7 +161,6 @@ func TestCanConfirmTypeahead(t *testing.T) {
 		typeaheadMode:  true,
 		minFilterChars: 3,
 		operation:      operation,
-		includeInput:   true,
 	}
 
 	wantCmd := func() tea.Msg {

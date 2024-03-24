@@ -104,25 +104,38 @@ type BlinkMsg struct {
 	Name string // name of the target component
 }
 
+// TypeaheadItem is the model for an item in the typeahead.
+type TypeaheadItem struct {
+	Value string // hidden identifier
+	Label string // visible text
+	New   bool   // if true this is a new item that didn't exist before
+}
+
+// UnfilteredQueryFn is a function that returns typeahead items when no filter is active.
+type UnfilteredQueryFn func() ([]TypeaheadItem, error)
+
+// FilteredQueryFn is a function that returns the typeahead items when a filter is active.
+type FilteredQueryFn func(query string) ([]TypeaheadItem, error)
+
 // TypeaheadModeMsg is used to change to typeahead mode.
 type TypeaheadModeMsg struct {
-	Name            string                               // name of the target component
-	InputMode       bool                                 // if true the typeahead will be in input mode
-	Prompt          string                               // the prompt to show
-	Text            string                               // the text to start the input with
-	MaxChars        int                                  // the maximum number of chars to allow
-	UnfilteredQuery func() ([]string, error)             // returns results when there isn't enough input
-	FilteredQuery   func(query string) ([]string, error) // returns results when there's enough input
-	MinFilterChars  int                                  // the minumum number of chars needed to filter
-	Operation       string                               // the operation the typeahead is for
-	IncludeInput    bool                                 // if true include the current input as an option
+	Name            string            // name of the target component
+	InputMode       bool              // if true the typeahead will be in input mode
+	Prompt          string            // the prompt to show
+	Text            string            // the text to start the input with
+	MaxChars        int               // the maximum number of chars to allow
+	UnfilteredQuery UnfilteredQueryFn // returns results when there isn't enough input
+	FilteredQuery   FilteredQueryFn   // returns results when there's enough input
+	MinFilterChars  int               // the minumum number of chars needed to filter
+	Operation       string            // the operation the typeahead is for
+	IncludeInput    bool              // if true include the current input as an option
 }
 
 // TypeaheadConfirmedMsg is published when an option is selected..
 type TypeaheadConfirmedMsg struct {
-	Name      string // name of the target typeahead
-	Value     string // the value that was selected
-	Operation string // the operation the typeahead is for
+	Name      string        // name of the target typeahead
+	Value     TypeaheadItem // the value that was selected
+	Operation string        // the operation the typeahead is for
 }
 
 // SelectionConfirmedMsg is published when an option selection is cancelled.

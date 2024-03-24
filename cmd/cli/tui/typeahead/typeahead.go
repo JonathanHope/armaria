@@ -1,7 +1,6 @@
 package typeahead
 
 import (
-	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,28 +8,37 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/scrolltable"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/textinput"
+	"github.com/samber/lo"
 )
+
+// typeaheadTable is the type of the underlying table in the typeahead.
+type typeaheadTable = scrolltable.ScrolltableModel[msgs.TypeaheadItem]
 
 // TypeaheadModel is the model for a typeahead.
 // The typpeahead allows the user to filter a list of things to select from by typing.
 type TypeaheadModel struct {
-	name            string                               // name of the typeahead
-	width           int                                  // max width of the typeahead
-	typeaheadMode   bool                                 // if true typeahead is accepting input
-	inputName       string                               // the name of the input in the typeahead
-	tableName       string                               // the name of the table in the typeahead
-	unfilteredQuery func() ([]string, error)             // returns results when there isn't enough input
-	filteredQuery   func(query string) ([]string, error) // returns results when there's enough input
-	minFilterChars  int                                  // the minumum number of chars needed to filter
-	operation       string                               // the operation the typeahead is for
-	includeInput    bool                                 // if true include the current input as an option
-	input           textinput.TextInputModel             // allows text input
-	table           scrolltable.ScrolltableModel[string] // shows the options to select from
+	name            string                   // name of the typeahead
+	width           int                      // max width of the typeahead
+	typeaheadMode   bool                     // if true typeahead is accepting input
+	inputName       string                   // the name of the input in the typeahead
+	tableName       string                   // the name of the table in the typeahead
+	unfilteredQuery msgs.UnfilteredQueryFn   // returns results when there isn't enough input
+	filteredQuery   msgs.FilteredQueryFn     // returns results when there's enough input
+	minFilterChars  int                      // the minumum number of chars needed to filter
+	operation       string                   // the operation the typeahead is for
+	includeInput    bool                     // if true include the current input as an option
+	input           textinput.TextInputModel // allows text input
+	table           typeaheadTable           // shows the options to select from
 }
 
 // TypeaheadMode returns whether the typeahead is accepting input or not.
 func (m TypeaheadModel) TypeaheadMode() bool {
 	return m.typeaheadMode
+}
+
+// Text returns the text currently in the typeahead.
+func (m TypeaheadModel) Text() string {
+	return m.input.Text()
 }
 
 // InitialModel builds the model.
@@ -43,25 +51,29 @@ func InitialModel(name string) TypeaheadModel {
 		inputName: inputName,
 		tableName: tableName,
 		input:     textinput.InitialModel(inputName, ""),
-		table: scrolltable.InitialModel(tableName, true, []scrolltable.ColumnDefinition[string]{
-			{
-				Mode:   scrolltable.DynamicColumn,
-				Header: "",
-				RenderCell: func(item string) string {
-					return item
-				},
-				Style: func(item string, isSelected bool, isHeader bool) lipgloss.Style {
-					style := lipgloss.
-						NewStyle()
+		table: scrolltable.InitialModel[msgs.TypeaheadItem](
+			tableName,
+			true,
+			[]scrolltable.ColumnDefinition[msgs.TypeaheadItem]{
+				{
+					Mode:   scrolltable.DynamicColumn,
+					Header: "",
+					RenderCell: func(item msgs.TypeaheadItem) string {
+						return item.Label
+					},
+					Style: func(item msgs.TypeaheadItem, isSelected bool, isHeader bool) lipgloss.Style {
+						style := lipgloss.
+							NewStyle()
 
-					if isSelected {
-						style = style.Bold(true).Underline(true)
-					}
+						if isSelected {
+							style = style.Bold(true).Underline(true)
+						}
 
-					return style
+						return style
+					},
 				},
 			},
-		}),
+		),
 	}
 }
 
@@ -73,7 +85,7 @@ func (m TypeaheadModel) Update(msg tea.Msg) (TypeaheadModel, tea.Cmd) {
 
 	case msgs.InputChangedMsg:
 		if msg.Name == m.inputName {
-			cmds = append(cmds, m.loadOptions())
+			cmds = append(cmds, m.loadItemsCmd())
 		}
 
 	case msgs.SizeMsg:
@@ -110,7 +122,7 @@ func (m TypeaheadModel) Update(msg tea.Msg) (TypeaheadModel, tea.Cmd) {
 					return msgs.TextMsg{Name: m.inputName, Text: msg.Text}
 				}, func() tea.Msg {
 					return msgs.FocusMsg{Name: m.inputName, MaxChars: msg.MaxChars}
-				}, m.loadOptions())
+				}, m.loadItemsCmd())
 			} else {
 				cmds = append(cmds, func() tea.Msg {
 					return msgs.BlurMsg{Name: m.inputName}
@@ -184,8 +196,8 @@ func (m TypeaheadModel) Init() tea.Cmd {
 	return nil
 }
 
-// loadOptions loads the available options.
-func (m TypeaheadModel) loadOptions() tea.Cmd {
+// loadItemsCmd loads the available option in the typeahead.
+func (m TypeaheadModel) loadItemsCmd() tea.Cmd {
 	return func() tea.Msg {
 		if len(strings.Split(m.input.Text(), "")) >= m.minFilterChars {
 			items, err := m.filteredQuery(m.input.Text())
@@ -193,22 +205,35 @@ func (m TypeaheadModel) loadOptions() tea.Cmd {
 				return msgs.ErrorMsg{Err: err}
 			}
 
-			if m.includeInput && !slices.Contains(items, m.input.Text()) {
-				items = append([]string{m.input.Text()}, items...)
+			numMatch := len(lo.Filter(items, func(item msgs.TypeaheadItem, index int) bool {
+				return item.Label == m.input.Text()
+			}))
+
+			if m.includeInput && numMatch == 0 {
+				items = append(
+					[]msgs.TypeaheadItem{{Label: m.input.Text(), Value: m.input.Text(), New: true}},
+					items...)
 			}
 
-			return msgs.DataMsg[string]{Name: m.tableName, Data: items, Move: msgs.DirectionStart}
+			return msgs.DataMsg[msgs.TypeaheadItem]{Name: m.tableName, Data: items, Move: msgs.DirectionStart}
+
 		} else {
 			items, err := m.unfilteredQuery()
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 
-			if m.includeInput && m.input.Text() != "" && !slices.Contains(items, m.input.Text()) {
-				items = append([]string{m.input.Text()}, items...)
+			numMatch := len(lo.Filter(items, func(item msgs.TypeaheadItem, index int) bool {
+				return item.Label == m.input.Text()
+			}))
+
+			if m.includeInput && m.input.Text() != "" && numMatch == 0 {
+				items = append(
+					[]msgs.TypeaheadItem{{Label: m.input.Text(), Value: m.input.Text(), New: true}},
+					items...)
 			}
 
-			return msgs.DataMsg[string]{Name: m.tableName, Data: items, Move: msgs.DirectionStart}
+			return msgs.DataMsg[msgs.TypeaheadItem]{Name: m.tableName, Data: items, Move: msgs.DirectionStart}
 		}
 	}
 }

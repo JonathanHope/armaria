@@ -6,6 +6,7 @@ import (
 
 	"github.com/jonathanhope/armaria/internal/db"
 	"github.com/jonathanhope/armaria/internal/null"
+	"github.com/jonathanhope/armaria/internal/order"
 	"github.com/jonathanhope/armaria/internal/validate"
 	"github.com/jonathanhope/armaria/pkg/model"
 )
@@ -123,6 +124,25 @@ func UpdateBook(id string, options *updateBookOptions) (armaria.Book, error) {
 		current, err := validate.Ordering(tx, options.PreviousBook, options.NextBook)
 		if err != nil {
 			return armaria.Book{}, fmt.Errorf("ordering validation failed while updating bookmark: %w", err)
+		}
+
+		if current == "" && options.ParentID.Dirty {
+			previous, err := db.MaxOrder(tx, options.ParentID)
+			if err != nil {
+				return armaria.Book{}, fmt.Errorf("error getting max order while adding bookmark: %w", err)
+			}
+
+			if previous == "" {
+				current, err = order.Initial()
+				if err != nil {
+					return armaria.Book{}, fmt.Errorf("error getting current order while adding bookmark: %w", err)
+				}
+			} else {
+				current, err = order.End(previous)
+				if err != nil {
+					return armaria.Book{}, fmt.Errorf("error getting current order while adding bookmark: %w", err)
+				}
+			}
 		}
 
 		if err := db.UpdateBook(tx, id, db.UpdateBookArgs{
