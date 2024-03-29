@@ -131,9 +131,9 @@ This software is still in its early days. This roadmap lays out where it current
 - [x] Add folder
 - [x] Delete bookmark
 - [x] Delete folder
-- [ ] Update bookmark
-- [ ] Update folder
-- [ ] Add tag
-- [ ] Remove tag
+- [ ] Update bookmark (description not done yet)
+- [x] Update folder
+- [x] Add tag
+- [x] Remove tag
 - [x] List bookmarks/folders
 - [ ] View bookmark

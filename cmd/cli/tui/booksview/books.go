@@ -28,7 +28,8 @@ const TableName = "BooksTable"         // name of the table
 const HelpName = "BooksHelp"           // name of the help screen
 const TypeaheadName = "BooksTypeahead" // name of the typeahead
 const AddTagOperation = "AddTag"       // operation to add a tag
-const RemoveTagOperation = "RemoveTag" // operation to remove tag
+const RemoveTagOp = "RemoveTag"        // operation to remove tag
+const ChangeParentOp = "ChangeParent"  // operation to change parent
 
 // InputType is which type of input is being collected.
 type inputType int
@@ -113,6 +114,8 @@ func InitialModel() tea.Model {
 				{Context: "Listing", Key: "b", Help: "Add bookmark"},
 				{Context: "Listing", Key: "t", Help: "Add tag"},
 				{Context: "Listing", Key: "T", Help: "Remove tag"},
+				{Context: "Listing", Key: "p", Help: "Change parent"},
+				{Context: "Listing", Key: "P", Help: "Remove parent"},
 				{Context: "Listing", Key: "q", Help: "Quit"},
 				{Context: "Input", Key: "left", Help: "Move to previous char"},
 				{Context: "Input", Key: "right", Help: "Move to next char"},
@@ -359,35 +362,113 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					128,
 					AddTagOperation,
 					true,
-					func() ([]string, error) {
+					func() ([]msgs.TypeaheadItem, error) {
 						options := armariaapi.DefaultListTagsOptions()
-						return armariaapi.ListTags(options)
+						tags, err := armariaapi.ListTags(options)
+
+						if err != nil {
+							return nil, err
+						}
+
+						items := lo.Map(tags, func(tag string, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: tag, Value: tag}
+						})
+
+						return items, nil
 					},
-					func(query string) ([]string, error) {
+					func(query string) ([]msgs.TypeaheadItem, error) {
 						options := armariaapi.DefaultListTagsOptions().WithQuery(query)
-						return armariaapi.ListTags(options)
+						tags, err := armariaapi.ListTags(options)
+
+						if err != nil {
+							return nil, err
+						}
+
+						items := lo.Map(tags, func(tag string, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: tag, Value: tag}
+						})
+
+						return items, nil
 					},
 				))
 			}
 
 		case "T":
-			cmds = append(cmds, m.typeaheadStartCmd(
-				"Remove Tag: ",
-				"",
-				128,
-				RemoveTagOperation,
-				false,
-				func() ([]string, error) {
-					return m.table.Selection().Tags, nil
-				},
-				func(query string) ([]string, error) {
-					tags := lo.Filter(m.table.Selection().Tags, func(tag string, index int) bool {
-						return strings.Contains(tag, query)
-					})
+			if !m.header.Busy() && !m.table.Empty() && !m.table.Selection().IsFolder {
+				cmds = append(cmds, m.typeaheadStartCmd(
+					"Remove Tag: ",
+					"",
+					128,
+					RemoveTagOp,
+					false,
+					func() ([]msgs.TypeaheadItem, error) {
+						items := lo.Map(m.table.Selection().Tags, func(tag string, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: tag, Value: tag}
+						})
 
-					return tags, nil
-				},
-			))
+						return items, nil
+					},
+					func(query string) ([]msgs.TypeaheadItem, error) {
+						tags := lo.Filter(m.table.Selection().Tags, func(tag string, index int) bool {
+							return strings.Contains(tag, query)
+						})
+
+						items := lo.Map(tags, func(tag string, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: tag, Value: tag}
+						})
+
+						return items, nil
+					},
+				))
+			}
+
+		case "p":
+			if !m.header.Busy() && !m.table.Empty() {
+				cmds = append(cmds, m.typeaheadStartCmd(
+					"Change Parent: ",
+					"",
+					2048,
+					ChangeParentOp,
+					false,
+					func() ([]msgs.TypeaheadItem, error) {
+						options := armariaapi.DefaultListBooksOptions().WithFolders(true).WithBooks(false)
+						books, err := armariaapi.ListBooks(options)
+
+						if err != nil {
+							return nil, err
+						}
+
+						items := lo.Map(books, func(book armaria.Book, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: book.Name, Value: book.ID}
+						})
+
+						return items, nil
+					},
+					func(query string) ([]msgs.TypeaheadItem, error) {
+						options := armariaapi.
+							DefaultListBooksOptions().
+							WithFolders(true).
+							WithBooks(false).
+							WithQuery(query)
+						books, err := armariaapi.ListBooks(options)
+
+						if err != nil {
+							return nil, err
+						}
+
+						items := lo.Map(books, func(book armaria.Book, index int) msgs.TypeaheadItem {
+							return msgs.TypeaheadItem{Label: book.Name, Value: book.ID}
+						})
+
+						return items, nil
+					},
+				))
+			}
+
+		case "P":
+			if !m.header.Busy() && !m.table.Empty() && m.table.Selection().ParentID != nil {
+				cmds = append(cmds, m.removeParentCmd())
+			}
 		}
 
 	case msgs.SelectionChangedMsg[armaria.Book]:
@@ -447,9 +528,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case msgs.TypeaheadConfirmedMsg:
 		if msg.Name == TypeaheadName && msg.Operation == AddTagOperation {
-			cmds = append(cmds, m.typeaheadEndCmd(), m.addTag(msg.Value))
-		} else if msg.Name == TypeaheadName && msg.Operation == RemoveTagOperation {
-			cmds = append(cmds, m.typeaheadEndCmd(), m.removeTag(msg.Value))
+			cmds = append(cmds, m.typeaheadEndCmd(), m.addTagCmd(msg.Value.Value))
+		} else if msg.Name == TypeaheadName && msg.Operation == RemoveTagOp {
+			cmds = append(cmds, m.typeaheadEndCmd(), m.removeTagCmd(msg.Value.Value))
+		} else if msg.Name == TypeaheadName && msg.Operation == ChangeParentOp {
+			cmds = append(cmds, m.typeaheadEndCmd(), m.changeParentCmd(msg.Value.Value))
 		}
 
 	case msgs.InputChangedMsg:
@@ -725,7 +808,7 @@ func (m model) inputEndCmd() tea.Cmd {
 }
 
 // typeaheadStartCmd makes the necessary state updates when the typeahead mode starts.
-func (m model) typeaheadStartCmd(prompt string, text string, maxChars int, operation string, includeInput bool, unfilteredQuery func() ([]string, error), filteredQuery func(query string) ([]string, error)) tea.Cmd {
+func (m model) typeaheadStartCmd(prompt string, text string, maxChars int, operation string, includeInput bool, unfilteredQuery msgs.UnfilteredQueryFn, filteredQuery msgs.FilteredQueryFn) tea.Cmd {
 	return func() tea.Msg {
 		return msgs.TypeaheadModeMsg{
 			Name:            TypeaheadName,
@@ -883,8 +966,8 @@ func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction)
 	}
 }
 
-// addTag adds a tag to a bookmark.
-func (m model) addTag(tag string) tea.Cmd {
+// addTagCmd adds a tag to a bookmark.
+func (m model) addTagCmd(tag string) tea.Cmd {
 	return func() tea.Msg {
 		options := armariaapi.DefaultAddTagsOptions()
 		_, err := armariaapi.AddTags(m.table.Selection().ID, []string{tag}, options)
@@ -895,14 +978,56 @@ func (m model) addTag(tag string) tea.Cmd {
 	}
 }
 
-// removeTag removes a tag from a bookmark.
-func (m model) removeTag(tag string) tea.Cmd {
+// removeTagCmd removes a tag from a bookmark.
+func (m model) removeTagCmd(tag string) tea.Cmd {
 	return func() tea.Msg {
 		options := armariaapi.DefaultRemoveTagsOptions()
 		_, err := armariaapi.RemoveTags(m.table.Selection().ID, []string{tag}, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
+		return m.getBooksCmd(msgs.DirectionNone)()
+	}
+}
+
+// changeParentCmd changes the parent of a bookmark or folder.
+func (m model) changeParentCmd(parentID string) tea.Cmd {
+	return func() tea.Msg {
+		if m.table.Selection().IsFolder {
+			options := armariaapi.DefaultUpdateFolderOptions().WithParentID(parentID)
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		} else {
+			options := armariaapi.DefaultUpdateBookOptions().WithParentID(parentID)
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		}
+
+		return m.getBooksCmd(msgs.DirectionNone)()
+	}
+}
+
+// removeParentCmd removes the parent of a bookmark or folder.
+func (m model) removeParentCmd() tea.Cmd {
+	return func() tea.Msg {
+		if m.table.Selection().IsFolder {
+			options := armariaapi.DefaultUpdateFolderOptions().WithoutParentID()
+			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		} else {
+			options := armariaapi.DefaultUpdateBookOptions().WithoutParentID()
+			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			if err != nil {
+				return msgs.ErrorMsg{Err: err}
+			}
+		}
+
 		return m.getBooksCmd(msgs.DirectionNone)()
 	}
 }
