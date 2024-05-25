@@ -4,23 +4,42 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
 // HeaderModel is the model for a header.
 // The header displays state information such as breadcrumbs for the selected book.
 type HeaderModel struct {
-	name  string // name of the header
-	title string // title of the app
-	nav   string // breadcrumbs for the currently selected book
-	busy  bool   // if true the writer is busy
-	width int    // max width of the header
+	name        string // name of the header
+	title       string // title of the app
+	breadcrumbs string // breadcrumbs for the currently selected book
+	busy        bool   // if true the writer is busy
+	width       int    // max width of the header
 }
 
 // Busy returns whether the writer is busy or not.
 func (m HeaderModel) Busy() bool {
 	return m.busy
+}
+
+// SetBusy denotes that the writer is busy.
+func (m *HeaderModel) SetBusy() {
+	m.busy = true
+}
+
+// SetBusy denotes that the writer is free.
+func (m *HeaderModel) SetFree() {
+	m.busy = false
+}
+
+// SetBreadcrumbs sets the bread crumbs displayed in the header.
+func (m *HeaderModel) SetBreadcrumbs(breadcrumbs string) {
+	m.breadcrumbs = breadcrumbs
+}
+
+// Resize changes the size of the header.
+func (m *HeaderModel) Resize(width int) {
+	m.width = width
 }
 
 // InitialModel builds the model.
@@ -33,23 +52,6 @@ func InitialModel(name string, title string) HeaderModel {
 
 // Update handles a message.
 func (m HeaderModel) Update(msg tea.Msg) (HeaderModel, tea.Cmd) {
-	switch msg := msg.(type) {
-
-	case msgs.SizeMsg:
-		if msg.Name == m.name {
-			m.width = msg.Width
-		}
-
-	case msgs.BreadcrumbsMsg:
-		m.nav = string(msg)
-
-	case msgs.BusyMsg:
-		m.busy = true
-
-	case msgs.FreeMsg:
-		m.busy = false
-	}
-
 	return m, nil
 }
 
@@ -66,7 +68,7 @@ func (m HeaderModel) View() string {
 	}
 
 	rows := [][]string{
-		{title, utils.Substr(m.nav, cellTextWidth)},
+		{title, utils.Substr(m.breadcrumbs, cellTextWidth)},
 	}
 
 	titleNavStyle := lipgloss.

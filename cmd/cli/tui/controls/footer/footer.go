@@ -5,8 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/textinput"
+	"github.com/jonathanhope/armaria/cmd/cli/tui/controls/textinput"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
@@ -33,6 +32,58 @@ func (m FooterModel) InputMode() bool {
 	return m.inputMode
 }
 
+// InputName is the name of the underlying input.
+func (m FooterModel) InputName() string {
+	return m.name + "Input"
+}
+
+// Resize changes the size of the footer.
+func (m *FooterModel) Resize(width int) {
+	m.width = width
+	m.input.Resize(width - HelpInfoWidth)
+}
+
+// Insert inserts runes in front of the cursor.
+func (m *FooterModel) Insert(runes []rune) tea.Cmd {
+	return m.input.Insert(runes)
+}
+
+// Delete deletes the rune in front of the cursor.
+func (m *FooterModel) Delete() tea.Cmd {
+	return m.input.Delete()
+}
+
+// MoveLeft moves the cursor the left once space.
+func (m *FooterModel) MoveLeft() {
+	m.input.MoveLeft()
+}
+
+// MoveRight moves the cursor to right once space.
+func (m *FooterModel) MoveRight() {
+	m.input.MoveRight()
+}
+
+// StartInputMode switches the footer into accepting input.
+func (m *FooterModel) StartInputMode(prompt string, text string, maxChars int) {
+	m.inputMode = true
+	m.input.SetPrompt(prompt)
+	m.input.SetText(text)
+	m.input.Focus(maxChars)
+}
+
+// StopInputMode switches the footer out of accepting input.
+func (m *FooterModel) StopInputMode() {
+	m.inputMode = false
+	m.input.SetPrompt("")
+	m.input.SetText("")
+	m.input.Blur()
+}
+
+// SetFilters sets the curently applied filters.
+func (m *FooterModel) SetFilters(filters []string) {
+	m.filters = filters
+}
+
 // InitialModel builds the model.
 func InitialModel(name string) FooterModel {
 	inputName := name + "Input"
@@ -46,72 +97,7 @@ func InitialModel(name string) FooterModel {
 
 // Update handles a message.
 func (m FooterModel) Update(msg tea.Msg) (FooterModel, tea.Cmd) {
-	var cmds []tea.Cmd
-
-	switch msg := msg.(type) {
-
-	case msgs.SizeMsg:
-		if msg.Name == m.name {
-			m.width = msg.Width
-
-			var inputCmd tea.Cmd
-			m.input, inputCmd = m.input.Update(msgs.SizeMsg{
-				Name:  m.inputName,
-				Width: m.width - HelpInfoWidth,
-			})
-			cmds = append(cmds, inputCmd)
-		}
-
-	case msgs.InputModeMsg:
-		if msg.Name == m.name {
-			m.inputMode = msg.InputMode
-
-			if m.inputMode {
-				cmds = append(cmds, m.startInputCmd(msg.Prompt, msg.Text, msg.MaxChars))
-			} else {
-				cmds = append(cmds, m.endInputCmd())
-			}
-		}
-
-	case msgs.FiltersMsg:
-		if msg.Name == m.name {
-			m.filters = msg.Filters
-		}
-
-	case tea.KeyMsg:
-		if m.inputMode {
-			switch msg.String() {
-			case "ctrl+c":
-				if m.inputMode {
-					return m, tea.Quit
-				}
-
-			case "esc":
-				cmds = append(cmds, func() tea.Msg {
-					return msgs.InputCancelledMsg{Name: m.name}
-				})
-
-			case "enter":
-				if m.input.Text() != "" {
-					cmds = append(cmds, func() tea.Msg {
-						return msgs.InputConfirmedMsg{Name: m.name}
-					})
-				}
-
-			default:
-				var inputCmd tea.Cmd
-				m.input, inputCmd = m.input.Update(msg)
-				cmds = append(cmds, inputCmd)
-			}
-		}
-
-	default:
-		var inputCmd tea.Cmd
-		m.input, inputCmd = m.input.Update(msg)
-		cmds = append(cmds, inputCmd)
-	}
-
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 // View renders the model.
@@ -154,26 +140,4 @@ func (m FooterModel) View() string {
 // Init initializes the model.
 func (m FooterModel) Init() tea.Cmd {
 	return nil
-}
-
-// startInputCmd is a command that switches the footer to input mode.
-func (m FooterModel) startInputCmd(prompt string, text string, maxChars int) tea.Cmd {
-	return tea.Batch(func() tea.Msg {
-		return msgs.PromptMsg{Name: m.inputName, Prompt: prompt}
-	}, func() tea.Msg {
-		return msgs.TextMsg{Name: m.inputName, Text: text}
-	}, func() tea.Msg {
-		return msgs.FocusMsg{Name: m.inputName, MaxChars: maxChars}
-	})
-}
-
-// endInputCmd is a command that switches the footer out of input mode.
-func (m FooterModel) endInputCmd() tea.Cmd {
-	return tea.Batch(func() tea.Msg {
-		return msgs.BlurMsg{Name: m.inputName}
-	}, func() tea.Msg {
-		return msgs.PromptMsg{Name: m.inputName, Prompt: ""}
-	}, func() tea.Msg {
-		return msgs.TextMsg{Name: m.inputName, Text: ""}
-	})
 }

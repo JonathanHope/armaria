@@ -20,7 +20,7 @@ func TestCanUpdateData(t *testing.T) {
 		cursor: 0,
 		height: height,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.DataMsg[TestDatum]{Data: data})
+	gotCmd := gotModel.Reload(data, msgs.DirectionNone)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -30,13 +30,8 @@ func TestCanUpdateData(t *testing.T) {
 	}
 
 	wantCmd := func() tea.Msg {
-		return tea.BatchMsg{
-			func() tea.Msg {
-				return msgs.SelectionChangedMsg[TestDatum]{
-					Selection: TestDatum{ID: "1"},
-				}
-			},
-			func() tea.Msg { return msgs.FreeMsg{} },
+		return msgs.SelectionChangedMsg[TestDatum]{
+			Selection: TestDatum{ID: "1"},
 		}
 	}
 
@@ -55,7 +50,7 @@ func TestCanUpdateDataMoveUp(t *testing.T) {
 		height:     height,
 		frameStart: 1,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.DataMsg[TestDatum]{Data: data, Move: msgs.DirectionUp})
+	gotCmd := gotModel.Reload(data, msgs.DirectionUp)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -65,13 +60,8 @@ func TestCanUpdateDataMoveUp(t *testing.T) {
 	}
 
 	wantCmd := func() tea.Msg {
-		return tea.BatchMsg{
-			func() tea.Msg {
-				return msgs.SelectionChangedMsg[TestDatum]{
-					Selection: TestDatum{ID: "1"},
-				}
-			},
-			func() tea.Msg { return msgs.FreeMsg{} },
+		return msgs.SelectionChangedMsg[TestDatum]{
+			Selection: TestDatum{ID: "1"},
 		}
 	}
 
@@ -89,7 +79,7 @@ func TestCanUpdateDataMoveDown(t *testing.T) {
 		cursor: 0,
 		height: height,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.DataMsg[TestDatum]{Data: data, Move: msgs.DirectionDown})
+	gotCmd := gotModel.Reload(data, msgs.DirectionDown)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -99,13 +89,8 @@ func TestCanUpdateDataMoveDown(t *testing.T) {
 	}
 
 	wantCmd := func() tea.Msg {
-		return tea.BatchMsg{
-			func() tea.Msg {
-				return msgs.SelectionChangedMsg[TestDatum]{
-					Selection: TestDatum{ID: "2"},
-				}
-			},
-			func() tea.Msg { return msgs.FreeMsg{} },
+		return msgs.SelectionChangedMsg[TestDatum]{
+			Selection: TestDatum{ID: "2"},
 		}
 	}
 
@@ -124,7 +109,7 @@ func TestCanUpdateDataMoveStart(t *testing.T) {
 		height:     height,
 		frameStart: 1,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.DataMsg[TestDatum]{Data: data, Move: msgs.DirectionStart})
+	gotCmd := gotModel.Reload(data, msgs.DirectionStart)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -134,13 +119,8 @@ func TestCanUpdateDataMoveStart(t *testing.T) {
 	}
 
 	wantCmd := func() tea.Msg {
-		return tea.BatchMsg{
-			func() tea.Msg {
-				return msgs.SelectionChangedMsg[TestDatum]{
-					Selection: TestDatum{ID: "1"},
-				}
-			},
-			func() tea.Msg { return msgs.FreeMsg{} },
+		return msgs.SelectionChangedMsg[TestDatum]{
+			Selection: TestDatum{ID: "1"},
 		}
 	}
 
@@ -160,7 +140,7 @@ func TestCanScrollDown(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+	gotCmd := gotModel.MoveDown()
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -175,7 +155,7 @@ func TestCanScrollDown(t *testing.T) {
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+	gotCmd = gotModel.MoveDown()
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
@@ -193,7 +173,7 @@ func TestCanScrollUp(t *testing.T) {
 		data:       data,
 		frameStart: 1,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+	gotCmd := gotModel.MoveUp()
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -207,7 +187,7 @@ func TestCanScrollUp(t *testing.T) {
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+	gotCmd = gotModel.MoveUp()
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
@@ -225,7 +205,7 @@ func TestCanMoveDown(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+	gotCmd := gotModel.MoveDown()
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     1,
@@ -239,7 +219,7 @@ func TestCanMoveDown(t *testing.T) {
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+	gotCmd = gotModel.MoveDown()
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
@@ -257,7 +237,7 @@ func TestCanMoveUp(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+	gotCmd := gotModel.MoveUp()
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -271,7 +251,7 @@ func TestCanMoveUp(t *testing.T) {
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, wantCmd)
 
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+	gotCmd = gotModel.MoveUp()
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
@@ -286,7 +266,7 @@ func TestCanScrollIfFrameEmpty(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+	gotCmd := gotModel.MoveDown()
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -297,7 +277,7 @@ func TestCanScrollIfFrameEmpty(t *testing.T) {
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+	gotCmd = gotModel.MoveUp()
 
 	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
 }
@@ -314,7 +294,7 @@ func TestFrameSizeChangesWithHeight(t *testing.T) {
 		data:       data,
 		frameStart: 0,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.SizeMsg{Height: Reserved + 2})
+	gotModel.Resize(0, Reserved+2)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -323,7 +303,7 @@ func TestFrameSizeChangesWithHeight(t *testing.T) {
 		frameStart: 0,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, nil, nil)
 }
 
 func TestFrameCannotBeLargerThanData(t *testing.T) {
@@ -336,7 +316,7 @@ func TestFrameCannotBeLargerThanData(t *testing.T) {
 		cursor: 0,
 		height: height,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.DataMsg[TestDatum]{Data: data})
+	gotCmd := gotModel.Reload(data, msgs.DirectionNone)
 
 	wantModel := ScrolltableModel[TestDatum]{
 		cursor:     0,
@@ -345,13 +325,8 @@ func TestFrameCannotBeLargerThanData(t *testing.T) {
 		frameStart: 0,
 	}
 	wantCmd := func() tea.Msg {
-		return tea.BatchMsg{
-			func() tea.Msg {
-				return msgs.SelectionChangedMsg[TestDatum]{
-					Selection: TestDatum{ID: "1"},
-				}
-			},
-			func() tea.Msg { return msgs.FreeMsg{} },
+		return msgs.SelectionChangedMsg[TestDatum]{
+			Selection: TestDatum{ID: "1"},
 		}
 	}
 
