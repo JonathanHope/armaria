@@ -4,7 +4,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/samber/lo"
 )
 
@@ -29,6 +28,14 @@ func (m HelpModel) HelpMode() bool {
 	return m.helpMode
 }
 
+func (m *HelpModel) ShowHelp() {
+	m.helpMode = true
+}
+
+func (m *HelpModel) HideHelp() {
+	m.helpMode = false
+}
+
 // InitialModel builds the model.
 func InitialModel(name string, contexts []string, bindings []Binding) HelpModel {
 	return HelpModel{
@@ -40,21 +47,6 @@ func InitialModel(name string, contexts []string, bindings []Binding) HelpModel 
 
 // Update handles a message.
 func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
-	switch msg := msg.(type) {
-	case msgs.ShowHelpMsg:
-		m.helpMode = true
-
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
-			return m, tea.Quit
-
-		case "q", "esc":
-			m.helpMode = false
-			return m, nil
-		}
-	}
-
 	return m, nil
 }
 
@@ -95,7 +87,6 @@ func (m HelpModel) View() string {
 		Padding(0, cellPadding)
 
 	headerStyle := baseStyle.
-		Copy().
 		Bold(true).
 		Foreground(lipgloss.Color("3"))
 

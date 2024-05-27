@@ -1,10 +1,9 @@
 package textinput
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/google/go-cmp/cmp"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 const name = "TestInput"
@@ -37,10 +36,10 @@ func TestInsert(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🦊'}})
+	model.Focus(0)
+	model.MoveLeft()
+	model.MoveLeft()
+	model.Insert([]rune{'🦊'})
 
 	validate(model, "🦊🐂🐜 ")
 
@@ -52,8 +51,8 @@ func TestInsert(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🐜'}})
+	model.Focus(0)
+	model.Insert([]rune{'🐜'})
 
 	validate(model, "🦊🐂🐜 ")
 
@@ -65,9 +64,9 @@ func TestInsert(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🐂'}})
+	model.Focus(0)
+	model.MoveLeft()
+	model.Insert([]rune{'🐂'})
 
 	validate(model, "🦊🐂🐜 ")
 }
@@ -102,13 +101,13 @@ func TestInsertMovesWindow(t *testing.T) {
 		text:   "🦊",
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model.Focus(0)
 	validate(model, 1, "🦊 ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	model.Insert([]rune{'c'})
 	validate(model, 2, "c ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'🦊'}})
+	model.Insert([]rune{'🦊'})
 	validate(model, 3, "🦊 ")
 }
 
@@ -128,10 +127,10 @@ func TestDelete(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Focus(0)
+	model.MoveLeft()
+	model.MoveLeft()
+	model.Delete()
 
 	validate(model, "🐂🐜 ")
 
@@ -143,8 +142,8 @@ func TestDelete(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Focus(0)
+	model.Delete()
 
 	validate(model, "🦊🐂 ")
 
@@ -156,9 +155,9 @@ func TestDelete(t *testing.T) {
 		width: 12,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Focus(0)
+	model.MoveLeft()
+	model.Delete()
 
 	validate(model, "🦊🐜 ")
 }
@@ -177,28 +176,28 @@ func TestDeleteMovesWindow(t *testing.T) {
 		width: 6,
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model.Focus(0)
 	validate(model, "🦊c ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, "c🦊 ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, "🦊c ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, "c🦊 ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, "🦊c ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, "🦊 ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, " ")
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	model.Delete()
 	validate(model, " ")
 }
 
@@ -227,34 +226,34 @@ func TestMoveRight(t *testing.T) {
 		text:   "a🦊b🐂c🐜",
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.Focus(0)
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
 	validate(model, "a🦊", 0, 0)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "a🦊", 1, 1)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🦊b", 1, 2)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "b🐂", 1, 3)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐂c", 1, 4)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "c🐜", 1, 5)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐜 ", 1, 6)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐜 ", 1, 6)
 }
 
@@ -283,42 +282,42 @@ func TestMoveRightVariation2(t *testing.T) {
 		text:   "🦊🐂abcd🐜🐕",
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.Focus(0)
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
+	model.MoveLeft()
 	validate(model, "🦊🐂", 0, 0)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🦊🐂", 1, 1)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐂a", 1, 2)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐂ab", 2, 3)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "abc", 2, 4)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "abcd", 3, 5)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "cd🐜", 2, 6)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐜🐕", 1, 7)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐕 ", 1, 8)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRight})
+	model.MoveRight()
 	validate(model, "🐕 ", 1, 8)
 }
 
@@ -347,28 +346,28 @@ func TestMoveLeft(t *testing.T) {
 		text:   "a🦊b🐂c🐜",
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model.Focus(0)
 	validate(model, "🐜 ", 1, 6)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🐜 ", 0, 5)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "c🐜", 0, 4)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🐂c", 0, 3)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "b🐂", 0, 2)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🦊b", 0, 1)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "a🦊", 0, 0)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "a🦊", 0, 0)
 }
 
@@ -397,33 +396,33 @@ func TestMoveLeftVariation2(t *testing.T) {
 		text:   "🦊🐂abcd🐜🐕",
 	}
 
-	model, _ = model.Update(msgs.FocusMsg{Name: name})
+	model.Focus(0)
 	validate(model, "🐕 ", 1, 8)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🐕 ", 0, 7)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🐜🐕", 0, 6)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "d🐜", 0, 5)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "cd🐜", 0, 4)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "bcd", 0, 3)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "abcd", 0, 2)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🐂ab", 0, 1)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🦊🐂", 0, 0)
 
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	model.MoveLeft()
 	validate(model, "🦊🐂", 0, 0)
 }

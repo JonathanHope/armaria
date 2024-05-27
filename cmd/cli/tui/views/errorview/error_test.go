@@ -11,20 +11,6 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
-func TestHandlesViewMessage(t *testing.T) {
-	var gotModel tea.Model = model{
-		activeView: msgs.ViewBooks,
-	}
-
-	gotModel, gotCmd := gotModel.Update(msgs.ViewMsg(msgs.ViewError))
-
-	wantModel := model{
-		activeView: msgs.ViewError,
-	}
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-}
-
 func TestHandlesErrorMessage(t *testing.T) {
 	err := errors.New("test error")
 	var gotModel tea.Model = model{}

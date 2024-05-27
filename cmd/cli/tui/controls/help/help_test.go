@@ -5,7 +5,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/go-cmp/cmp"
-	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/utils"
 )
 
@@ -15,14 +14,14 @@ func TestCanShowHelp(t *testing.T) {
 	gotModel := HelpModel{
 		name: Name,
 	}
-	gotModel, gotCmd := gotModel.Update(msgs.ShowHelpMsg{Name: Name})
+	gotModel.ShowHelp()
 
 	wantModel := HelpModel{
 		name:     Name,
 		helpMode: true,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, nil, nil)
 }
 
 func TestCanHideHelp(t *testing.T) {
@@ -30,18 +29,14 @@ func TestCanHideHelp(t *testing.T) {
 		name:     Name,
 		helpMode: true,
 	}
-	gotModel, gotCmd := gotModel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	gotModel.HideHelp()
 
 	wantModel := HelpModel{
 		name:     Name,
 		helpMode: false,
 	}
 
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
-
-	gotModel, gotCmd = gotModel.Update(tea.KeyMsg{Type: tea.KeyEsc})
-
-	verifyUpdate(t, gotModel, wantModel, gotCmd, nil)
+	verifyUpdate(t, gotModel, wantModel, nil, nil)
 }
 
 func TestHelpMode(t *testing.T) {

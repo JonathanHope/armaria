@@ -2,7 +2,6 @@ package textinput
 
 import (
 	"strings"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -10,38 +9,176 @@ import (
 	"github.com/muesli/reflow/ansi"
 )
 
-const BlinkSpeed = 600 // how quickly to blink the cursor
-const Padding = 1      // how much left and right padding to add
+const Padding = 1 // how much left and right padding to add
 
 // TextInputModel is the TextInputModel for a textinput.
 // The textinput allows users to enter and modify text.
 type TextInputModel struct {
-	name        string  // name of the text input
-	prompt      string  // prompt for the input
-	text        string  // the current text being inputted
-	width       int     // the width of the text input
-	cursor      int     // location of the cursor in the window
-	index       int     // which character is selected in the text
-	focus       bool    // whether the text input is focused or not
-	maxChars    int     // maximum number of chars to allow
-	blink       bool    // flag that alternates in order to make the cursor blink
-	windowStart int     // index the window starts at
-	windowEnd   int     // index the window ends at
-	sleeper     sleeper // used to sleep
+	name        string // name of the input
+	prompt      string // prompt for the input
+	text        string // the current text being inputted
+	width       int    // the width of the text input
+	cursor      int    // location of the cursor in the window
+	index       int    // which character is selected in the text
+	focus       bool   // whether the input is focused or not
+	maxChars    int    // maximum number of chars to allow
+	blink       bool   // flag that alternates in order to make the cursor blink
+	windowStart int    // index the window starts at
+	windowEnd   int    // index the window ends at
 }
 
 // InitialModel builds the model.
 func InitialModel(name string, prompt string) TextInputModel {
 	return TextInputModel{
-		name:    name,
-		prompt:  prompt,
-		sleeper: timeSleeper{},
+		name:   name,
+		prompt: prompt,
 	}
 }
 
 // Text returns the current text in the input.
-func (m *TextInputModel) Text() string {
+func (m TextInputModel) Text() string {
 	return m.text
+}
+
+// Focus returns true if this input is focused.
+func (m TextInputModel) Focused() bool {
+	return m.focus
+}
+
+// Focus focuses the input.
+// If it is focused it will be accepting input.
+func (m *TextInputModel) Focus(maxChars int) {
+	m.focus = true
+	m.maxChars = maxChars
+	m.initWindow()
+}
+
+// Blur blurs the input.
+// Once it is no longer focused it will no longer accept input.
+func (m *TextInputModel) Blur() {
+	m.focus = false
+	m.maxChars = 0
+	m.initWindow()
+}
+
+// SetText sets the text inside the input.
+func (m *TextInputModel) SetText(text string) {
+	m.text = text
+	m.initWindow()
+}
+
+// SetPrompt sets the prompt for the input.
+func (m *TextInputModel) SetPrompt(prompt string) {
+	m.prompt = prompt
+	m.initWindow()
+}
+
+// Resize changes the size of the input.
+func (m *TextInputModel) Resize(width int) {
+	m.width = width - Padding*2
+	m.initWindow()
+}
+
+// Insert inserts runes in front of the cursor.
+func (m *TextInputModel) Insert(runes []rune) tea.Cmd {
+	textRunes := strings.Split(m.text, "")
+	cursorAtEnd := m.cursorAtEnd()
+
+	if m.maxChars > 0 && len(textRunes)+len(runes) > m.maxChars {
+		return nil
+	}
+
+	if m.indexAtStart() { // Insert the char at start of the text.
+		m.text = string(runes) + m.text
+	} else if m.indexAtEnd() { // Insert the char at the end of the text.
+		m.text += string(runes)
+	} else { // Insert the char in the middle of the text.
+		first := strings.Join(textRunes[:m.index], "")
+		rest := strings.Join(textRunes[m.index:], "")
+		m.text = first + string(runes) + rest
+	}
+
+	if cursorAtEnd {
+		m.moveEnd()
+	} else {
+		m.cursor += len(runes)
+		m.index += len(runes)
+		m.chopRight()
+	}
+
+	return m.inputChangedCmd()
+}
+
+// Delete deletes the rune in front of the cursor.
+func (m *TextInputModel) Delete() tea.Cmd {
+	if m.text == "" || m.index == 0 {
+		return nil
+	}
+
+	textRunes := strings.Split(m.text, "")
+
+	if m.index == 1 { // Delete a char at the start of the text.
+		m.text = strings.Join(textRunes[1:], "")
+	} else if m.indexAtEnd() { // Delete a char at the end of the text.
+		m.text = strings.Join(textRunes[:len(textRunes)-1], "")
+	} else { // Delete a char in the middle of the text.
+		first := strings.Join(textRunes[:m.index-1], "")
+		rest := strings.Join(textRunes[m.index:], "")
+		m.text = first + rest
+	}
+
+	m.index -= 1
+
+	if m.windowStart > 0 {
+		m.windowStart -= 1
+		m.chopRight()
+	} else {
+		m.cursor -= 1
+	}
+
+	return m.inputChangedCmd()
+}
+
+// MoveLeft moves the cursor the left once space.
+func (m *TextInputModel) MoveLeft() {
+	shift := !m.indexAtStart() && m.cursorAtStart()
+
+	if !m.indexAtStart() {
+		m.index -= 1
+	}
+
+	if !m.cursorAtStart() {
+		m.cursor -= 1
+	}
+
+	if shift {
+		m.windowStart -= 1
+	}
+
+	m.chopRight()
+}
+
+// MoveRight moves the cursor to right once space.
+func (m *TextInputModel) MoveRight() {
+	shift := !m.indexAtEnd() && m.cursorAtEnd()
+	previousLength := m.windowEnd - m.windowStart
+
+	if !m.indexAtEnd() {
+		m.index += 1
+	}
+
+	if !m.cursorAtEnd() {
+		m.cursor += 1
+	}
+
+	if shift {
+		m.windowEnd += 1
+	}
+
+	m.chopLeft()
+
+	newLength := m.windowEnd - m.windowStart
+	m.cursor += newLength - previousLength
 }
 
 // textWithSpace returns the current text with a space at the end.
@@ -133,182 +270,15 @@ func (m *TextInputModel) chopLeft() {
 	}
 }
 
-// moveRight moves the cursor to right once space.
-func (m *TextInputModel) moveRight() {
-	shift := !m.indexAtEnd() && m.cursorAtEnd()
-	previousLength := m.windowEnd - m.windowStart
-
-	if !m.indexAtEnd() {
-		m.index += 1
-	}
-
-	if !m.cursorAtEnd() {
-		m.cursor += 1
-	}
-
-	if shift {
-		m.windowEnd += 1
-	}
-
-	m.chopLeft()
-
-	newLength := m.windowEnd - m.windowStart
-	m.cursor += newLength - previousLength
-}
-
-// moveLeft moves the cursor the left once space.
-func (m *TextInputModel) moveLeft() {
-	shift := !m.indexAtStart() && m.cursorAtStart()
-
-	if !m.indexAtStart() {
-		m.index -= 1
-	}
-
-	if !m.cursorAtStart() {
-		m.cursor -= 1
-	}
-
-	if shift {
-		m.windowStart -= 1
-	}
-
-	m.chopRight()
-}
-
 // moveEnd moves to the end of the text.
 func (m *TextInputModel) moveEnd() {
 	for !m.cursorAtEnd() || !m.indexAtEnd() {
-		m.moveRight()
-	}
-}
-
-// moveEnd moves to the start of the text.
-func (m *TextInputModel) moveStart() {
-	for !m.cursorAtStart() || !m.indexAtStart() {
-		m.moveLeft()
-	}
-}
-
-// delete deletes the rune in front of the cursor.
-func (m *TextInputModel) delete() {
-	if m.text == "" || m.index == 0 {
-		return
-	}
-
-	textRunes := strings.Split(m.text, "")
-
-	if m.index == 1 { // Delete a char at the start of the text.
-		m.text = strings.Join(textRunes[1:], "")
-	} else if m.indexAtEnd() { // Delete a char at the end of the text.
-		m.text = strings.Join(textRunes[:len(textRunes)-1], "")
-	} else { // Delete a char in the middle of the text.
-		first := strings.Join(textRunes[:m.index-1], "")
-		rest := strings.Join(textRunes[m.index:], "")
-		m.text = first + rest
-	}
-
-	m.index -= 1
-
-	if m.windowStart > 0 {
-		m.windowStart -= 1
-		m.chopRight()
-	} else {
-		m.cursor -= 1
-	}
-}
-
-// insert inserts runes in front of the cursor.
-func (m *TextInputModel) insert(runes []rune) {
-	textRunes := strings.Split(m.text, "")
-	cursorAtEnd := m.cursorAtEnd()
-
-	if m.maxChars > 0 && len(textRunes)+len(runes) > m.maxChars {
-		return
-	}
-
-	if m.indexAtStart() { // Insert the char at start of the text.
-		m.text = string(runes) + m.text
-	} else if m.indexAtEnd() { // Insert the char at the end of the text.
-		m.text += string(runes)
-	} else { // Insert the char in the middle of the text.
-		first := strings.Join(textRunes[:m.index], "")
-		rest := strings.Join(textRunes[m.index:], "")
-		m.text = first + string(runes) + rest
-	}
-
-	if cursorAtEnd {
-		m.moveEnd()
-	} else {
-		m.cursor += len(runes)
-		m.index += len(runes)
-		m.chopRight()
+		m.MoveRight()
 	}
 }
 
 // Update handles a message.
 func (m TextInputModel) Update(msg tea.Msg) (TextInputModel, tea.Cmd) {
-	switch msg := msg.(type) {
-
-	case msgs.FocusMsg:
-		if m.name == msg.Name {
-			m.focus = true
-			m.blink = true
-			m.maxChars = msg.MaxChars
-			m.initWindow()
-			return m, m.blinkCmd()
-		}
-
-	case msgs.BlurMsg:
-		m.focus = false
-		m.blink = false
-		m.maxChars = 0
-		m.initWindow()
-
-	case msgs.BlinkMsg:
-		if m.focus && msg.Name == m.name {
-			m.blink = !m.blink
-			return m, m.blinkCmd()
-		}
-
-	case msgs.TextMsg:
-		if m.name == msg.Name {
-			m.text = msg.Text
-			m.initWindow()
-		}
-
-	case msgs.PromptMsg:
-		if m.name == msg.Name {
-			m.prompt = msg.Prompt
-			m.initWindow()
-		}
-
-	case msgs.SizeMsg:
-		if m.name == msg.Name {
-			m.width = msg.Width - Padding*2
-			m.initWindow()
-		}
-
-	case tea.KeyMsg:
-		if m.focus {
-			switch msg.String() {
-
-			case "backspace":
-				m.delete()
-				return m, m.inputChangedCmd()
-
-			case "left":
-				m.moveLeft()
-
-			case "right":
-				m.moveRight()
-
-			default:
-				m.insert(msg.Runes)
-				return m, m.inputChangedCmd()
-			}
-		}
-	}
-
 	return m, nil
 }
 
@@ -323,7 +293,8 @@ func (m TextInputModel) View() string {
 	cursorStyle := lipgloss.
 		NewStyle().
 		Inline(true)
-	if m.blink {
+
+	if m.focus {
 		cursorStyle = cursorStyle.Reverse(true)
 	}
 
@@ -363,31 +334,9 @@ func (m TextInputModel) Init() tea.Cmd {
 	return nil
 }
 
-// blinkCmd makes the cursor blink.
-func (m *TextInputModel) blinkCmd() tea.Cmd {
-	return func() tea.Msg {
-		// By sleeping and then returning another BlinkMsg we can make the cursor blink.
-		m.sleeper.sleep(BlinkSpeed * time.Millisecond)
-		return msgs.BlinkMsg{Name: m.name}
-	}
-}
-
 // inputChangedCmd publishes a message with the current text.
 func (m TextInputModel) inputChangedCmd() tea.Cmd {
 	return func() tea.Msg {
 		return msgs.InputChangedMsg{Name: m.name}
 	}
-}
-
-type sleeper interface {
-	// sleep pauses execution for the requested duration.
-	sleep(time.Duration)
-}
-
-// timeSleeper implements sleeper with the time package.
-type timeSleeper struct{}
-
-// sleep pauses execution of the calling thread for the requested duration.
-func (s timeSleeper) sleep(d time.Duration) {
-	time.Sleep(d)
 }

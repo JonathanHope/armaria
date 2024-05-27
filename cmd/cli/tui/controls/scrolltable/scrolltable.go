@@ -90,37 +90,10 @@ func (m ScrolltableModel[T]) Data() []T {
 	return m.data
 }
 
-// frameSize returns the current size of the visible frame of data.
-func (m ScrolltableModel[T]) frameSize() int {
-	frameSize := m.height - Reserved
-	if len(m.data) < frameSize {
-		frameSize = len(m.data)
-	}
-
-	return frameSize
-}
-
-// resetFrame resets the frame after the size or data has changed.
-func (m *ScrolltableModel[T]) resetFrame(move msgs.Direction) {
-	if move == msgs.DirectionUp {
-		m.moveUp()
-	} else if move == msgs.DirectionDown {
-		m.moveDown()
-	} else if move == msgs.DirectionStart {
-		m.cursor = 0
-		m.frameStart = 0
-	}
-
-	if m.frameStart+m.cursor >= len(m.data) {
-		m.cursor = 0
-		m.frameStart = 0
-	}
-}
-
-// moveDown moves the cursor down the table.
-func (m *ScrolltableModel[T]) moveDown() (ScrolltableModel[T], tea.Cmd) {
+// MoveDown moves the cursor down the table.
+func (m *ScrolltableModel[T]) MoveDown() tea.Cmd {
 	if m.Empty() {
-		return *m, nil
+		return nil
 	}
 
 	move := false
@@ -136,16 +109,16 @@ func (m *ScrolltableModel[T]) moveDown() (ScrolltableModel[T], tea.Cmd) {
 	}
 
 	if scroll || move {
-		return *m, m.selectionChangedCmd()
+		return m.selectionChangedCmd()
 	}
 
-	return *m, nil
+	return nil
 }
 
-// moveUp moves the cursor up the table.
-func (m *ScrolltableModel[T]) moveUp() (ScrolltableModel[T], tea.Cmd) {
+// MoveUp moves the cursor up the table.
+func (m *ScrolltableModel[T]) MoveUp() tea.Cmd {
 	if m.Empty() {
-		return *m, nil
+		return nil
 	}
 
 	move := false
@@ -161,49 +134,60 @@ func (m *ScrolltableModel[T]) moveUp() (ScrolltableModel[T], tea.Cmd) {
 	}
 
 	if scroll || move {
-		return *m, m.selectionChangedCmd()
+		return m.selectionChangedCmd()
 	}
 
-	return *m, nil
+	return nil
+}
+
+// Resize changes the size of the table.
+func (m *ScrolltableModel[T]) Resize(width int, height int) {
+	m.width = width
+	m.height = height
+	m.resetFrame(msgs.DirectionStart)
+}
+
+// Reload reloads that data in the table.
+func (m *ScrolltableModel[T]) Reload(data []T, move msgs.Direction) tea.Cmd {
+	// This allows the cursor to stick in the right place when an item is removed.
+	if len(m.data)-1 == len(data) && m.frameStart > 0 {
+		m.frameStart -= 1
+	}
+
+	m.data = data
+	m.resetFrame(move)
+	return m.selectionChangedCmd()
+}
+
+// frameSize returns the current size of the visible frame of data.
+func (m ScrolltableModel[T]) frameSize() int {
+	frameSize := m.height - Reserved
+	if len(m.data) < frameSize {
+		frameSize = len(m.data)
+	}
+
+	return frameSize
+}
+
+// resetFrame resets the frame after the size or data has changed.
+func (m *ScrolltableModel[T]) resetFrame(move msgs.Direction) {
+	if move == msgs.DirectionUp {
+		m.MoveUp()
+	} else if move == msgs.DirectionDown {
+		m.MoveDown()
+	} else if move == msgs.DirectionStart {
+		m.cursor = 0
+		m.frameStart = 0
+	}
+
+	if m.frameStart+m.cursor >= len(m.data) {
+		m.cursor = 0
+		m.frameStart = 0
+	}
 }
 
 // Update updates the scrolltable model from a message.
 func (m ScrolltableModel[T]) Update(msg tea.Msg) (ScrolltableModel[T], tea.Cmd) {
-	switch msg := msg.(type) {
-
-	case msgs.SizeMsg:
-		if msg.Name == m.name {
-			m.width = msg.Width
-			m.height = msg.Height
-			m.resetFrame(msgs.DirectionNone)
-		}
-
-	case msgs.DataMsg[T]:
-		if msg.Name == m.name {
-			// This allows the cursor to stick in the right place when an item is removed.
-			if len(m.data)-1 == len(msg.Data) && m.frameStart > 0 {
-				m.frameStart -= 1
-			}
-
-			m.data = msg.Data
-			m.resetFrame(msg.Move)
-			return m, tea.Batch(
-				m.selectionChangedCmd(),
-				func() tea.Msg { return msgs.FreeMsg{} },
-			)
-		}
-
-	case tea.KeyMsg:
-		switch msg.String() {
-
-		case "down":
-			return m.moveDown()
-
-		case "up":
-			return m.moveUp()
-		}
-	}
-
 	return m, nil
 }
 
@@ -293,6 +277,7 @@ func (m ScrolltableModel[T]) Init() tea.Cmd {
 func (m ScrolltableModel[T]) selectionChangedCmd() tea.Cmd {
 	return func() tea.Msg {
 		return msgs.SelectionChangedMsg[T]{
+			Name:      m.name,
 			Empty:     m.Empty(),
 			Selection: m.Selection(),
 		}
