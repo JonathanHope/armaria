@@ -4,10 +4,6 @@ tasks:
   lint:
     cmds:
       - golangci-lint run --config .golangci.yml --timeout 3m
-  test-bdd:
-    dir: test
-    cmds:
-      - go test --tags "fts5"
   test-internal:
     dir: internal
     cmds:
@@ -20,7 +16,6 @@ tasks:
     cmds:
       - task: test-internal
       - task : test-cmd
-      - task: test-bdd
   build-cli:
     dir: cmd/cli
     cmds:

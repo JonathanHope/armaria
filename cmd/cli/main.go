@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-	"github.com/jonathanhope/armaria/cmd/cli/cmd"
+	"github.com/jonathanhope/armaria/cmd/cli/internal"
 )
 
 var version string
