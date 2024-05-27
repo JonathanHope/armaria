@@ -11,7 +11,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria/cmd/cli/cmd"
+	"github.com/jonathanhope/armaria/cmd/cli/internal"
 	"github.com/jonathanhope/armaria/internal/null"
 )
 
