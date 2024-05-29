@@ -1,8 +1,7 @@
 package messaging
 
 import (
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 	"github.com/samber/lo"
 )
 
@@ -16,7 +15,7 @@ func addBookHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultAddBookOptions()
+	options := armaria.DefaultAddBookOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -33,7 +32,7 @@ func addBookHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithTags(payload.Tags)
 	}
 
-	book, err := armariaapi.AddBook(payload.URL, options)
+	book, err := armaria.AddBook(payload.URL, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -55,7 +54,7 @@ func addFolderHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -63,7 +62,7 @@ func addFolderHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithParentID(payload.ParentID.String)
 	}
 
-	book, err := armariaapi.AddFolder(payload.Name, options)
+	book, err := armaria.AddFolder(payload.Name, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -85,11 +84,11 @@ func addTagsHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultAddTagsOptions()
+	options := armaria.DefaultAddTagsOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
-	book, err := armariaapi.AddTags(payload.ID, payload.Tags, options)
+	book, err := armaria.AddTags(payload.ID, payload.Tags, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -111,7 +110,7 @@ func listBooksHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultListBooksOptions()
+	options := armaria.DefaultListBooksOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -142,7 +141,7 @@ func listBooksHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithFirst(payload.First.Int64)
 	}
 
-	books, err := armariaapi.ListBooks(options)
+	books, err := armaria.ListBooks(options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -166,7 +165,7 @@ func listTagsHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultListTagsOptions()
+	options := armaria.DefaultListTagsOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -183,7 +182,7 @@ func listTagsHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithFirst(payload.First.Int64)
 	}
 
-	tags, err := armariaapi.ListTags(options)
+	tags, err := armaria.ListTags(options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -205,12 +204,12 @@ func removeBookHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultRemoveBookOptions()
+	options := armaria.DefaultRemoveBookOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
 
-	err = armariaapi.RemoveBook(payload.ID, options)
+	err = armaria.RemoveBook(payload.ID, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -230,12 +229,12 @@ func removeFolderHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultRemoveFolderOptions()
+	options := armaria.DefaultRemoveFolderOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
 
-	err = armariaapi.RemoveFolder(payload.ID, options)
+	err = armaria.RemoveFolder(payload.ID, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -255,12 +254,12 @@ func removeTagsHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultRemoveTagsOptions()
+	options := armaria.DefaultRemoveTagsOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
 
-	book, err := armariaapi.RemoveTags(payload.ID, payload.Tags, options)
+	book, err := armaria.RemoveTags(payload.ID, payload.Tags, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -282,7 +281,7 @@ func updateBookHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultUpdateBookOptions()
+	options := armaria.DefaultUpdateBookOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -311,7 +310,7 @@ func updateBookHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithOrderAfter(payload.PreviousBook.String)
 	}
 
-	book, err := armariaapi.UpdateBook(payload.ID, options)
+	book, err := armaria.UpdateBook(payload.ID, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}
@@ -333,7 +332,7 @@ func updateFolderHandler(in NativeMessage) (NativeMessage, error) {
 		return NativeMessage{}, err
 	}
 
-	options := armariaapi.DefaultUpdateFolderOptions()
+	options := armaria.DefaultUpdateFolderOptions()
 	if payload.DB.Valid {
 		options.WithDB(payload.DB.String)
 	}
@@ -353,7 +352,7 @@ func updateFolderHandler(in NativeMessage) (NativeMessage, error) {
 		options.WithOrderAfter(payload.PreviousBook.String)
 	}
 
-	book, err := armariaapi.UpdateFolder(payload.ID, options)
+	book, err := armaria.UpdateFolder(payload.ID, options)
 	if err != nil {
 		return NativeMessage{}, err
 	}

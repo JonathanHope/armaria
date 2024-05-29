@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/jonathanhope/armaria/cmd/cli/tui"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 // RootCmd is the top level CLI command for Armaria.
@@ -107,7 +106,7 @@ type AddBookCmd struct {
 func (r *AddBookCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultAddBookOptions()
+	options := armaria.DefaultAddBookOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
@@ -124,7 +123,7 @@ func (r *AddBookCmd) Run(ctx *Context) error {
 		options.WithTags(r.Tag)
 	}
 
-	book, err := armariaapi.AddBook(r.URL, options)
+	book, err := armaria.AddBook(r.URL, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -150,7 +149,7 @@ type AddFolderCmd struct {
 func (r *AddFolderCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
@@ -158,7 +157,7 @@ func (r *AddFolderCmd) Run(ctx *Context) error {
 		options.WithParentID(*r.Folder)
 	}
 
-	book, err := armariaapi.AddFolder(r.Name, options)
+	book, err := armaria.AddFolder(r.Name, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -184,12 +183,12 @@ type AddTagsCmd struct {
 func (r *AddTagsCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultAddTagsOptions()
+	options := armaria.DefaultAddTagsOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	book, err := armariaapi.AddTags(r.ID, r.Tag, options)
+	book, err := armaria.AddTags(r.ID, r.Tag, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -226,7 +225,7 @@ func (r *ListAllCmd) Run(ctx *Context) error {
 		return nil
 	}
 
-	options := armariaapi.DefaultListBooksOptions()
+	options := armaria.DefaultListBooksOptions()
 	options.WithFolders(true)
 	options.WithBooks(true)
 	if ctx.DB != nil {
@@ -257,7 +256,7 @@ func (r *ListAllCmd) Run(ctx *Context) error {
 		options.WithFirst(*r.First)
 	}
 
-	books, err := armariaapi.ListBooks(options)
+	books, err := armaria.ListBooks(options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -294,7 +293,7 @@ func (r *ListBooksCmd) Run(ctx *Context) error {
 		return nil
 	}
 
-	options := armariaapi.DefaultListBooksOptions()
+	options := armaria.DefaultListBooksOptions()
 	options.WithFolders(false)
 	options.WithBooks(true)
 	if ctx.DB != nil {
@@ -325,7 +324,7 @@ func (r *ListBooksCmd) Run(ctx *Context) error {
 		options.WithFirst(*r.First)
 	}
 
-	books, err := armariaapi.ListBooks(options)
+	books, err := armaria.ListBooks(options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -362,7 +361,7 @@ func (r *ListFoldersCmd) Run(ctx *Context) error {
 		return nil
 	}
 
-	options := armariaapi.DefaultListBooksOptions()
+	options := armaria.DefaultListBooksOptions()
 	options.WithFolders(true)
 	options.WithBooks(false)
 	if ctx.DB != nil {
@@ -393,7 +392,7 @@ func (r *ListFoldersCmd) Run(ctx *Context) error {
 		options.WithFirst(*r.First)
 	}
 
-	books, err := armariaapi.ListBooks(options)
+	books, err := armaria.ListBooks(options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -420,7 +419,7 @@ type ListTagsCmd struct {
 func (r *ListTagsCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultListTagsOptions()
+	options := armaria.DefaultListTagsOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
@@ -437,7 +436,7 @@ func (r *ListTagsCmd) Run(ctx *Context) error {
 		options.WithFirst(*r.First)
 	}
 
-	tags, err := armariaapi.ListTags(options)
+	tags, err := armaria.ListTags(options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -461,12 +460,12 @@ type ListParentNamesCmd struct {
 func (r *ListParentNamesCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultGetParentNameOptions()
+	options := armaria.DefaultGetParentNameOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	names, err := armariaapi.GetParentNames(r.ID, options)
+	names, err := armaria.GetParentNames(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -511,7 +510,7 @@ func (r *UpdateBookCmd) Run(ctx *Context) error {
 		return nil
 	}
 
-	options := armariaapi.DefaultUpdateBookOptions()
+	options := armaria.DefaultUpdateBookOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
@@ -540,7 +539,7 @@ func (r *UpdateBookCmd) Run(ctx *Context) error {
 		options.WithOrderAfter(*r.After)
 	}
 
-	book, err := armariaapi.UpdateBook(r.ID, options)
+	book, err := armaria.UpdateBook(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -576,7 +575,7 @@ func (r *UpdateFolderCmd) Run(ctx *Context) error {
 		return nil
 	}
 
-	options := armariaapi.DefaultUpdateFolderOptions()
+	options := armaria.DefaultUpdateFolderOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
@@ -596,7 +595,7 @@ func (r *UpdateFolderCmd) Run(ctx *Context) error {
 		options.WithOrderAfter(*r.After)
 	}
 
-	book, err := armariaapi.UpdateFolder(r.ID, options)
+	book, err := armaria.UpdateFolder(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -620,12 +619,12 @@ type RemoveBookCmd struct {
 func (r *RemoveBookCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultRemoveBookOptions()
+	options := armaria.DefaultRemoveBookOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	err := armariaapi.RemoveBook(r.ID, options)
+	err := armaria.RemoveBook(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -648,12 +647,12 @@ type RemoveFolderCmd struct {
 func (r *RemoveFolderCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultRemoveFolderOptions()
+	options := armaria.DefaultRemoveFolderOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	err := armariaapi.RemoveFolder(r.ID, options)
+	err := armaria.RemoveFolder(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -678,12 +677,12 @@ type RemoveTagsCmd struct {
 func (r *RemoveTagsCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultRemoveTagsOptions()
+	options := armaria.DefaultRemoveTagsOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	book, err := armariaapi.RemoveTags(r.ID, r.Tag, options)
+	book, err := armaria.RemoveTags(r.ID, r.Tag, options)
 
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
@@ -708,12 +707,12 @@ type GetAllCmd struct {
 func (r *GetAllCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultGetBookOptions()
+	options := armaria.DefaultGetBookOptions()
 	if ctx.DB != nil {
 		options.WithDB(*ctx.DB)
 	}
 
-	book, err := armariaapi.GetBook(r.ID, options)
+	book, err := armaria.GetBook(r.ID, options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)
@@ -736,7 +735,7 @@ type GetDBConfigCmd struct {
 func (r *GetDBConfigCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	config, err := armariaapi.GetConfig()
+	config, err := armaria.GetConfig()
 
 	if err != nil && !errors.Is(err, armaria.ErrConfigMissing) {
 		formatError(ctx.Writer, ctx.Formatter, err)
@@ -761,7 +760,7 @@ type SetDBConfigCmd struct {
 func (r *SetDBConfigCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	err := armariaapi.UpdateConfig(func(config *armaria.Config) {
+	err := armaria.UpdateConfig(func(config *armaria.Config) {
 		config.DB = r.DB
 	})
 
@@ -786,7 +785,7 @@ type InstallFirefoxManifestCmd struct {
 func (r *InstallFirefoxManifestCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	err := armariaapi.InstallManifestFirefox()
+	err := armaria.InstallManifestFirefox()
 
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
@@ -809,7 +808,7 @@ type InstallChromeManifestCmd struct {
 func (r *InstallChromeManifestCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	err := armariaapi.InstallManifestChrome()
+	err := armaria.InstallManifestChrome()
 
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
@@ -832,7 +831,7 @@ type InstallChromiumManifestCmd struct {
 func (r *InstallChromiumManifestCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	err := armariaapi.InstallManifestChromium()
+	err := armaria.InstallManifestChromium()
 
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
@@ -869,7 +868,7 @@ type QueryCmd struct {
 func (r *QueryCmd) Run(ctx *Context) error {
 	start := time.Now()
 
-	options := armariaapi.DefaultListBooksOptions()
+	options := armaria.DefaultListBooksOptions()
 	options.WithFolders(true)
 	options.WithBooks(true)
 	if ctx.DB != nil {
@@ -878,7 +877,7 @@ func (r *QueryCmd) Run(ctx *Context) error {
 	options.WithFirst(r.First)
 	options.WithQuery(r.Query)
 
-	books, err := armariaapi.ListBooks(options)
+	books, err := armaria.ListBooks(options)
 	if err != nil {
 		formatError(ctx.Writer, ctx.Formatter, err)
 		ctx.ReturnCode(1)

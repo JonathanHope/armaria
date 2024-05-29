@@ -9,18 +9,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 func TestListTags(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -49,10 +48,10 @@ func TestListTagsAsc(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -82,10 +81,10 @@ func TestListTagsDesc(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -115,10 +114,10 @@ func TestListTagsWithLimit(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -148,10 +147,10 @@ func TestListTagsWithAfter(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -181,10 +180,10 @@ func TestListTagsWithQuery(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	_, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

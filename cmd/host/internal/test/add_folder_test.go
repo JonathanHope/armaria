@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 func TestAddFolder(t *testing.T) {
@@ -51,9 +51,9 @@ func TestAddFolderToFolder(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	options.WithDB(db)
-	folder, err := armariaapi.AddFolder("Programming", options)
+	folder, err := armaria.AddFolder("Programming", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

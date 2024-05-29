@@ -14,8 +14,7 @@ import (
 	"github.com/jonathanhope/armaria/cmd/cli/tui/controls/scrolltable"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/controls/typeahead"
 	"github.com/jonathanhope/armaria/cmd/cli/tui/msgs"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 	"github.com/samber/lo"
 )
 
@@ -486,8 +485,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						IncludeInput:   true,
 						MinFilterChars: 3,
 						UnfilteredQuery: func() ([]typeahead.TypeaheadItem, error) {
-							options := armariaapi.DefaultListTagsOptions()
-							tags, err := armariaapi.ListTags(options)
+							options := armaria.DefaultListTagsOptions()
+							tags, err := armaria.ListTags(options)
 
 							if err != nil {
 								return nil, err
@@ -500,8 +499,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							return items, nil
 						},
 						FilteredQuery: func(query string) ([]typeahead.TypeaheadItem, error) {
-							options := armariaapi.DefaultListTagsOptions().WithQuery(query)
-							tags, err := armariaapi.ListTags(options)
+							options := armaria.DefaultListTagsOptions().WithQuery(query)
+							tags, err := armaria.ListTags(options)
 
 							if err != nil {
 								return nil, err
@@ -558,8 +557,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						IncludeInput:   false,
 						MinFilterChars: 3,
 						UnfilteredQuery: func() ([]typeahead.TypeaheadItem, error) {
-							options := armariaapi.DefaultListBooksOptions().WithFolders(true).WithBooks(false)
-							books, err := armariaapi.ListBooks(options)
+							options := armaria.DefaultListBooksOptions().WithFolders(true).WithBooks(false)
+							books, err := armaria.ListBooks(options)
 
 							if err != nil {
 								return nil, err
@@ -572,12 +571,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							return items, nil
 						},
 						FilteredQuery: func(query string) ([]typeahead.TypeaheadItem, error) {
-							options := armariaapi.
+							options := armaria.
 								DefaultListBooksOptions().
 								WithFolders(true).
 								WithBooks(false).
 								WithQuery(query)
-							books, err := armariaapi.ListBooks(options)
+							books, err := armaria.ListBooks(options)
 
 							if err != nil {
 								return nil, err
@@ -645,7 +644,7 @@ func (m model) Init() tea.Cmd {
 // getBooksCmd is a command to get books from the bookmarks database.
 func (m *model) getBooksCmd(move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.
+		options := armaria.
 			DefaultListBooksOptions().
 			WithoutParentID()
 
@@ -658,7 +657,7 @@ func (m *model) getBooksCmd(move msgs.Direction) tea.Cmd {
 			options.WithQuery(m.query)
 		}
 
-		books, err := armariaapi.ListBooks(options)
+		books, err := armaria.ListBooks(options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -696,8 +695,8 @@ func (m model) openURLCmd() tea.Cmd {
 // getBreadcrumbsCmd gets breadcrumbs for the currently selected book.
 func (m model) getBreadcrumbsCmd() tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.DefaultGetParentNameOptions()
-		parents, err := armariaapi.GetParentNames(m.table.Selection().ID, options)
+		options := armaria.DefaultGetParentNameOptions()
+		parents, err := armaria.GetParentNames(m.table.Selection().ID, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -709,7 +708,7 @@ func (m model) getBreadcrumbsCmd() tea.Cmd {
 // getParentCmd is a command to go one level up in the folder structure.
 func (m model) getParentCmd() tea.Cmd {
 	return func() tea.Msg {
-		book, err := armariaapi.GetBook(m.folder, armariaapi.DefaultGetBookOptions())
+		book, err := armaria.GetBook(m.folder, armaria.DefaultGetBookOptions())
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -726,12 +725,12 @@ func (m model) getParentCmd() tea.Cmd {
 func (m model) deleteBookCmd() tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			err := armariaapi.RemoveFolder(m.table.Selection().ID, armariaapi.DefaultRemoveFolderOptions())
+			err := armaria.RemoveFolder(m.table.Selection().ID, armaria.DefaultRemoveFolderOptions())
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			err := armariaapi.RemoveBook(m.table.Selection().ID, armariaapi.DefaultRemoveBookOptions())
+			err := armaria.RemoveBook(m.table.Selection().ID, armaria.DefaultRemoveBookOptions())
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -744,11 +743,11 @@ func (m model) deleteBookCmd() tea.Cmd {
 // updateURLCmd updates an URL for a bookmark.
 func (m model) updateURLCmd(URL string) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.
+		options := armaria.
 			DefaultUpdateBookOptions().
 			WithURL(URL)
 
-		_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+		_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -761,20 +760,20 @@ func (m model) updateURLCmd(URL string) tea.Cmd {
 func (m model) updateNameCmd(name string) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateFolderOptions().
 				WithName(name)
 
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateBookOptions().
 				WithName(name)
 
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -787,12 +786,12 @@ func (m model) updateNameCmd(name string) tea.Cmd {
 // addFolderCmd adds a folder to the bookmarks database.
 func (m model) addFolderCmd(name string) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.DefaultAddFolderOptions()
+		options := armaria.DefaultAddFolderOptions()
 		if m.folder != "" {
 			options.WithParentID(m.folder)
 		}
 
-		_, err := armariaapi.AddFolder(name, options)
+		_, err := armaria.AddFolder(name, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -804,12 +803,12 @@ func (m model) addFolderCmd(name string) tea.Cmd {
 // addBookmarkCmd adds a bookmark to the bookmarks database.
 func (m model) addBookmarkCmd(url string) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.DefaultAddBookOptions()
+		options := armaria.DefaultAddBookOptions()
 		if m.folder != "" {
 			options.WithParentID(m.folder)
 		}
 
-		_, err := armariaapi.AddBook(url, options)
+		_, err := armaria.AddBook(url, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -822,20 +821,20 @@ func (m model) addBookmarkCmd(url string) tea.Cmd {
 func (m model) moveToEndCmd(previous string, move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateFolderOptions().
 				WithOrderAfter(previous)
 
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateBookOptions().
 				WithOrderAfter(previous)
 
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -849,20 +848,20 @@ func (m model) moveToEndCmd(previous string, move msgs.Direction) tea.Cmd {
 func (m model) moveToStartCmd(next string, move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateFolderOptions().
 				WithOrderBefore(next)
 
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateBookOptions().
 				WithOrderBefore(next)
 
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -876,22 +875,22 @@ func (m model) moveToStartCmd(next string, move msgs.Direction) tea.Cmd {
 func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateFolderOptions().
 				WithOrderAfter(previous).
 				WithOrderBefore(next)
 
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.
+			options := armaria.
 				DefaultUpdateBookOptions().
 				WithOrderAfter(previous).
 				WithOrderBefore(next)
 
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -905,14 +904,14 @@ func (m model) moveBetweenCmd(previous string, next string, move msgs.Direction)
 func (m model) removeParentCmd() tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.DefaultUpdateFolderOptions().WithoutParentID()
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			options := armaria.DefaultUpdateFolderOptions().WithoutParentID()
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.DefaultUpdateBookOptions().WithoutParentID()
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			options := armaria.DefaultUpdateBookOptions().WithoutParentID()
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
@@ -925,8 +924,8 @@ func (m model) removeParentCmd() tea.Cmd {
 // addTagCmd adds a tag to a bookmark.
 func (m model) addTagCmd(tag string) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.DefaultAddTagsOptions()
-		_, err := armariaapi.AddTags(m.table.Selection().ID, []string{tag}, options)
+		options := armaria.DefaultAddTagsOptions()
+		_, err := armaria.AddTags(m.table.Selection().ID, []string{tag}, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -937,8 +936,8 @@ func (m model) addTagCmd(tag string) tea.Cmd {
 // removeTagCmd removes a tag from a bookmark.
 func (m model) removeTagCmd(tag string) tea.Cmd {
 	return func() tea.Msg {
-		options := armariaapi.DefaultRemoveTagsOptions()
-		_, err := armariaapi.RemoveTags(m.table.Selection().ID, []string{tag}, options)
+		options := armaria.DefaultRemoveTagsOptions()
+		_, err := armaria.RemoveTags(m.table.Selection().ID, []string{tag}, options)
 		if err != nil {
 			return msgs.ErrorMsg{Err: err}
 		}
@@ -950,14 +949,14 @@ func (m model) removeTagCmd(tag string) tea.Cmd {
 func (m model) changeParentCmd(parentID string) tea.Cmd {
 	return func() tea.Msg {
 		if m.table.Selection().IsFolder {
-			options := armariaapi.DefaultUpdateFolderOptions().WithParentID(parentID)
-			_, err := armariaapi.UpdateFolder(m.table.Selection().ID, options)
+			options := armaria.DefaultUpdateFolderOptions().WithParentID(parentID)
+			_, err := armaria.UpdateFolder(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
 		} else {
-			options := armariaapi.DefaultUpdateBookOptions().WithParentID(parentID)
-			_, err := armariaapi.UpdateBook(m.table.Selection().ID, options)
+			options := armaria.DefaultUpdateBookOptions().WithParentID(parentID)
+			_, err := armaria.UpdateBook(m.table.Selection().ID, options)
 			if err != nil {
 				return msgs.ErrorMsg{Err: err}
 			}
