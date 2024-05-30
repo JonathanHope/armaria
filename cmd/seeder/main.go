@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/alecthomas/kong"
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg"
 	"github.com/samber/lo"
 )
 
@@ -22,8 +22,8 @@ func (r *SmallCmd) Run(_ *Context) error {
 
 	folders := make([]string, 0)
 	for i := 0; i < 10; i++ {
-		fo := armariaapi.DefaultAddFolderOptions()
-		fr, err := armariaapi.AddFolder(gofakeit.ProductName(), fo)
+		fo := armaria.DefaultAddFolderOptions()
+		fr, err := armaria.AddFolder(gofakeit.ProductName(), fo)
 		if err != nil {
 			return err
 		}
@@ -34,12 +34,12 @@ func (r *SmallCmd) Run(_ *Context) error {
 	// Add 50 top level bookmarks.
 
 	for i := 0; i < 50; i++ {
-		bo := armariaapi.
+		bo := armaria.
 			DefaultAddBookOptions().
 			WithDescription(gofakeit.ProductDescription()).
 			WithName(gofakeit.ProductName()).
 			WithTags(tagsFactory())
-		_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+		_, err := armaria.AddBook(gofakeit.URL(), bo)
 		if err != nil {
 			return err
 		}
@@ -49,13 +49,13 @@ func (r *SmallCmd) Run(_ *Context) error {
 
 	for _, f := range folders {
 		for i := 0; i < 50; i++ {
-			bo := armariaapi.
+			bo := armaria.
 				DefaultAddBookOptions().
 				WithDescription(gofakeit.ProductDescription()).
 				WithName(gofakeit.ProductName()).
 				WithTags(tagsFactory()).
 				WithParentID(f)
-			_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+			_, err := armaria.AddBook(gofakeit.URL(), bo)
 			if err != nil {
 				return err
 			}
@@ -73,8 +73,8 @@ func (r *MediumCmd) Run(_ *Context) error {
 
 	folders := make([]string, 0)
 	for i := 0; i < 50; i++ {
-		fo := armariaapi.DefaultAddFolderOptions()
-		fr, err := armariaapi.AddFolder(gofakeit.ProductName(), fo)
+		fo := armaria.DefaultAddFolderOptions()
+		fr, err := armaria.AddFolder(gofakeit.ProductName(), fo)
 		if err != nil {
 			return err
 		}
@@ -85,12 +85,12 @@ func (r *MediumCmd) Run(_ *Context) error {
 	// Add 1000 top level bookmarks.
 
 	for i := 0; i < 1000; i++ {
-		bo := armariaapi.
+		bo := armaria.
 			DefaultAddBookOptions().
 			WithDescription(gofakeit.ProductDescription()).
 			WithName(gofakeit.ProductName()).
 			WithTags(tagsFactory())
-		_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+		_, err := armaria.AddBook(gofakeit.URL(), bo)
 		if err != nil {
 			return err
 		}
@@ -100,13 +100,13 @@ func (r *MediumCmd) Run(_ *Context) error {
 
 	for _, f := range folders {
 		for i := 0; i < 1000; i++ {
-			bo := armariaapi.
+			bo := armaria.
 				DefaultAddBookOptions().
 				WithDescription(gofakeit.ProductDescription()).
 				WithName(gofakeit.ProductName()).
 				WithTags(tagsFactory()).
 				WithParentID(f)
-			_, err := armariaapi.AddBook(gofakeit.URL(), bo)
+			_, err := armaria.AddBook(gofakeit.URL(), bo)
 			if err != nil {
 				return err
 			}

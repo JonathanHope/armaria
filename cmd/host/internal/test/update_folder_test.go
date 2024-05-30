@@ -9,8 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 	"github.com/samber/lo"
 )
 
@@ -18,9 +17,9 @@ func TestUpdateFolder(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	options.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", options)
+	folder, err := armaria.AddFolder("Blogs", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -56,15 +55,15 @@ func TestUpdateFolderParentID(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	options.WithDB(db)
 
-	programming, err := armariaapi.AddFolder("Programming", options)
+	programming, err := armaria.AddFolder("Programming", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	blogs, err := armariaapi.AddFolder("Blogs", options)
+	blogs, err := armaria.AddFolder("Blogs", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -102,17 +101,17 @@ func TestUpdateFolderRemoveParentID(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	options := armariaapi.DefaultAddFolderOptions()
+	options := armaria.DefaultAddFolderOptions()
 	options.WithDB(db)
 
-	programming, err := armariaapi.AddFolder("Programming", options)
+	programming, err := armaria.AddFolder("Programming", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
 	options.WithParentID(programming.ID)
 
-	blogs, err := armariaapi.AddFolder("Blogs", options)
+	blogs, err := armaria.AddFolder("Blogs", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -148,19 +147,19 @@ func TestUpdateFolderOrderStart(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	addOptions := armariaapi.DefaultAddFolderOptions()
+	addOptions := armaria.DefaultAddFolderOptions()
 	addOptions.WithDB(db)
-	folder1, err := armariaapi.AddFolder("one", addOptions)
+	folder1, err := armaria.AddFolder("one", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder2, err := armariaapi.AddFolder("two", addOptions)
+	folder2, err := armaria.AddFolder("two", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder3, err := armariaapi.AddFolder("three", addOptions)
+	folder3, err := armaria.AddFolder("three", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -174,10 +173,10 @@ func TestUpdateFolderOrderStart(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	listOptions := armariaapi.DefaultListBooksOptions()
+	listOptions := armaria.DefaultListBooksOptions()
 	listOptions.WithFolders(true)
 	listOptions.WithDB(db)
-	books, err := armariaapi.ListBooks(listOptions)
+	books, err := armaria.ListBooks(listOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -202,19 +201,19 @@ func TestUpdateFolderOrderEnd(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	addOptions := armariaapi.DefaultAddFolderOptions()
+	addOptions := armaria.DefaultAddFolderOptions()
 	addOptions.WithDB(db)
-	folder1, err := armariaapi.AddFolder("one", addOptions)
+	folder1, err := armaria.AddFolder("one", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder2, err := armariaapi.AddFolder("two", addOptions)
+	folder2, err := armaria.AddFolder("two", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder3, err := armariaapi.AddFolder("three", addOptions)
+	folder3, err := armaria.AddFolder("three", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -228,10 +227,10 @@ func TestUpdateFolderOrderEnd(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	listOptions := armariaapi.DefaultListBooksOptions()
+	listOptions := armaria.DefaultListBooksOptions()
 	listOptions.WithFolders(true)
 	listOptions.WithDB(db)
-	books, err := armariaapi.ListBooks(listOptions)
+	books, err := armaria.ListBooks(listOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -256,19 +255,19 @@ func TestUpdateFolderOrderBetween(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	addOptions := armariaapi.DefaultAddFolderOptions()
+	addOptions := armaria.DefaultAddFolderOptions()
 	addOptions.WithDB(db)
-	folder1, err := armariaapi.AddFolder("one", addOptions)
+	folder1, err := armaria.AddFolder("one", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder2, err := armariaapi.AddFolder("two", addOptions)
+	folder2, err := armaria.AddFolder("two", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	folder3, err := armariaapi.AddFolder("three", addOptions)
+	folder3, err := armaria.AddFolder("three", addOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -283,10 +282,10 @@ func TestUpdateFolderOrderBetween(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	listOptions := armariaapi.DefaultListBooksOptions()
+	listOptions := armaria.DefaultListBooksOptions()
 	listOptions.WithBooks(true)
 	listOptions.WithDB(db)
-	books, err := armariaapi.ListBooks(listOptions)
+	books, err := armaria.ListBooks(listOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

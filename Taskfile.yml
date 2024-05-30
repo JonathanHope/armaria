@@ -7,11 +7,11 @@ tasks:
   test-internal:
     dir: internal
     cmds:
-      - go test ./...
+      - go test -count=1 ./... 
   test-cmd:
     dir: cmd
     cmds:
-      - go test --tags "fts5" ./...
+      - go test -count=1 --tags "fts5" ./...
   test:
     cmds:
       - task: test-internal

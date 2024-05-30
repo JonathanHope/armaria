@@ -5,9 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/model"
 	"github.com/nullism/bqb"
-	"github.com/samber/lo"
 )
 
 // create
@@ -77,13 +75,13 @@ type GetBooksArgs struct {
 	Query          null.NullString
 	Tags           []string
 	After          null.NullString
-	Order          armaria.Order
-	Direction      armaria.Direction
+	Order          Order
+	Direction      Direction
 	First          null.NullInt64
 }
 
 // GetBooks lists bookmarks/folders in the bookmarks DB.
-func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
+func GetBooks(tx Transaction, args GetBooksArgs) ([]BookDTO, error) {
 	tags := bqb.New(`SELECT GROUP_CONCAT("tag")`)
 	tags.Space(`FROM "bookmarks_tags"`)
 	tags.Space(`WHERE "bookmark_id" = "child"."id"`)
@@ -139,42 +137,42 @@ func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
 	}
 
 	if args.After.Dirty && args.After.Valid {
-		if args.Order == armaria.OrderName && args.Direction == armaria.DirectionAsc {
+		if args.Order == OrderName && args.Direction == DirectionAsc {
 			where.And(`("child"."name" > (SELECT "name" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
-		} else if args.Order == armaria.OrderName && args.Direction == armaria.DirectionDesc {
+		} else if args.Order == OrderName && args.Direction == DirectionDesc {
 			where.And(`("child"."name" < (SELECT "name" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
-		} else if args.Order == armaria.OrderModified && args.Direction == armaria.DirectionAsc {
+		} else if args.Order == OrderModified && args.Direction == DirectionAsc {
 			where.And(`("child"."modified" > (SELECT "modified" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
-		} else if args.Order == armaria.OrderModified && args.Direction == armaria.DirectionDesc {
+		} else if args.Order == OrderModified && args.Direction == DirectionDesc {
 			where.And(`("child"."modified" < (SELECT "modified" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
-		} else if args.Order == armaria.OrderManual && args.Direction == armaria.DirectionAsc {
+		} else if args.Order == OrderManual && args.Direction == DirectionAsc {
 			where.And(`("child"."order" > (SELECT "order" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
-		} else if args.Order == armaria.OrderManual && args.Direction == armaria.DirectionDesc {
+		} else if args.Order == OrderManual && args.Direction == DirectionDesc {
 			where.And(`("child"."order" < (SELECT "order" FROM "bookmarks" WHERE "id" = ?)`, args.After.String)
 		}
 
-		if args.Order == armaria.OrderName {
+		if args.Order == OrderName {
 			where.Or(`("child"."name" = (SELECT "name" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
-		} else if args.Order == armaria.OrderModified {
+		} else if args.Order == OrderModified {
 			where.Or(`("child"."modified" = (SELECT "modified" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
-		} else if args.Order == armaria.OrderManual {
+		} else if args.Order == OrderManual {
 			where.Or(`("child"."order" = (SELECT "order" from "bookmarks" WHERE "id" = ?) AND "child"."id" > ?))`, args.After.String, args.After.String)
 		}
 	}
 
 	books.Space("?", where)
 
-	if args.Direction == armaria.DirectionAsc && args.Order == armaria.OrderName {
+	if args.Direction == DirectionAsc && args.Order == OrderName {
 		books.Space(`ORDER BY "child"."name" ASC`)
-	} else if args.Direction == armaria.DirectionDesc && args.Order == armaria.OrderName {
+	} else if args.Direction == DirectionDesc && args.Order == OrderName {
 		books.Space(`ORDER BY "child"."name" DESC`)
-	} else if args.Direction == armaria.DirectionAsc && args.Order == armaria.OrderModified {
+	} else if args.Direction == DirectionAsc && args.Order == OrderModified {
 		books.Space(`ORDER BY "child"."modified" ASC`)
-	} else if args.Direction == armaria.DirectionDesc && args.Order == armaria.OrderModified {
+	} else if args.Direction == DirectionDesc && args.Order == OrderModified {
 		books.Space(`ORDER BY "child"."modified" DESC`)
-	} else if args.Direction == armaria.DirectionAsc && args.Order == armaria.OrderManual {
+	} else if args.Direction == DirectionAsc && args.Order == OrderManual {
 		books.Space(`ORDER BY "child"."order" ASC`)
-	} else if args.Direction == armaria.DirectionDesc && args.Order == armaria.OrderManual {
+	} else if args.Direction == DirectionDesc && args.Order == OrderManual {
 		books.Space(`ORDER BY "child"."order" DESC`)
 	}
 
@@ -182,10 +180,8 @@ func GetBooks(tx Transaction, args GetBooksArgs) ([]armaria.Book, error) {
 		books.Space(`LIMIT ?`, args.First.Int64)
 	}
 
-	results, err := query[bookDTO](tx, books)
-	return lo.Map(results, func(x bookDTO, index int) armaria.Book {
-		return x.toBook()
-	}), err
+	return query[BookDTO](tx, books)
+
 }
 
 // GetTagsArgs are the args for getTagsDB.
@@ -194,7 +190,7 @@ type GetTagsArgs struct {
 	TagsFilter []string
 	Query      null.NullString
 	After      null.NullString
-	Direction  armaria.Direction
+	Direction  Direction
 	First      null.NullInt64
 }
 
@@ -218,7 +214,7 @@ func GetTags(tx Transaction, args GetTagsArgs) ([]string, error) {
 	}
 
 	if args.After.Dirty && args.After.Valid {
-		if args.Direction == armaria.DirectionAsc {
+		if args.Direction == DirectionAsc {
 			where.And(`"tag" > ?`, args.After.String)
 		} else {
 			where.And(`"tag" < ?`, args.After.String)
@@ -227,7 +223,7 @@ func GetTags(tx Transaction, args GetTagsArgs) ([]string, error) {
 
 	tags.Space(`?`, where)
 
-	if args.Direction == armaria.DirectionAsc {
+	if args.Direction == DirectionAsc {
 		tags.Space(`ORDER BY "tag" ASC, "id" ASC`)
 	} else {
 		tags.Space(`ORDER BY "tag" DESC, "id" ASC`)
@@ -252,7 +248,7 @@ func BookFolderExists(tx Transaction, ID string, isFolder bool) (bool, error) {
 }
 
 // GetParentAndChildren gets a parent and all of its children.
-func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
+func GetParentAndChildren(tx Transaction, ID string) ([]BookDTO, error) {
 	tags := bqb.New(`SELECT GROUP_CONCAT("tag")`)
 	tags.Space(`FROM "bookmarks_tags"`)
 	tags.Space(`WHERE "bookmark_id" = "child"."id"`)
@@ -295,10 +291,7 @@ func GetParentAndChildren(tx Transaction, ID string) ([]armaria.Book, error) {
 	books.Comma(`"tags"`)
 	books.Space(`FROM BOOK`)
 
-	results, err := query[bookDTO](tx, books)
-	return lo.Map(results, func(x bookDTO, index int) armaria.Book {
-		return x.toBook()
-	}), err
+	return query[BookDTO](tx, books)
 }
 
 // MaxOrder returns the max order for a given parentID.

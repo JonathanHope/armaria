@@ -9,24 +9,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 func TestListBooksFolders(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -72,16 +71,16 @@ func TestListBooks(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	_, err := armariaapi.AddFolder("Blogs", folderOptions)
+	_, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -121,16 +120,16 @@ func TestListFolder(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	_, err = armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err = armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -170,16 +169,16 @@ func TestListBooksFoldersWithLimit(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	_, err = armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err = armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -220,16 +219,16 @@ func TestListBooksFoldersNamAsc(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -275,16 +274,16 @@ func TestListBooksFoldersNamDesc(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -330,16 +329,16 @@ func TestListBooksFoldersWithAfter(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -380,17 +379,17 @@ func TestListBooksFoldersWithParentID(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithParentID(folder.ID)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -433,17 +432,17 @@ func TestListBooksFoldersWithoutParentID(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	folder, err := armariaapi.AddFolder("Blogs", folderOptions)
+	folder, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithParentID(folder.ID)
-	_, err = armariaapi.AddBook("https://jho.pe", bookOptions)
+	_, err = armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -484,16 +483,16 @@ func TestListBooksFoldersWithQuery(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	_, err := armariaapi.AddFolder("Blogs", folderOptions)
+	_, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -534,17 +533,17 @@ func TestListBooksFoldersWithTags(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	folderOptions := armariaapi.DefaultAddFolderOptions()
+	folderOptions := armaria.DefaultAddFolderOptions()
 	folderOptions.WithDB(db)
-	_, err := armariaapi.AddFolder("Blogs", folderOptions)
+	_, err := armaria.AddFolder("Blogs", folderOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	bookOptions := armariaapi.DefaultAddBookOptions()
+	bookOptions := armaria.DefaultAddBookOptions()
 	bookOptions.WithDB(db)
 	bookOptions.WithTags([]string{"blog", "programming"})
-	book, err := armariaapi.AddBook("https://jho.pe", bookOptions)
+	book, err := armaria.AddBook("https://jho.pe", bookOptions)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

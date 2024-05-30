@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 	"github.com/nathan-fiscaletti/consolesize-go"
 	"github.com/samber/lo"
 )

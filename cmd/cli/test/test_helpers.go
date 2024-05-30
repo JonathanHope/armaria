@@ -14,8 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/cli/internal"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
-	"github.com/jonathanhope/armaria/pkg/model"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 // invokeCli runs the Armaria CLI with the provided args.
@@ -114,7 +113,7 @@ func insert(args insertArgs) error {
 
 	var book armaria.Book
 	if !isFolder {
-		options := armariaapi.DefaultAddBookOptions()
+		options := armaria.DefaultAddBookOptions()
 		options.WithDB(args.db)
 		if parentID.Valid {
 			options.WithParentID(parentID.String)
@@ -129,18 +128,18 @@ func insert(args insertArgs) error {
 			options.WithTags(tags)
 		}
 
-		book, err = armariaapi.AddBook(URL.String, options)
+		book, err = armaria.AddBook(URL.String, options)
 		if err != nil {
 			return err
 		}
 	} else {
-		options := armariaapi.DefaultAddFolderOptions()
+		options := armaria.DefaultAddFolderOptions()
 		options.WithDB(args.db)
 		if parentID.Valid {
 			options.WithParentID(parentID.String)
 		}
 
-		book, err = armariaapi.AddFolder(name, options)
+		book, err = armaria.AddFolder(name, options)
 		if err != nil {
 			return err
 		}

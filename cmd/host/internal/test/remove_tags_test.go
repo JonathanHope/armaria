@@ -9,17 +9,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/host/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
-	"github.com/jonathanhope/armaria/pkg/api"
+	"github.com/jonathanhope/armaria/pkg"
 )
 
 func TestRemoveTags(t *testing.T) {
 	db := fmt.Sprintf("%s.db", uuid.New().String())
 	defer func() { os.Remove(db) }()
 
-	options := armariaapi.DefaultAddBookOptions()
+	options := armaria.DefaultAddBookOptions()
 	options.WithDB(db)
 	options.WithTags([]string{"blog", "programming"})
-	book, err := armariaapi.AddBook("https://jho.pe", options)
+	book, err := armaria.AddBook("https://jho.pe", options)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
