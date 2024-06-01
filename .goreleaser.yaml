@@ -1,6 +1,6 @@
 env:
   - CGO_ENABLED=1
-  - SDK=/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk
+  - SDK=/Library/Developer/CommandLineTools/SDKs/MacOSX14.3.sdk
 
 builds:
   - id: armaria-darwin-amd64
