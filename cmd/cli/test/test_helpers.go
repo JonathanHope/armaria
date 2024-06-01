@@ -13,6 +13,7 @@ import (
 	"github.com/google/shlex"
 	"github.com/google/uuid"
 	"github.com/jonathanhope/armaria/cmd/cli/internal"
+	"github.com/jonathanhope/armaria/cmd/cli/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/pkg"
 )
@@ -179,8 +180,8 @@ func insert(args insertArgs) error {
 }
 
 // tableToBooks converts a cucumber table to a collection of bookmarks/folders.
-func tableToBooks(vars map[string]interface{}, actual []cmd.BookDTO, table *godog.Table) ([]cmd.BookDTO, error) {
-	books := make([]cmd.BookDTO, 0)
+func tableToBooks(vars map[string]interface{}, actual []messaging.BookDTO, table *godog.Table) ([]messaging.BookDTO, error) {
+	books := make([]messaging.BookDTO, 0)
 	for _, row := range table.Rows[1:] {
 		id, storeId, _, err := handleString(vars, row.Cells[0].Value)
 		if err != nil {
@@ -250,7 +251,7 @@ func tableToBooks(vars map[string]interface{}, actual []cmd.BookDTO, table *godo
 			tags = last.Tags
 		}
 
-		book := cmd.BookDTO{
+		book := messaging.BookDTO{
 			ID:          id,
 			ParentID:    parentId,
 			IsFolder:    isFolder,
@@ -434,7 +435,7 @@ func noop(code int) {}
 
 // markDirty marks every field as dirty.
 // The dirty field is not relevant to tests.
-func markDirty(expected []cmd.BookDTO, actual []cmd.BookDTO) {
+func markDirty(expected []messaging.BookDTO, actual []messaging.BookDTO) {
 	for i := range expected {
 		expected[i].Description.Dirty = false
 		expected[i].ParentID.Dirty = false

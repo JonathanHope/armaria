@@ -7,7 +7,7 @@ tasks:
   test-internal:
     dir: internal
     cmds:
-      - go test -count=1 ./... 
+      - go test -count=1 --tags "fts5" ./... 
   test-cmd:
     dir: cmd
     cmds:
@@ -21,11 +21,6 @@ tasks:
     cmds:
       - go build --tags "fts5" -ldflags="-X main.version=local"
       - cp cli ../../armaria
-  build-host:
-    dir: cmd/host
-    cmds:
-      - go build --tags "fts5"
-      - cp host ../../armaria-host
   build-seeder:
     dir: cmd/seeder
     cmds:
@@ -34,7 +29,6 @@ tasks:
   build:
     cmds:
       - task: build-cli
-      - task: build-host
       - task: build-seeder
   migrate-up:
     cmds:
@@ -45,10 +39,8 @@ tasks:
   clean:
     cmds:
       - rm -f armaria
-      - rm -f armaria-host
       - rm -f armaria-seeder
       - rm -f cmd/cli/cli
-      - rm -f cmd/host/host
       - rm -f cmd/seeder/seeder
       - find . -name "*.db" -type f -delete
       - find . -name "*.db-shm" -type f -delete
