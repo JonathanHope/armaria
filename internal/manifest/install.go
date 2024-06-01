@@ -9,9 +9,9 @@ import (
 const name = "armaria"
 const description = "Armaria is a fast local-first bookmarks manager."
 const hostType = "stdio"
-const firefoxExtension = "armaria@net"
-const chromeExtension1 = "chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/"
-const chromeExtension2 = "chrome-extension://fbnilfpngakppdkddndcnckolmlpghdf/"
+const FirefoxExtension = "armaria@armaria.net"
+const ChromeExtension1 = "chrome-extension://cahkgigfdplmhgjbioakkgennhncioli/"
+const ChromeExtension2 = "chrome-extension://fbnilfpngakppdkddndcnckolmlpghdf/"
 
 // TODO: Windows needs registry entiries.
 
@@ -27,8 +27,8 @@ func InstallManifest(path string, hostPath string, manifestType ManifestType) er
 			Path:        hostPath,
 			HostType:    hostType,
 			AllowedOrigins: []string{
-				chromeExtension1,
-				chromeExtension2,
+				ChromeExtension1,
+				ChromeExtension2,
 			},
 		}
 
@@ -42,7 +42,7 @@ func InstallManifest(path string, hostPath string, manifestType ManifestType) er
 			Description:       description,
 			Path:              hostPath,
 			HostType:          hostType,
-			AllowedExtensions: []string{firefoxExtension},
+			AllowedExtensions: []string{FirefoxExtension},
 		}
 
 		buffer, err = json.Marshal(manifest)

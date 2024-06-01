@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jonathanhope/armaria/cmd/cli/tui"
+	"github.com/jonathanhope/armaria/cmd/cli/internal/tui"
 	"github.com/jonathanhope/armaria/pkg"
 )
 

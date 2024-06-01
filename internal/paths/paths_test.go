@@ -231,11 +231,11 @@ func TestHostPath(t *testing.T) {
 	tests := []test{
 		{
 			snapRealHome: "",
-			hostPath:     "/usr/bin/armaria-host",
+			hostPath:     "/usr/bin/armaria",
 		},
 		{
 			snapRealHome: "/snap",
-			hostPath:     "/snap/bin/armaria.armaria-host",
+			hostPath:     "/snap/bin/armaria",
 		},
 	}
 

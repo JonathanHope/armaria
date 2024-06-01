@@ -26,6 +26,7 @@
             goreleaser
             syft
             delve
+            upx
           ];
           hardeningDisable = [ "fortify" ];
           shellHook = ''

@@ -11,7 +11,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/jonathanhope/armaria/cmd/cli/internal"
+	"github.com/jonathanhope/armaria/cmd/cli/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
 )
 
@@ -161,10 +161,11 @@ func theFollowingBookmarksFoldersExist(ctx context.Context, table *godog.Table) 
 		return err
 	}
 
-	var actual []cmd.BookDTO
-	if err := json.Unmarshal([]byte(output), &actual); err != nil {
+	payload, err := receiveMessage[messaging.BooksPayload](output, messaging.MessageKindBooks)
+	if err != nil {
 		return err
 	}
+	actual := payload.Books
 
 	expected, err := tableToBooks(vars, actual, table)
 	if err != nil {
@@ -198,10 +199,11 @@ func theFollowingTagsExist(ctx context.Context, table *godog.Table) error {
 		return err
 	}
 
-	var actual []string
-	if err := json.Unmarshal([]byte(output), &actual); err != nil {
+	payload, err := receiveMessage[messaging.TagsPayload](output, messaging.MessageKindTags)
+	if err != nil {
 		return err
 	}
+	actual := payload.Tags
 
 	expected := tableToTags(table)
 	if err != nil {
@@ -227,9 +229,13 @@ func theFollowingErrorIsReturned(ctx context.Context, message *godog.DocString) 
 		return errors.New("Missing output")
 	}
 
-	expected := strings.TrimSpace(fmt.Sprintf("\"%s\"", message.Content))
+	payload, err := receiveMessage[messaging.ErrorPayload](output, messaging.MessageKindError)
+	if err != nil {
+		return err
+	}
+	actual := strings.TrimSpace(payload.Error)
 
-	actual := strings.TrimSpace(output)
+	expected := strings.TrimSpace(message.Content)
 
 	diff := cmp.Diff(expected, actual)
 	if diff != "" {
@@ -246,15 +252,15 @@ func theFolllowingTagsAreReturned(ctx context.Context, table *godog.Table) error
 		return errors.New("Missing output")
 	}
 
+	payload, err := receiveMessage[messaging.TagsPayload](output, messaging.MessageKindTags)
+	if err != nil {
+		return err
+	}
+	actual := payload.Tags
+
 	var expected []string
 	for _, row := range table.Rows[1:] {
 		expected = append(expected, row.Cells[0].Value)
-	}
-
-	var actual []string
-	err := json.Unmarshal([]byte(output), &actual)
-	if err != nil {
-		return err
 	}
 
 	diff := cmp.Diff(expected, actual)
@@ -272,15 +278,15 @@ func theFolllowingNamesAreReturned(ctx context.Context, table *godog.Table) erro
 		return errors.New("Missing output")
 	}
 
+	payload, err := receiveMessage[messaging.ParentNamesPayload](output, messaging.MessageKindParentNames)
+	if err != nil {
+		return err
+	}
+	actual := payload.ParentNames
+
 	var expected []string
 	for _, row := range table.Rows {
 		expected = append(expected, row.Cells[0].Value)
-	}
-
-	var actual []string
-	err := json.Unmarshal([]byte(output), &actual)
-	if err != nil {
-		return err
 	}
 
 	diff := cmp.Diff(expected, actual)
@@ -303,11 +309,11 @@ func theFolllowingBooksAreReturned(ctx context.Context, table *godog.Table) erro
 		return errors.New("Missing variables")
 	}
 
-	var actual []cmd.BookDTO
-	err := json.Unmarshal([]byte(output), &actual)
+	payload, err := receiveMessage[messaging.BooksPayload](output, messaging.MessageKindBooks)
 	if err != nil {
 		return err
 	}
+	actual := payload.Books
 
 	expected, err := tableToBooks(vars, actual, table)
 	if err != nil {
@@ -322,4 +328,25 @@ func theFolllowingBooksAreReturned(ctx context.Context, table *godog.Table) erro
 	}
 
 	return nil
+}
+
+// receiveMessage receives a message from the CLI.
+func receiveMessage[T messaging.Payload](output string, kind messaging.MessageKind) (T, error) {
+	var payload T
+
+	msg := messaging.NativeMessage{}
+	err := json.Unmarshal([]byte(output), &msg)
+	if err != nil {
+		return payload, err
+	}
+	if msg.Kind != kind {
+		return payload, errors.New("Didn't receive expected message kind")
+	}
+
+	err = json.Unmarshal([]byte(msg.Payload), &payload)
+	if err != nil {
+		return payload, err
+	}
+
+	return payload, nil
 }

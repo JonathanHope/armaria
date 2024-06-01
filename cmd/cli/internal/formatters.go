@@ -9,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/jonathanhope/armaria/cmd/cli/internal/messaging"
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/pkg"
 	"github.com/nathan-fiscaletti/consolesize-go"
@@ -26,16 +27,18 @@ const (
 	FormatterPretty Formatter = "pretty" // format results in human readable way.
 )
 
-// BookDTO is a bookmark or folder that can be marshalled into JSON.
-type BookDTO struct {
-	ID          string          `json:"id"`
-	URL         null.NullString `json:"url"`
-	Name        string          `json:"name"`
-	Description null.NullString `json:"description"`
-	ParentID    null.NullString `json:"parentId"`
-	IsFolder    bool            `json:"isFolder"`
-	ParentName  null.NullString `json:"parentName"`
-	Tags        []string        `json:"tags"`
+// marshalMsg will marshal a native message as JSON.
+func marshalMsg[T messaging.Payload](kind messaging.MessageKind, payload T) string {
+	msg, err := messaging.PayloadToMessage(kind, payload)
+	if err != nil {
+		panic(err)
+	}
+	json, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(json)
 }
 
 // formatSuccess formats a success message.
@@ -108,7 +111,10 @@ func formatError(writer io.Writer, formatter Formatter, err error) {
 	switch formatter {
 
 	case FormatterJSON:
-		fmt.Fprintf(writer, "\"%s\"\n", errorString)
+		json := marshalMsg(messaging.MessageKindError, messaging.ErrorPayload{
+			Error: errorString,
+		})
+		fmt.Fprint(writer, json)
 
 	case FormatterPretty:
 		style := lipgloss.
@@ -127,9 +133,10 @@ func formatError(writer io.Writer, formatter Formatter, err error) {
 func formatBookResults(writer io.Writer, formatter Formatter, books []armaria.Book) {
 
 	switch formatter {
+
 	case FormatterJSON:
-		dtos := lo.Map(books, func(x armaria.Book, index int) BookDTO {
-			return BookDTO{
+		dtos := lo.Map(books, func(x armaria.Book, index int) messaging.BookDTO {
+			return messaging.BookDTO{
 				ID:          x.ID,
 				URL:         null.NullStringFromPtr(x.URL),
 				Name:        x.Name,
@@ -141,12 +148,11 @@ func formatBookResults(writer io.Writer, formatter Formatter, books []armaria.Bo
 			}
 		})
 
-		json, err := json.Marshal(&dtos)
-		if err != nil {
-			panic(err)
-		}
+		json := marshalMsg(messaging.MessageKindBooks, messaging.BooksPayload{
+			Books: dtos,
+		})
 
-		fmt.Fprintln(writer, string(json))
+		fmt.Fprintln(writer, json)
 
 	case FormatterPretty:
 		width, _ := consolesize.GetConsoleSize()
@@ -199,13 +205,11 @@ func formatTagResults(writer io.Writer, formatter Formatter, tags []string) {
 	switch formatter {
 
 	case FormatterJSON:
-		json, err := json.Marshal(&tags)
+		json := marshalMsg(messaging.MessageKindTags, messaging.TagsPayload{
+			Tags: tags,
+		})
 
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Fprintln(writer, string(json))
+		fmt.Fprintln(writer, json)
 
 	case FormatterPretty:
 		width, _ := consolesize.GetConsoleSize()
@@ -229,7 +233,11 @@ func formatConfigResult(writer io.Writer, formatter Formatter, value string) {
 	switch formatter {
 
 	case FormatterJSON:
-		fmt.Fprintf(writer, "\"%s\"\n", value)
+		json := marshalMsg(messaging.MessageKindConfigValue, messaging.ConfigValuePayload{
+			Value: value,
+		})
+
+		fmt.Fprint(writer, json)
 
 	case FormatterPretty:
 		width, _ := consolesize.GetConsoleSize()
@@ -255,13 +263,11 @@ func formatParentNames(writer io.Writer, formatter Formatter, parentNames []stri
 	switch formatter {
 
 	case FormatterJSON:
-		json, err := json.Marshal(&parentNames)
+		json := marshalMsg(messaging.MessageKindParentNames, messaging.ParentNamesPayload{
+			ParentNames: parentNames,
+		})
 
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Fprintln(writer, string(json))
+		fmt.Fprintln(writer, json)
 
 	case FormatterPretty:
 		width, _ := consolesize.GetConsoleSize()

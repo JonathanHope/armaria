@@ -145,7 +145,7 @@ func hostInternal(getenv getenvFn, executable executableFn, dir dirFn, join join
 
 	snapHome := getenv("SNAP_REAL_HOME")
 	if snapHome != "" {
-		return "/snap/bin/armaria.armaria-host", nil
+		return "/snap/bin/armaria", nil
 	}
 
 	// Otherwise we can assume the host is installed alongside the CLI.
@@ -154,7 +154,7 @@ func hostInternal(getenv getenvFn, executable executableFn, dir dirFn, join join
 	if err != nil {
 		return "", fmt.Errorf("error getting current executable while getting host path: %w", err)
 	}
-	return join(dir(ex), "armaria-host"), nil
+	return join(dir(ex), "armaria"), nil
 }
 
 // FirefoxManifest gets the path to the Firefox app manifest.

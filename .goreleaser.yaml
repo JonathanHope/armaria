@@ -22,24 +22,6 @@ builds:
       - -w
       - -X "main.version={{ .Version }}"
 
-  - id: armaria-host-darwin-amd64
-    binary: armaria
-    main: ./cmd/host
-    goarch:
-      - amd64
-    goos:
-      - darwin
-    env:
-      - CC=zig cc -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
-      - CXX=zig c++ -target x86_64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
-    flags:
-      - -trimpath
-      - -tags=fts5
-      - -buildmode=pie
-    ldflags:
-      - -s
-      - -w
-
   - id: armaria-darwin-arm64
     binary: armria
     main: ./cmd/cli
@@ -58,24 +40,6 @@ builds:
       - -s
       - -w
       - -X "main.version={{ .Version }}"
-
-  - id: armaria-host-darwin-arm64
-    binary: armria
-    main: ./cmd/host
-    goarch:
-      - arm64
-    goos:
-      - darwin
-    env:
-      - CC=zig cc -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
-      - CXX=zig c++ -target aarch64-macos -g0 --sysroot={{ .Env.SDK }} -I{{ .Env.SDK }}/usr/include -L{{ .Env.SDK }}/usr/lib -F{{ .Env.SDK }}/System/Library/Frameworks -framework CoreFoundation -Wno-expansion-to-defined -Wno-availability -Wno-nullability-completeness
-    flags:
-      - -trimpath
-      - -tags=fts5
-      - -buildmode=pie
-    ldflags:
-      - -s
-      - -w
 
   - id: armaria-linux-amd64
     binary: armaria
@@ -97,25 +61,6 @@ builds:
       - -w
       - -X "main.version={{ .Version }}"
 
-  - id: armaria-host-linux-amd64
-    binary: armaria-host
-    main: ./cmd/host
-    env:
-      - CC=zig cc -target x86_64-linux-musl -g0
-      - CXX=zig c++ -target x86_64-linux-musl -g0
-      # https://github.com/mattn/go-sqlite3/issues/1164
-      - CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
-    goarch:
-      - amd64
-    goos:
-      - linux
-    flags:
-      - -trimpath
-      - -tags=fts5
-    ldflags:
-      - -s
-      - -w
-
   - id: armaria-windows-amd64
     binary: armaria
     main: ./cmd/cli
@@ -135,24 +80,6 @@ builds:
       - -w
       - -X "main.version={{ .Version }}"
 
-  - id: armaria-host-windows-amd64
-    binary: armaria-host
-    main: ./cmd/host
-    goarch:
-      - amd64
-    goos:
-      - windows
-    env:
-      - CC=zig cc -target x86_64-windows-gnu -g0
-      - CXX=zig c++ -target x86_64-windows-gnu -g0
-    flags:
-      - -trimpath
-      - -buildmode=exe
-      - -tags=fts5
-    ldflags:
-      - -s
-      - -w
-
 universal_binaries:
   - id: armaria-darwin-universal
     ids:
@@ -160,18 +87,11 @@ universal_binaries:
       - armaria-darwin-arm64
     replace: true
     name_template: "armaria"
-  - id: armaria-host-darwin-universal
-    ids:
-      - armaria-host-darwin-amd64
-      - armaria-host-darwin-arm64
-    replace: true
-    name_template: "armaria-host"
 
 archives:
   - id: armaria-linux-archive
     builds:
       - armaria-linux-amd64
-      - armaria-host-linux-amd64
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format: zip
@@ -180,7 +100,6 @@ archives:
   - id: armaria-windows-archive
     builds:
       - armaria-windows-amd64
-      - armaria-host-windows-amd64
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format: zip
@@ -189,12 +108,16 @@ archives:
   - id: armaria-macos-archive
     builds:
       - armaria-darwin-universal
-      - armaria-host-darwin-universal
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format: zip
     files:
       - none*
+
+upx:
+  - enabled: true
+    goos: [linux, windows] # UPX doesn't work for MacOS ATM
+    compress: best
 
 checksum:
   name_template: 'checksums.txt'
@@ -219,7 +142,6 @@ snapcrafts:
   - id: armaria-snap
     builds:
       - armaria-linux-amd64
-      - armaria-host-linux-amd64
     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     name: armaria
     title: Armaria
@@ -237,8 +159,6 @@ snapcrafts:
       armaria:  
         command: armaria
         plugs: ["dot-mozilla-native-messaging-hosts", "dot-config-google-chrome-native-messaging-hosts", "dot-config-chromium-native-messaging-hosts"]
-      armaria-host:
-        command: armaria-host
     plugs:
       dot-mozilla-native-messaging-hosts:
         interface: personal-files
