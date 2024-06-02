@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: macos-13
+    runs-on: macos-12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
