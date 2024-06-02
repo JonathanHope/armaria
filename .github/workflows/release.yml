@@ -24,7 +24,9 @@ jobs:
           brew install colima
           colima start
       - name: Release
-        run: task release
+        run: |
+          export SDK=$(ls -1 "/Library/Developer/CommandLineTools/SDKs/" | head -n 1)
+          task release
         shell: nix develop --command bash -e {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -32,3 +34,4 @@ jobs:
           TAP_AUTH_TOKEN: ${{ secrets.TAP_AUTH_TOKEN }}
           NUR_AUTH_TOKEN: ${{ secrets.NUR_AUTH_TOKEN }}
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+          SDK: 
