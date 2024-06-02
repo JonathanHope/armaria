@@ -12,3 +12,5 @@ dist
 .vscode
 .vale.ini
 styles
+colima-Darwin-x86_64
+install.log
