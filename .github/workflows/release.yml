@@ -20,11 +20,8 @@ jobs:
         run: echo "SDK=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
       - name: Install Nix
         uses: cachix/install-nix-action@v22
-      # - name: Setup Docker
-      #   run: |
-      #     brew install docker
-      #     brew install colima
-      #     colima start
+      - name: Setup Docker
+        uses: douglascamata/setup-docker-macos-action@v1-alpha    
       - name: Release
         run: |
           task release
