@@ -18,6 +18,12 @@ jobs:
           fetch-depth: 0
       - name: Install Nix
         uses: cachix/install-nix-action@v22
+      - name: Debug SDK
+        run: |
+          echo $SDKROOT
+          xcrun --sdk macosx --show-sdk-path
+          ls -1 "/Library/Developer/CommandLineTools/SDKs/"
+          ls -1 "/Library/Developer/CommandLineTools/SDKs/" | head -n 1
       - name: Setup Docker
         run: |
           brew install docker
@@ -25,7 +31,7 @@ jobs:
           colima start
       - name: Release
         run: |
-          export SDK=$(ls -1 "/Library/Developer/CommandLineTools/SDKs/" | head -n 1)
+          export SDK=$(xcrun --sdk macosx --show-sdk-path)
           task release
         shell: nix develop --command bash -e {0}
         env:
