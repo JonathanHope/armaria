@@ -135,10 +135,10 @@ func snapOrHome(userHome userHomeFn, getenv getenvFn) (string, error) {
 // Host will get the path to the native messaging host.
 // The extensions need an absolute path to it in order to work.
 func Host() (string, error) {
-	return hostInternal(os.Getenv, os.Executable, filepath.Dir, filepath.Join)
+	return hostInternal(runtime.GOOS, os.Getenv, os.Executable, filepath.Dir, filepath.Join)
 }
 
-func hostInternal(getenv getenvFn, executable executableFn, dir dirFn, join joinFn) (string, error) {
+func hostInternal(goos string, getenv getenvFn, executable executableFn, dir dirFn, join joinFn) (string, error) {
 	// The snap path needs to be a hard coded special case.
 	// There doesn't appear to be way to intuit it.
 	// Additionally snap will namespace the host with "armaria".
@@ -154,7 +154,13 @@ func hostInternal(getenv getenvFn, executable executableFn, dir dirFn, join join
 	if err != nil {
 		return "", fmt.Errorf("error getting current executable while getting host path: %w", err)
 	}
-	return join(dir(ex), "armaria"), nil
+
+	hostExe := "armaria"
+	if goos == "windows" {
+		hostExe = "armaria.exe"
+	}
+
+	return join(dir(ex), hostExe), nil
 }
 
 // FirefoxManifest gets the path to the Firefox app manifest.

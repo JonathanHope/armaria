@@ -17,8 +17,14 @@ func main() {
 	// When a browser sends a native message it will send the extension ID as the last argument.
 	// When we see one of Armaria's extension IDs we switch to native messaging mode.
 	extensionIds := []string{manifest.FirefoxExtension, manifest.ChromeExtension1, manifest.ChromeExtension2}
-	lastArg := os.Args[len(os.Args)-1]
-	if slices.Contains(extensionIds, lastArg) {
+	hostMode := false
+	for _, arg := range os.Args {
+		if slices.Contains(extensionIds, arg) {
+			hostMode = true
+		}
+	}
+
+	if hostMode {
 		if err := messaging.Dispatch(os.Stdin, os.Stdout); err != nil {
 			fmt.Printf("Unexpected error: %s", err)
 			os.Exit(1)
