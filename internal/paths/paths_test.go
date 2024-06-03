@@ -224,18 +224,26 @@ func TestGetFolderPath(t *testing.T) {
 
 func TestHostPath(t *testing.T) {
 	type test struct {
+		goos         string
 		snapRealHome string
 		hostPath     string
 	}
 
 	tests := []test{
 		{
+			goos:         "linux",
 			snapRealHome: "",
 			hostPath:     "/usr/bin/armaria",
 		},
 		{
+			goos:         "linux",
 			snapRealHome: "/snap",
 			hostPath:     "/snap/bin/armaria",
+		},
+		{
+			goos:         "windows",
+			snapRealHome: "",
+			hostPath:     "/usr/bin/armaria.exe",
 		},
 	}
 
@@ -257,7 +265,7 @@ func TestHostPath(t *testing.T) {
 				return tc.snapRealHome
 			}
 
-			got, err := hostInternal(getenv, executable, dir, path.Join)
+			got, err := hostInternal(tc.goos, getenv, executable, dir, path.Join)
 			if err != nil {
 				t.Fatalf("unexpected error: %+v", err)
 			}

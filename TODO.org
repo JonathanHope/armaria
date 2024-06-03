@@ -1,5 +1,5 @@
 This is a running list of things that need to taken care of at some point:
 
  - [ ] Long subtract function too complex
- - [ ] Manifest requires registry key on Windows
- - [ ] There has got to be a way to figure out which XCode version is installed
+ - [ ] The native messaging is broken on browsers installed by snap
+   - this is an issue with the Firefox Snapcraft in particular: https://forum.snapcraft.io/t/firefox-snapcraft-native-messaging-behavior/40437
