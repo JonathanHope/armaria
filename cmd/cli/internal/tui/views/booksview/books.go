@@ -274,6 +274,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var cmd tea.Cmd
 				m.query = ""
 				m.footer.StopInputMode()
+				m.header.SetFree()
 
 				if m.inputType == inputSearch {
 					cmd = m.getBooksCmd(msgs.DirectionStart)
@@ -435,14 +436,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 			case "+":
-				if !m.table.Empty() && !m.header.Busy() {
+				if !m.header.Busy() {
 					m.inputType = inputFolder
 					m.footer.StartInputMode("Folder: ", "", 2048)
 					m.header.SetBusy()
 				}
 
 			case "b":
-				if !m.table.Empty() && !m.header.Busy() {
+				if !m.header.Busy() {
 					m.inputType = inputBookmark
 					m.footer.StartInputMode("Bookmark: ", "", 2048)
 					m.header.SetBusy()
