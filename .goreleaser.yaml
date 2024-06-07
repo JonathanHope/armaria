@@ -137,40 +137,40 @@ release:
   extra_files:
     - glob: ./**/*.snap
 
-snapcrafts:
-  - id: armaria-snap
-    builds:
-      - armaria-linux-amd64
-    name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    name: armaria
-    title: Armaria
-    publish: true
-    summary: Armaria is a fast, open, and local first bookmarks manager.
-    description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
-    confinement: strict
-    license: MIT
-    base: core18
-    extra_files:
-      - source: ./art/cabinet-light-128.png
-        destination: meta/gui/icon.png
-        mode: 0755
-    apps:
-      armaria:  
-        command: armaria
-        plugs: ["dot-mozilla-native-messaging-hosts", "dot-config-google-chrome-native-messaging-hosts", "dot-config-chromium-native-messaging-hosts"]
-    plugs:
-      dot-mozilla-native-messaging-hosts:
-        interface: personal-files
-        write:
-          - $HOME/.mozilla/native-messaging-hosts
-      dot-config-google-chrome-native-messaging-hosts:
-        interface: personal-files
-        write:
-          - $HOME/.config/google-chrome/NativeMessagingHosts
-      dot-config-chromium-native-messaging-hosts:
-        interface: personal-files
-        write:
-          - $HOME/.config/chromium/NativeMessagingHosts
+# snapcrafts:
+#   - id: armaria-snap
+#     builds:
+#       - armaria-linux-amd64
+#     name_template: "armaria_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+#     name: armaria
+#     title: Armaria
+#     publish: true
+#     summary: Armaria is a fast, open, and local first bookmarks manager.
+#     description: Armaria is a FOSS bookmarks manager that keeps all of your local bookmarks in a SQLite database. You can use many different frontends to manage your bookmarks including browsers, and back them up and/or sync them however you see fit.
+#     confinement: strict
+#     license: MIT
+#     base: core18
+#     extra_files:
+#       - source: ./art/cabinet-light-128.png
+#         destination: meta/gui/icon.png
+#         mode: 0755
+#     apps:
+#       armaria:  
+#         command: armaria
+#         plugs: ["dot-mozilla-native-messaging-hosts", "dot-config-google-chrome-native-messaging-hosts", "dot-config-chromium-native-messaging-hosts"]
+#     plugs:
+#       dot-mozilla-native-messaging-hosts:
+#         interface: personal-files
+#         write:
+#           - $HOME/.mozilla/native-messaging-hosts
+#       dot-config-google-chrome-native-messaging-hosts:
+#         interface: personal-files
+#         write:
+#           - $HOME/.config/google-chrome/NativeMessagingHosts
+#       dot-config-chromium-native-messaging-hosts:
+#         interface: personal-files
+#         write:
+#           - $HOME/.config/chromium/NativeMessagingHosts
 
 winget:
   - name: Armaria
