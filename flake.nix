@@ -22,7 +22,7 @@
             golangci-lint
             goose
             # https://github.com/ziglang/zig/issues/17130
-            zig.packages.${system}.master-2023-08-15
+            zig.packages.${system}.master
             goreleaser
             syft
             delve
