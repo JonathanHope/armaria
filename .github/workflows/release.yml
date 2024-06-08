@@ -24,7 +24,7 @@ jobs:
       #   uses: douglascamata/setup-docker-macos-action@v1-alpha
       - name: Release
         run: |
-          task release
+          sudo task release
         shell: nix develop --command bash -e {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
