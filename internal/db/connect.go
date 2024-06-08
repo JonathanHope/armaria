@@ -7,8 +7,8 @@ import (
 
 	"github.com/jonathanhope/armaria/internal/null"
 	"github.com/jonathanhope/armaria/internal/paths"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed migrations/*.sql
@@ -26,7 +26,7 @@ func connectDB(inputPath null.NullString, configPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("error getting database location wile connecting to database: %w", err)
 	}
 
-	db, err := sql.Open("sqlite3", dbLocation)
+	db, err := sql.Open("sqlite", dbLocation)
 	if err != nil {
 		return nil, fmt.Errorf("error while connecting to database: %w", err)
 	}

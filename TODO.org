@@ -3,3 +3,5 @@ This is a running list of things that need to taken care of at some point:
  - [ ] Long subtract function too complex
  - [ ] The native messaging is broken on browsers installed by snap
    - this is an issue with the Firefox Snapcraft in particular: https://forum.snapcraft.io/t/firefox-snapcraft-native-messaging-behavior/40437
+ - [ ] Cross compiling with the mattn driver seems impossible. I would prefer to do it, but I think that is a future problem. I would rather keep the project moving.
+   - Current issue: https://github.com/ziglang/zig/issues/19400

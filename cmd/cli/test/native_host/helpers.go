@@ -38,7 +38,7 @@ func nativeMessageLoop[T messaging.Payload](kind messaging.MessageKind, payload 
 
 // getLastInsertedID gets the ID of the last inserted bookmark.
 func getLastInsertedID(dbLocation string, ignoreIds []string) (string, error) {
-	db, err := sql.Open("sqlite3", dbLocation)
+	db, err := sql.Open("sqlite", dbLocation)
 	if err != nil {
 		return "", err
 	}
