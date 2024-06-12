@@ -184,7 +184,7 @@ func firefoxManifestInternal(goos string, getenv getenvFn, userHome userHomeFn, 
 		folder = join(home, ".mozilla", "native-messaging-hosts")
 	} else if goos == "windows" {
 		// The manifest can be anywhere in Windows, but it needs a supporting registry entry.
-		folder = join(home, "AppData", "Local", "Armaria")
+		folder = join(home, "AppData", "Local", "Armaria", "Firefox")
 	} else if goos == "darwin" {
 		folder = join(home, "Library", "Application Support", "Mozilla", "NativeMessagingHosts")
 	} else {
@@ -219,7 +219,7 @@ func chromeManifestInternal(goos string, getenv getenvFn, userHome userHomeFn, j
 		folder = join(home, ".config", "google-chrome", "NativeMessagingHosts")
 	} else if goos == "windows" {
 		// The manifest can be anywhere in Windows, but it needs a supporting registry entry.
-		folder = join(home, "AppData", "Local", "Armaria")
+		folder = join(home, "AppData", "Local", "Armaria", "Chrome")
 	} else if goos == "darwin" {
 		folder = join(home, "Library", "Application Support", "Google", "Chrome", "NativeMessagingHosts")
 	} else {
@@ -254,7 +254,7 @@ func chromiumManifestInternal(goos string, getenv getenvFn, userHome userHomeFn,
 		folder = join(home, ".config", "chromium", "NativeMessagingHosts")
 	} else if goos == "windows" {
 		// The manifest can be anywhere in Windows, but it needs a supporting registry entry.
-		folder = join(home, "AppData", "Local", "Armaria")
+		folder = join(home, "AppData", "Local", "Armaria", "Chrome")
 	} else if goos == "darwin" {
 		folder = join(home, "Library", "Application Support", "Chromium", "NativeMessagingHosts")
 	} else {

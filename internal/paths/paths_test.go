@@ -289,9 +289,9 @@ func TestFirefoxManifestPath(t *testing.T) {
 	tests := []test{
 		{
 			goos:          "windows",
-			folderPath:    "~/AppData/Local/Armaria",
+			folderPath:    "~/AppData/Local/Armaria/Firefox",
 			folderCreated: true,
-			manifestPath:  "~/AppData/Local/Armaria/armaria.json",
+			manifestPath:  "~/AppData/Local/Armaria/Firefox/armaria.json",
 		},
 		{
 			goos:          "linux",
@@ -363,9 +363,9 @@ func TestChromeManifestPath(t *testing.T) {
 	tests := []test{
 		{
 			goos:          "windows",
-			folderPath:    "~/AppData/Local/Armaria",
+			folderPath:    "~/AppData/Local/Armaria/Chrome",
 			folderCreated: true,
-			manifestPath:  "~/AppData/Local/Armaria/armaria.json",
+			manifestPath:  "~/AppData/Local/Armaria/Chrome/armaria.json",
 		},
 		{
 			goos:          "linux",
@@ -437,9 +437,9 @@ func TestChromiumManifestPath(t *testing.T) {
 	tests := []test{
 		{
 			goos:          "windows",
-			folderPath:    "~/AppData/Local/Armaria",
+			folderPath:    "~/AppData/Local/Armaria/Chrome",
 			folderCreated: true,
-			manifestPath:  "~/AppData/Local/Armaria/armaria.json",
+			manifestPath:  "~/AppData/Local/Armaria/Chrome/armaria.json",
 		},
 		{
 			goos:          "linux",
